@@ -1,0 +1,22 @@
+dimension_id,dimension_name,dimension_weight,subcategory_id,subcategory_name,subcategory_weight,subcategory_description
+creativity,Creativity,0.25,innovation_problem_solving,Innovation & Problem-solving,0.3,Ability to approach problems with novel solutions and creative thinking
+creativity,Creativity,0.25,algorithm_design,Algorithm Design,0.25,Creative approach to designing efficient and elegant algorithms
+creativity,Creativity,0.25,system_architecture,System Architecture,0.25,Innovative thinking in designing scalable and maintainable system architectures
+creativity,Creativity,0.25,code_optimization,Code Optimization,0.1,Creative approaches to optimizing code performance and efficiency
+creativity,Creativity,0.25,ux_design,User Experience Design,0.1,Creative thinking in designing intuitive and user-friendly interfaces
+teamwork,Teamwork,0.25,communication_documentation,Communication & Documentation,0.3,Clear communication skills and ability to document work effectively
+teamwork,Teamwork,0.25,code_review_collaboration,Code Review & Collaboration,0.25,Effective participation in code reviews and collaborative development
+teamwork,Teamwork,0.25,leadership_mentoring,Leadership & Mentoring,0.2,Ability to lead teams and mentor fellow students/developers
+teamwork,Teamwork,0.25,conflict_resolution,Conflict Resolution,0.15,Skills in resolving disagreements and maintaining team harmony
+teamwork,Teamwork,0.25,agile_participation,Agile/Scrum Participation,0.1,Effective participation in agile development processes and ceremonies
+soft_skills,Soft Skills,0.25,time_management,Time Management & Planning,0.25,Ability to manage time effectively and plan project milestones
+soft_skills,Soft Skills,0.25,adaptability_learning,Adaptability & Learning,0.25,Flexibility in adapting to new technologies and continuous learning
+soft_skills,Soft Skills,0.25,critical_thinking,Critical Thinking,0.25,Analytical thinking and ability to evaluate information objectively
+soft_skills,Soft Skills,0.25,presentation_communication,Presentation & Client Communication,0.15,Skills in presenting ideas and communicating with stakeholders
+soft_skills,Soft Skills,0.25,project_management,Project Management,0.1,Understanding of project management principles and methodologies
+hard_skills,Hard Skills,0.25,programming_languages,Programming Languages,0.3,Proficiency in various programming languages and paradigms
+hard_skills,Hard Skills,0.25,software_engineering_principles,Software Engineering Principles,0.25,Understanding of SOLID principles design patterns and best practices
+hard_skills,Hard Skills,0.25,database_management,Database Management,0.15,Skills in database design SQL and data management
+hard_skills,Hard Skills,0.25,devops_deployment,DevOps & Deployment,0.15,Knowledge of CI/CD containerization and deployment strategies
+hard_skills,Hard Skills,0.25,testing_qa,Testing & Quality Assurance,0.1,Skills in writing tests debugging and ensuring code quality
+hard_skills,Hard Skills,0.25,mathematics_algorithms,Mathematics & Algorithms,0.05,Mathematical foundations and algorithmic problem-solving skills

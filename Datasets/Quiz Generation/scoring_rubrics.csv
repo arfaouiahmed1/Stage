@@ -1,0 +1,127 @@
+dimension,subcategory,score_level,rubric_description
+creativity,innovation_problem_solving,0,Cannot identify problems or propose solutions
+creativity,innovation_problem_solving,1,Identifies problems but solutions are conventional or impractical
+creativity,innovation_problem_solving,2,Proposes basic solutions with minimal innovation
+creativity,innovation_problem_solving,3,Demonstrates standard problem-solving approaches effectively
+creativity,innovation_problem_solving,4,Shows creative thinking with some innovative solutions
+creativity,innovation_problem_solving,5,Consistently demonstrates highly innovative and effective problem-solving
+creativity,algorithm_design,0,Cannot design basic algorithms
+creativity,algorithm_design,1,Designs inefficient algorithms with major flaws
+creativity,algorithm_design,2,Creates functional but suboptimal algorithms
+creativity,algorithm_design,3,Designs standard algorithms that meet requirements
+creativity,algorithm_design,4,Creates efficient algorithms with creative optimizations
+creativity,algorithm_design,5,Designs exceptional algorithms that are both creative and highly efficient
+creativity,system_architecture,0,No understanding of system design principles
+creativity,system_architecture,1,Basic understanding but poor application
+creativity,system_architecture,2,Can design simple systems with guidance
+creativity,system_architecture,3,Designs adequate systems following standard patterns
+creativity,system_architecture,4,Creates well-designed systems with innovative elements
+creativity,system_architecture,5,Designs exceptional scalable and innovative architectures
+creativity,code_optimization,0,No awareness of optimization concepts
+creativity,code_optimization,1,Limited understanding with ineffective attempts
+creativity,code_optimization,2,Basic optimization with minor improvements
+creativity,code_optimization,3,Standard optimization techniques applied correctly
+creativity,code_optimization,4,Creative optimization approaches with good results
+creativity,code_optimization,5,Exceptional optimization skills with innovative techniques
+creativity,ux_design,0,No consideration for user experience
+creativity,ux_design,1,Basic awareness but poor implementation
+creativity,ux_design,2,Simple UX considerations with standard approaches
+creativity,ux_design,3,Good UX design following established principles
+creativity,ux_design,4,Creative and user-centered design approaches
+creativity,ux_design,5,Exceptional UX design with innovative and intuitive solutions
+teamwork,communication_documentation,0,Poor communication inadequate documentation
+teamwork,communication_documentation,1,Basic communication with minimal documentation
+teamwork,communication_documentation,2,Adequate communication and documentation
+teamwork,communication_documentation,3,Clear communication with good documentation practices
+teamwork,communication_documentation,4,Excellent communication skills and comprehensive documentation
+teamwork,communication_documentation,5,Outstanding communication that enhances team effectiveness
+teamwork,code_review_collaboration,0,Does not participate in code reviews
+teamwork,code_review_collaboration,1,Minimal participation with limited feedback
+teamwork,code_review_collaboration,2,Basic participation in review processes
+teamwork,code_review_collaboration,3,Active participation with constructive feedback
+teamwork,code_review_collaboration,4,Excellent reviewer who improves code quality
+teamwork,code_review_collaboration,5,Exceptional collaboration that elevates team performance
+teamwork,leadership_mentoring,0,No leadership or mentoring capabilities
+teamwork,leadership_mentoring,1,Minimal leadership with limited impact
+teamwork,leadership_mentoring,2,Basic leadership in simple situations
+teamwork,leadership_mentoring,3,Effective leadership in team settings
+teamwork,leadership_mentoring,4,Strong leadership that motivates and guides others
+teamwork,leadership_mentoring,5,Exceptional leadership that transforms team dynamics
+teamwork,conflict_resolution,0,Avoids or escalates conflicts
+teamwork,conflict_resolution,1,Limited ability to address conflicts
+teamwork,conflict_resolution,2,Basic conflict resolution in simple situations
+teamwork,conflict_resolution,3,Effective at resolving common team conflicts
+teamwork,conflict_resolution,4,Skilled at mediating and resolving complex issues
+teamwork,conflict_resolution,5,Exceptional ability to turn conflicts into opportunities
+teamwork,agile_participation,0,Does not understand or participate in agile processes
+teamwork,agile_participation,1,Basic understanding with minimal participation
+teamwork,agile_participation,2,Adequate participation in agile ceremonies
+teamwork,agile_participation,3,Active and effective agile team member
+teamwork,agile_participation,4,Contributes significantly to agile process improvement
+teamwork,agile_participation,5,Exceptional agile practitioner who enhances team velocity
+soft_skills,time_management,0,Poor time management frequently misses deadlines
+soft_skills,time_management,1,Basic time awareness with frequent delays
+soft_skills,time_management,2,Adequate time management with occasional delays
+soft_skills,time_management,3,Good time management meeting most deadlines
+soft_skills,time_management,4,Excellent time management with proactive planning
+soft_skills,time_management,5,Exceptional time management that enables team efficiency
+soft_skills,adaptability_learning,0,Resistant to change slow to learn new concepts
+soft_skills,adaptability_learning,1,Limited adaptability with significant learning curve
+soft_skills,adaptability_learning,2,Basic adaptability to familiar changes
+soft_skills,adaptability_learning,3,Good adaptability and continuous learning
+soft_skills,adaptability_learning,4,Excellent at adapting and learning new technologies
+soft_skills,adaptability_learning,5,Exceptional adaptability that drives innovation
+soft_skills,critical_thinking,0,Lacks analytical thinking skills
+soft_skills,critical_thinking,1,Basic analysis with limited depth
+soft_skills,critical_thinking,2,Adequate critical thinking in simple scenarios
+soft_skills,critical_thinking,3,Good analytical skills with logical reasoning
+soft_skills,critical_thinking,4,Excellent critical thinking with comprehensive analysis
+soft_skills,critical_thinking,5,Exceptional analytical abilities that provide deep insights
+soft_skills,presentation_communication,0,Poor presentation skills unclear communication
+soft_skills,presentation_communication,1,Basic presentation with limited clarity
+soft_skills,presentation_communication,2,Adequate presentation of simple concepts
+soft_skills,presentation_communication,3,Good presentation skills with clear communication
+soft_skills,presentation_communication,4,Excellent presenter who engages audiences effectively
+soft_skills,presentation_communication,5,Exceptional communication that influences and inspires
+soft_skills,project_management,0,No understanding of project management
+soft_skills,project_management,1,Basic awareness with limited application
+soft_skills,project_management,2,Adequate project coordination in simple projects
+soft_skills,project_management,3,Good project management following standard practices
+soft_skills,project_management,4,Excellent project management with effective methodologies
+soft_skills,project_management,5,Exceptional project leadership that ensures success
+hard_skills,programming_languages,0,Cannot write functional code in any language
+hard_skills,programming_languages,1,Basic syntax knowledge with limited functionality
+hard_skills,programming_languages,2,Can write simple programs with guidance
+hard_skills,programming_languages,3,Proficient in at least one language with good practices
+hard_skills,programming_languages,4,Skilled in multiple languages with advanced concepts
+hard_skills,programming_languages,5,Expert-level programming across multiple paradigms
+hard_skills,software_engineering_principles,0,No understanding of software engineering principles
+hard_skills,software_engineering_principles,1,Basic awareness with poor implementation
+hard_skills,software_engineering_principles,2,Adequate application of simple principles
+hard_skills,software_engineering_principles,3,Good understanding and application of core principles
+hard_skills,software_engineering_principles,4,Excellent application of advanced principles and patterns
+hard_skills,software_engineering_principles,5,Exceptional mastery that guides architectural decisions
+hard_skills,database_management,0,No database knowledge or skills
+hard_skills,database_management,1,Basic SQL with limited database understanding
+hard_skills,database_management,2,Adequate database operations and simple queries
+hard_skills,database_management,3,Good database design and query optimization
+hard_skills,database_management,4,Excellent database management with advanced techniques
+hard_skills,database_management,5,Exceptional database expertise with performance optimization
+hard_skills,devops_deployment,0,No understanding of deployment or DevOps
+hard_skills,devops_deployment,1,Basic awareness with limited practical knowledge
+hard_skills,devops_deployment,2,Can perform simple deployment tasks with guidance
+hard_skills,devops_deployment,3,Good understanding of CI/CD and deployment practices
+hard_skills,devops_deployment,4,Excellent DevOps skills with automation and optimization
+hard_skills,devops_deployment,5,Exceptional DevOps expertise that improves team efficiency
+hard_skills,testing_qa,0,No testing knowledge or practices
+hard_skills,testing_qa,1,Basic testing awareness with minimal implementation
+hard_skills,testing_qa,2,Adequate testing of simple functionality
+hard_skills,testing_qa,3,Good testing practices with appropriate coverage
+hard_skills,testing_qa,4,Excellent testing strategies including advanced techniques
+hard_skills,testing_qa,5,Exceptional testing expertise that ensures quality
+hard_skills,mathematics_algorithms,0,Poor mathematical foundation and algorithmic thinking
+hard_skills,mathematics_algorithms,1,Basic math skills with limited algorithmic understanding
+hard_skills,mathematics_algorithms,2,Adequate mathematical reasoning for simple algorithms
+hard_skills,mathematics_algorithms,3,Good mathematical foundation with solid algorithmic skills
+hard_skills,mathematics_algorithms,4,Excellent mathematical reasoning and advanced algorithms
+hard_skills,mathematics_algorithms,5,Exceptional mathematical expertise enabling complex solutions
