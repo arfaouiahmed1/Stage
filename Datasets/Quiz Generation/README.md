@@ -11,6 +11,10 @@ Complete dataset collection for the Gamified Student Clustering Platform, specif
 - **`scoring_system.csv`** - 0-5 point scoring scale definitions and descriptions
 - **`scoring_rubrics.csv`** - Detailed scoring criteria for each dimension/subcategory combination
 - **`sample_questions.csv`** - Sample quiz questions organized by category with metadata
+- **`comprehensive_questions.csv`** - **Extensive question bank with 150+ questions** covering all scenarios and skill levels
+- **`year_level_expectations.csv`** - Year-specific scoring expectations for different student levels
+- **`collaboration_indicators.csv`** - Collaboration capability definitions for team formation
+- **`scoring_calculation_guide.md`** - **Complete guide explaining how scores are calculated and finalized**
 
 ## Scoring System Details
 - **Scale**: 0-5 points across all assessments
@@ -69,8 +73,10 @@ Technical competencies specific to software engineering practice.
 ### For LLM Quiz Generation
 1. **Load Taxonomy**: Use `dimensions_taxonomy.csv` to understand the complete structure and weights
 2. **Reference Rubrics**: Consult `scoring_rubrics.csv` for detailed assessment criteria for each subcategory
-3. **Question Examples**: Review `sample_questions.csv` for question format and assessment criteria examples
+3. **Question Examples**: Review `comprehensive_questions.csv` for **150+ realistic questions** covering all university contexts
 4. **Scoring Guidelines**: Use `scoring_system.csv` for consistent 0-5 scale application
+5. **Year-Level Targeting**: Reference `year_level_expectations.csv` to adjust difficulty appropriately
+6. **Collaboration Focus**: Prioritize questions with high collaboration indicators for team formation
 
 ### For ML Clustering Algorithms
 1. **Feature Template**: Use `clustering_features.csv` as the exact column structure for student data
@@ -100,6 +106,12 @@ Student Responses → scoring_rubrics.csv → Individual Scores → clustering_f
 ```
 clustering_features.csv → ML Algorithms → Optimal Team Groupings → Gamification System
 ```
+
+### Complete Scoring Pipeline
+```
+Quiz Responses → Rubric Evaluation → Subcategory Scores → Dimension Scores → Composite Score → Team Formation Features
+```
+**Detailed Process**: See `scoring_calculation_guide.md` for complete mathematical calculations and examples
 
 ## Configuration Management
 
