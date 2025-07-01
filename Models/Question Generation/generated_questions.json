@@ -1,0 +1,8 @@
+{
+  "teacher_prompt": "Generate 3 beginner-level multiple-choice questions on git",
+  "generated_questions": [
+    "**What is the primary purpose of Git?**",
+    "**Which Git command is used to create a copy of a remote repository on your local machine?**",
+    "**What does the command `git status` display?**"
+  ]
+}
