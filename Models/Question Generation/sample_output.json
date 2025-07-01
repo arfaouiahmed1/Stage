@@ -1,0 +1,273 @@
+{
+  "quiz_metadata": {
+    "quiz_id": "quiz_20250701_143022",
+    "title": "Creative Web Development Assessment",
+    "description": "Assessment focusing on creative problem-solving in web development projects",
+    "created_at": "2025-07-01T14:30:22.123456",
+    "created_by": "Dr. Sarah Johnson",
+    "total_questions": 3,
+    "estimated_duration_minutes": 45,
+    "difficulty_level": "intermediate",
+    "subject_area": "Computer Science",
+    "target_audience": {
+      "year_level": "2-3",
+      "course": "Web Development",
+      "prerequisites": ["HTML/CSS", "JavaScript basics", "React fundamentals"]
+    }
+  },
+  "assessment_framework": {
+    "primary_dimension": "creativity",
+    "subcategory": "innovation_problem_solving",
+    "collaboration_level": "medium",
+    "assessment_type": "formative"
+  },
+  "scoring_configuration": {
+    "total_points": 15,
+    "grading_scale": {
+      "excellent": {
+        "min_score": 90,
+        "description": "Exceptional demonstration"
+      },
+      "good": {
+        "min_score": 75,
+        "description": "Solid demonstration"
+      },
+      "satisfactory": {
+        "min_score": 60,
+        "description": "Meets expectations"
+      },
+      "needs_improvement": {
+        "min_score": 40,
+        "description": "Below expectations"
+      },
+      "unsatisfactory": {
+        "min_score": 0,
+        "description": "Minimal demonstration"
+      }
+    },
+    "rubric_criteria": [
+      "technical_accuracy",
+      "creative_thinking",
+      "problem_solving_approach",
+      "communication_clarity"
+    ]
+  },
+  "questions": [
+    {
+      "question_id": "gen_001",
+      "question_number": 1,
+      "question_text": "Your React project team is building an e-commerce website but realizes the current component structure is becoming difficult to maintain. How would you propose a creative refactoring approach while ensuring the team understands and agrees with the changes?",
+      "question_type": "collaboration_scenario",
+      "difficulty_level": "intermediate",
+      "time_allocation": {
+        "recommended_minutes": 15,
+        "maximum_minutes": 22.5
+      },
+      "assessment_criteria": {
+        "primary": "problem_solving_approach",
+        "secondary": "creative_thinking",
+        "tertiary": "communication_clarity"
+      },
+      "collaboration_requirements": {
+        "level": "medium",
+        "team_size": "2-3 students",
+        "interaction_required": true
+      },
+      "scoring": {
+        "max_points": 5,
+        "rubric_levels": [
+          {
+            "level": 5,
+            "description": "Excellent",
+            "criteria": "Exceptional demonstration of all criteria"
+          },
+          {
+            "level": 4,
+            "description": "Good", 
+            "criteria": "Strong demonstration with minor gaps"
+          },
+          {
+            "level": 3,
+            "description": "Satisfactory",
+            "criteria": "Meets basic expectations"
+          },
+          {
+            "level": 2,
+            "description": "Needs Improvement",
+            "criteria": "Below expectations"
+          },
+          {
+            "level": 1,
+            "description": "Unsatisfactory",
+            "criteria": "Minimal demonstration"
+          }
+        ]
+      },
+      "metadata": {
+        "dimension": "creativity",
+        "subcategory": "innovation_problem_solving",
+        "target_year_level": "2-3",
+        "context_similarity_score": 0.87,
+        "generation_timestamp": "2025-07-01T14:30:22.456789"
+      },
+      "frontend_display": {
+        "render_type": "scenario_card",
+        "layout_hints": {
+          "full_width": true,
+          "show_timer": true,
+          "allow_drafts": true,
+          "rich_text_editor": false
+        },
+        "ui_elements": {
+          "progress_indicator": true,
+          "word_count": false,
+          "collaboration_tools": true
+        }
+      }
+    },
+    {
+      "question_id": "gen_002", 
+      "question_number": 2,
+      "question_text": "Design a creative user interface for a mobile app that helps elderly users manage their medications. Consider accessibility, usability, and innovative features that would make the experience engaging rather than clinical.",
+      "question_type": "design_creativity",
+      "difficulty_level": "intermediate",
+      "time_allocation": {
+        "recommended_minutes": 20,
+        "maximum_minutes": 30
+      },
+      "assessment_criteria": {
+        "primary": "creative_thinking",
+        "secondary": "user_experience_design",
+        "tertiary": "accessibility_awareness"
+      },
+      "collaboration_requirements": {
+        "level": "low",
+        "team_size": "Individual work",
+        "interaction_required": false
+      },
+      "scoring": {
+        "max_points": 5,
+        "rubric_levels": [
+          {
+            "level": 5,
+            "description": "Excellent",
+            "criteria": "Exceptional demonstration of all criteria"
+          },
+          {
+            "level": 4,
+            "description": "Good",
+            "criteria": "Strong demonstration with minor gaps"
+          },
+          {
+            "level": 3,
+            "description": "Satisfactory", 
+            "criteria": "Meets basic expectations"
+          },
+          {
+            "level": 2,
+            "description": "Needs Improvement",
+            "criteria": "Below expectations"
+          },
+          {
+            "level": 1,
+            "description": "Unsatisfactory",
+            "criteria": "Minimal demonstration"
+          }
+        ]
+      },
+      "metadata": {
+        "dimension": "creativity",
+        "subcategory": "ux_design",
+        "target_year_level": "2-3",
+        "context_similarity_score": 0.82,
+        "generation_timestamp": "2025-07-01T14:30:22.567890"
+      },
+      "frontend_display": {
+        "render_type": "design_canvas",
+        "layout_hints": {
+          "full_width": true,
+          "show_timer": true,
+          "allow_drafts": true,
+          "rich_text_editor": false
+        },
+        "ui_elements": {
+          "progress_indicator": true,
+          "word_count": false,
+          "collaboration_tools": false
+        }
+      }
+    },
+    {
+      "question_id": "gen_003",
+      "question_number": 3,
+      "question_text": "Your web development team needs to present a complex technical solution to non-technical stakeholders. How would you create an innovative presentation approach that makes the technical concepts accessible and engaging?",
+      "question_type": "presentation_creativity",
+      "difficulty_level": "intermediate",
+      "time_allocation": {
+        "recommended_minutes": 10,
+        "maximum_minutes": 15
+      },
+      "assessment_criteria": {
+        "primary": "communication_clarity",
+        "secondary": "creative_thinking",
+        "tertiary": "audience_adaptation"
+      },
+      "collaboration_requirements": {
+        "level": "high",
+        "team_size": "3-4 students",
+        "interaction_required": true
+      },
+      "scoring": {
+        "max_points": 5,
+        "rubric_levels": [
+          {
+            "level": 5,
+            "description": "Excellent",
+            "criteria": "Exceptional demonstration of all criteria"
+          },
+          {
+            "level": 4,
+            "description": "Good",
+            "criteria": "Strong demonstration with minor gaps"
+          },
+          {
+            "level": 3,
+            "description": "Satisfactory",
+            "criteria": "Meets basic expectations"
+          },
+          {
+            "level": 2,
+            "description": "Needs Improvement",
+            "criteria": "Below expectations"
+          },
+          {
+            "level": 1,
+            "description": "Unsatisfactory",
+            "criteria": "Minimal demonstration"
+          }
+        ]
+      },
+      "metadata": {
+        "dimension": "creativity",
+        "subcategory": "innovation_problem_solving",
+        "target_year_level": "2-3",
+        "context_similarity_score": 0.79,
+        "generation_timestamp": "2025-07-01T14:30:22.678901"
+      },
+      "frontend_display": {
+        "render_type": "multimedia_response",
+        "layout_hints": {
+          "full_width": true,
+          "show_timer": true,
+          "allow_drafts": true,
+          "rich_text_editor": true
+        },
+        "ui_elements": {
+          "progress_indicator": true,
+          "word_count": true,
+          "collaboration_tools": true
+        }
+      }
+    }
+  ]
+}
