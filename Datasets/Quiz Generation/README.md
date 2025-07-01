@@ -1,167 +1,116 @@
 # Quiz Generation Dataset
 
 ## Overview
-Complete dataset collection for the Gamified Student Clustering Platform, specifically designed for software engineering education. This comprehensive dataset supports LLM-driven quiz generation, student assessment, and ML-based clustering for optimal team formation.
+Clean, production-ready dataset for ML-driven student assessment and team formation. Organized following data science best practices with clear separation between raw and processed data.
 
-## Files Structure
-
-### Core Dataset Files
-- **`dimensions_taxonomy.csv`** - Complete hierarchical structure of all 4 dimensions and 21 subcategories with weights
-- **`clustering_features.csv`** - ML feature template with all scoring columns for clustering algorithms
-- **`scoring_system.csv`** - 0-5 point scoring scale definitions and descriptions
-- **`scoring_rubrics.csv`** - Detailed scoring criteria for each dimension/subcategory combination
-- **`sample_questions.csv`** - Sample quiz questions organized by category with metadata
-- **`comprehensive_questions.csv`** - **Extensive question bank with 150+ questions** covering all scenarios and skill levels
-- **`year_level_expectations.csv`** - Year-specific scoring expectations for different student levels
-- **`collaboration_indicators.csv`** - Collaboration capability definitions for team formation
-- **`scoring_calculation_guide.md`** - **Complete guide explaining how scores are calculated and finalized**
-
-## Scoring System Details
-- **Scale**: 0-5 points across all assessments
-- **0**: No Evidence - No demonstration of the skill or competency
-- **1**: Poor - Minimal demonstration with significant gaps
-- **2**: Below Average - Some demonstration but below expected level
-- **3**: Average - Meets basic expectations for the skill
-- **4**: Good - Exceeds expectations with solid demonstration
-- **5**: Excellent - Exceptional demonstration of the skill
-
-## Comprehensive Dimensions Structure
-
-### 1. Creativity (25% overall weight)
-Focuses on innovative thinking and creative problem-solving in software engineering contexts.
-
-**Subcategories:**
-- **Innovation & Problem-solving (30%)** - Novel solution approaches and creative thinking
-- **Algorithm Design (25%)** - Creative and efficient algorithm development
-- **System Architecture (25%)** - Innovative system design and scalability thinking
-- **Code Optimization (10%)** - Creative approaches to performance improvement
-- **User Experience Design (10%)** - Creative UI/UX thinking and user-centered design
-
-### 2. Teamwork (25% overall weight)
-Evaluates collaborative skills essential for software development teams.
-
-**Subcategories:**
-- **Communication & Documentation (30%)** - Clear communication and effective documentation
-- **Code Review & Collaboration (25%)** - Collaborative development and peer review skills
-- **Leadership & Mentoring (20%)** - Team leadership and knowledge sharing abilities
-- **Conflict Resolution (15%)** - Skills in managing team disagreements and challenges
-- **Agile/Scrum Participation (10%)** - Effective participation in agile development processes
-
-### 3. Soft Skills (25% overall weight)
-Personal and interpersonal skills crucial for professional software engineering success.
-
-**Subcategories:**
-- **Time Management & Planning (25%)** - Project planning and deadline management
-- **Adaptability & Learning (25%)** - Flexibility and continuous learning mindset
-- **Critical Thinking (25%)** - Analytical reasoning and objective evaluation
-- **Presentation & Client Communication (15%)** - Stakeholder communication and presentation skills
-- **Project Management (10%)** - Understanding of project management methodologies
-
-### 4. Hard Skills (25% overall weight)
-Technical competencies specific to software engineering practice.
-
-**Subcategories:**
-- **Programming Languages (30%)** - Proficiency across multiple programming paradigms
-- **Software Engineering Principles (25%)** - SOLID principles, design patterns, best practices
-- **Database Management (15%)** - Database design, SQL, and data management skills
-- **DevOps & Deployment (15%)** - CI/CD, containerization, and deployment strategies
-- **Testing & Quality Assurance (10%)** - Testing methodologies and quality assurance practices
-- **Mathematics & Algorithms (5%)** - Mathematical foundations and algorithmic problem-solving
-
-## Usage Instructions
-
-### For LLM Quiz Generation
-1. **Load Taxonomy**: Use `dimensions_taxonomy.csv` to understand the complete structure and weights
-2. **Reference Rubrics**: Consult `scoring_rubrics.csv` for detailed assessment criteria for each subcategory
-3. **Question Examples**: Review `comprehensive_questions.csv` for **150+ realistic questions** covering all university contexts
-4. **Scoring Guidelines**: Use `scoring_system.csv` for consistent 0-5 scale application
-5. **Year-Level Targeting**: Reference `year_level_expectations.csv` to adjust difficulty appropriately
-6. **Collaboration Focus**: Prioritize questions with high collaboration indicators for team formation
-
-### For ML Clustering Algorithms
-1. **Feature Template**: Use `clustering_features.csv` as the exact column structure for student data
-2. **Weight Application**: Apply dimension and subcategory weights from `dimensions_taxonomy.csv`
-3. **Score Normalization**: Ensure all scores follow the 0-5 scale defined in `scoring_system.csv`
-4. **Feature Engineering**: Consider creating composite scores using the hierarchical weight structure
-
-### For Data Processing & Analysis
-1. **Import Structure**: CSV format optimized for pandas, R, and database imports
-2. **Consistent IDs**: Maintain dimension/subcategory ID consistency across all systems
-3. **Weight Calculations**: Use the weight columns for proper score aggregation and analysis
-4. **Quality Validation**: Cross-reference scoring against rubrics for consistency
-
-## Data Pipeline Integration
-
-### Quiz Creation Workflow
+## Folder Structure
 ```
-dimensions_taxonomy.csv → LLM → Generated Questions → scoring_rubrics.csv → Assessment
+Quiz Generation/
+├── README.md                    # This file
+├── raw/                        # Original, immutable source data
+│   ├── taxonomy.csv            # Assessment framework (4 dimensions × 21 subcategories)
+│   ├── questions.csv           # Question bank (160 realistic scenarios)
+│   └── rubrics.csv             # Scoring standards (0-5 scale with year expectations)
+├── processed/                  # Derived and ML-ready data
+│   ├── features_template.csv   # ML pipeline template (32 features)
+│   ├── clustering_features.csv # Feature engineering outputs
+│   ├── collaboration_indicators.csv # Team formation metrics
+│   └── year_level_expectations.csv # Academic year benchmarks
+├── scripts/                    # Data processing and validation
+│   └── validate_data.py        # Data integrity checks
+└── documentation/              # Detailed methodology
+    ├── scoring_guide.md        # Mathematical scoring methodology
+    └── scoring_calculation_guide.md # Implementation details
 ```
 
-### Student Assessment Workflow
+## Quick Start (Data Scientists)
+```python
+import pandas as pd
+import numpy as np
+
+# Load core datasets
+taxonomy = pd.read_csv('raw/taxonomy.csv')
+questions = pd.read_csv('raw/questions.csv') 
+rubrics = pd.read_csv('raw/rubrics.csv')
+
+# Load processed features
+features_template = pd.read_csv('processed/features_template.csv')
+collaboration_data = pd.read_csv('processed/collaboration_indicators.csv')
+
+# Basic validation
+assert len(taxonomy) == 21, "Expected 21 subcategories"
+assert len(questions) == 160, "Expected 160 questions"
+assert len(rubrics) == 6, "Expected 6 scoring levels (0-5)"
+
+print("✅ Dataset loaded successfully")
+print(f"Dimensions: {taxonomy['dimension_name'].unique()}")
+print(f"Questions per dimension: {questions['dimension'].value_counts()}")
 ```
-Student Responses → scoring_rubrics.csv → Individual Scores → clustering_features.csv → ML Features
+
+## Data Schema
+
+### Raw Data (`raw/`)
+
+#### `taxonomy.csv` - Assessment Framework
+Defines the 4-dimensional assessment structure:
+- **Creativity** (25%): Innovation, algorithm design, UX
+- **Teamwork** (25%): Communication, collaboration, leadership  
+- **Soft Skills** (25%): Time management, presentation, ethics
+- **Hard Skills** (25%): Programming, debugging, testing
+
+#### `questions.csv` - Question Bank
+160 realistic university scenarios covering:
+- Target year levels: 1-5
+- Question types: Individual tasks, collaboration scenarios
+- Time limits: 5-15 minutes
+- Assessment criteria mapped to taxonomy
+
+#### `rubrics.csv` - Scoring Standards
+0-5 scale scoring with year-appropriate expectations:
+- 0: No Evidence
+- 1: Basic Attempt  
+- 2: Developing
+- 3: Proficient
+- 4: Advanced
+- 5: Exceptional
+
+### Processed Data (`processed/`)
+
+#### `features_template.csv` - ML Pipeline Template
+32-column structure for clustering algorithms including:
+- Individual dimension scores
+- Composite metrics
+- Collaboration indicators
+- Conflict resolution scores
+
+#### `collaboration_indicators.csv` - Team Formation Metrics
+Derived metrics for optimal team formation based on complementary skills.
+
+#### `year_level_expectations.csv` - Academic Benchmarks
+Year-specific performance expectations for calibrating assessment difficulty.
+
+## Use Cases
+- **Student Clustering**: Form balanced teams based on complementary skills
+- **LLM Training**: Generate contextually appropriate assessment questions
+- **Learning Analytics**: Track student development across multiple dimensions
+- **Academic Research**: Analyze collaboration patterns in CS education
+
+## Data Quality
+- ✅ Zero missing values
+- ✅ Balanced question distribution across dimensions
+- ✅ Mathematically consistent weights (dimensions sum to 1.0)
+- ✅ Validated taxonomy mapping
+- ✅ Realistic university scenarios
+
+## Validation
+Run data integrity checks:
+```bash
+cd scripts/
+python validate_data.py
 ```
 
-### Team Formation Workflow
-```
-clustering_features.csv → ML Algorithms → Optimal Team Groupings → Gamification System
-```
-
-### Complete Scoring Pipeline
-```
-Quiz Responses → Rubric Evaluation → Subcategory Scores → Dimension Scores → Composite Score → Team Formation Features
-```
-**Detailed Process**: See `scoring_calculation_guide.md` for complete mathematical calculations and examples
-
-## Configuration Management
-
-### Easy Modification Capabilities
-- **Weights**: All dimension and subcategory weights centralized in taxonomy CSV
-- **Scoring Criteria**: Rubrics can be updated independently for each subcategory
-- **New Categories**: Add new dimensions/subcategories by extending the taxonomy structure
-- **Question Bank**: Expand sample questions by adding to the questions CSV
-- **Scaling**: Modify the scoring system scale while maintaining rubric consistency
-
-### Version Control Best Practices
-- **File Versioning**: Include date stamps and version numbers in file modifications
-- **Backup Strategy**: Maintain previous versions before making structural changes
-- **Change Documentation**: Log all weight and criteria modifications
-- **Testing**: Validate changes against existing data before production deployment
-
-## Advanced Features
-
-### Weighted Scoring System
-The hierarchical weight structure allows for sophisticated scoring calculations:
-- **Dimension Level**: Each dimension contributes 25% to overall score
-- **Subcategory Level**: Within each dimension, subcategories have specific weights
-- **Flexible Weighting**: Weights can be adjusted for different course contexts or learning objectives
-
-### Comprehensive Rubrics
-Each subcategory includes detailed 0-5 scoring criteria that:
-- **Define Clear Expectations**: Specific descriptions for each score level
-- **Ensure Consistency**: Standardized assessment across different evaluators
-- **Support Development**: Clear progression paths for student improvement
-- **Enable Automation**: Structured format suitable for automated scoring systems
-
-### Sample Question Framework
-The question bank provides templates for:
-- **Multiple Question Types**: Open-ended, scenarios, coding challenges, analysis tasks
-- **Difficulty Levels**: Basic, intermediate, and advanced complexity
-- **Time Management**: Suggested time limits for each question type
-- **Assessment Criteria**: Multiple evaluation dimensions for comprehensive assessment
-
-## Future Enhancement Opportunities
-
-### Scalability Features
-- **Additional Dimensions**: Framework supports easy addition of new assessment areas
-- **Specialized Rubrics**: Custom scoring criteria for specific course or industry contexts
-- **Advanced Weighting**: Dynamic weight adjustment based on course progression or learning objectives
-- **Multi-Language Support**: Extension to support multiple programming language contexts
-
-### Integration Capabilities
-- **LMS Integration**: Compatible with learning management system data formats
-- **API Development**: CSV structure ready for REST API implementation
-- **Real-time Processing**: Suitable for live assessment and immediate feedback systems
-- **Analytics Integration**: Structured for advanced learning analytics and progress tracking
-
-This comprehensive dataset structure provides a robust foundation for intelligent student assessment and team formation in software engineering education contexts.
+## Documentation
+Detailed methodology available in `documentation/`:
+- Mathematical scoring formulas
+- Assessment design principles
+- Implementation guidelines
