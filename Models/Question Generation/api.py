@@ -1,179 +1,91 @@
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
-import uvicorn
-import os
-from question_generation_rag import QuestionGenerationRAG
+import pandas as pd
+from sentence_transformers import SentenceTransformer
+import faiss
+# import genai client for Google Gemini API (may need installation)
+import google.generativeai as genai  # type: ignore
 
-app = FastAPI(
-    title="Question Generation API",
-    description="RAG-based question generation system for educational assessments",
-    version="1.0.0"
-)
+# Load environment variables
+load_dotenv()
 
-# Global RAG system instance
-rag_system = None
+# Configure Google Gemini API
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+model = genai.GenerativeModel("gemini-2.0-flash")
 
-class QuestionRequest(BaseModel):
-    dimension: Optional[str] = None
-    subcategory: Optional[str] = None
-    question_type: Optional[str] = None
-    target_year_level: Optional[str] = None
-    additional_context: Optional[str] = ""
-    num_questions: int = 1
+# Load questions for context retrieval
+CSV_PATH = "/workspaces/Stage/Datasets/Quiz Generation/questions.csv"
+df = pd.read_csv(CSV_PATH, comment="#")
+texts = df["question_text"].tolist()
+metadatas = df[["dimension","subdimension","target_year_level","question_id"]].to_dict(orient="records")
 
-class QuestionResponse(BaseModel):
-    questions: List[Dict[str, Any]]
-    status: str
-    message: str
+# Embedding model and FAISS index
+embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+embeddings = embed_model.encode(texts, convert_to_numpy=True)
+index = faiss.IndexFlatIP(embeddings.shape[1])
+faiss.normalize_L2(embeddings)
+index.add(embeddings)
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize the RAG system on startup"""
-    global rag_system
-    try:
-        print("Initializing Question Generation RAG system...")
-        rag_system = QuestionGenerationRAG()
-        print("RAG system initialized successfully!")
-    except Exception as e:
-        print(f"Failed to initialize RAG system: {str(e)}")
-        raise e
+class GenerateRequest(BaseModel):
+    dimension: str
+    subdimension: str
+    target_year_level: int
+    num_questions: int = 5
+    additional_context: str | None = None
 
-@app.get("/")
-async def root():
-    """Root endpoint with API information"""
-    return {
-        "message": "Question Generation RAG API",
-        "version": "1.0.0",
-        "endpoints": {
-            "/generate": "POST - Generate new questions",
-            "/suggestions": "GET - Get parameter suggestions",
-            "/health": "GET - Health check",
-            "/docs": "GET - API documentation"
-        }
-    }
+class SubmitResponse(BaseModel):
+    responses: dict
+
+app = FastAPI(title="Question Generation RAG API", version="1.0.0")
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    if rag_system is None:
-        raise HTTPException(status_code=503, detail="RAG system not initialized")
-    
-    return {
-        "status": "healthy",
-        "rag_system_loaded": rag_system is not None,
-        "documents_loaded": len(rag_system.knowledge_base) if rag_system else 0
-    }
-
-@app.post("/generate", response_model=QuestionResponse)
-async def generate_questions(request: QuestionRequest):
-    """Generate new questions based on provided parameters"""
-    
-    if rag_system is None:
-        raise HTTPException(status_code=503, detail="RAG system not initialized")
-    
-    try:
-        questions = rag_system.generate_question(
-            dimension=request.dimension,
-            subcategory=request.subcategory,
-            question_type=request.question_type,
-            target_year_level=request.target_year_level,
-            additional_context=request.additional_context,
-            num_questions=request.num_questions
-        )
-        
-        return QuestionResponse(
-            questions=questions,
-            status="success",
-            message=f"Generated {len(questions)} question(s) successfully"
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate questions: {str(e)}")
-
-@app.get("/suggestions")
-async def get_suggestions(partial_input: str = ""):
-    """Get suggestions for question parameters"""
-    
-    if rag_system is None:
-        raise HTTPException(status_code=503, detail="RAG system not initialized")
-    
-    try:
-        suggestions = rag_system.get_question_suggestions(partial_input)
-        return {
-            "suggestions": suggestions,
-            "count": len(suggestions),
-            "partial_input": partial_input
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get suggestions: {str(e)}")
+    return {"status": "healthy", "api": "running"}
 
 @app.get("/dimensions")
-async def get_dimensions():
-    """Get available dimensions"""
-    if rag_system is None:
-        raise HTTPException(status_code=503, detail="RAG system not initialized")
-    
-    dimensions = set()
-    for doc in rag_system.knowledge_base:
-        if doc['type'] == 'question':
-            dimensions.add(doc['dimension'])
-        elif doc['type'] == 'taxonomy':
-            dimensions.add(doc['dimension_name'])
-    
-    return {"dimensions": sorted(list(dimensions))}
+def list_dimensions():
+    return sorted(df["dimension"].unique().tolist())
 
-@app.get("/subcategories/{dimension}")
-async def get_subcategories(dimension: str):
-    """Get subcategories for a specific dimension"""
-    if rag_system is None:
-        raise HTTPException(status_code=503, detail="RAG system not initialized")
-    
-    subcategories = set()
-    for doc in rag_system.knowledge_base:
-        if doc['type'] == 'question' and doc['dimension'] == dimension:
-            subcategories.add(doc['subcategory'])
-        elif doc['type'] == 'taxonomy' and doc['dimension_name'] == dimension:
-            subcategories.add(doc['subcategory_name'])
-    
-    return {"subcategories": sorted(list(subcategories))}
+@app.get("/subdimensions/{dimension}")
+def list_subdimensions(dimension: str):
+    return sorted(df[df["dimension"]==dimension]["subdimension"].unique().tolist())
 
-@app.get("/question-types")
-async def get_question_types():
-    """Get available question types"""
-    if rag_system is None:
-        raise HTTPException(status_code=503, detail="RAG system not initialized")
-    
-    question_types = set()
-    for doc in rag_system.knowledge_base:
-        if doc['type'] == 'question' and doc['question_type']:
-            question_types.add(doc['question_type'])
-    
-    return {"question_types": sorted(list(question_types))}
+@app.post("/generate")
+def generate(req: GenerateRequest):
+    # Filter by metadata
+    mask = (df.dimension==req.dimension) & (df.subdimension==req.subdimension) & (df.target_year_level==req.target_year_level)
+    candidates = df[mask]
+    if candidates.empty:
+        raise HTTPException(status_code=404, detail="No base questions for given filters")
+    # Retrieve context via FAISS if additional context provided
+    if req.additional_context:
+        query_emb = embed_model.encode([req.additional_context], convert_to_numpy=True)
+        faiss.normalize_L2(query_emb)
+        D, I = index.search(query_emb, k=5)
+        context_snippets = [texts[i] for i in I[0]]
+    else:
+        context_snippets = candidates.question_text.sample(min(5, len(candidates))).tolist()
+    # Build prompt
+    prompt = (
+        f"Generate {req.num_questions} self-assessment questions for \"{req.dimension} - {req.subdimension}\" at year level {req.target_year_level}. "
+        + "Each question should be a clear self-assessment statement using 'How confident are you...' or similar phrasing. "
+        + "Use these examples as context:\n" + "\n".join(f"- {txt}" for txt in context_snippets)
+        + "\n\nGenerate exactly " + str(req.num_questions) + " questions, one per line. Do not include numbering or bullet points."
+    )
+    # Call LLM
+    response = model.generate_content(prompt)
+    # Extract generated questions
+    generated_text = response.text
+    # Split by lines and clean up
+    items = [line.strip() for line in generated_text.split('\n') if line.strip() and not line.strip().startswith(('*', '-', '1.', '2.', '3.', '4.', '5.'))]
+    # Take only the requested number of questions
+    items = items[:req.num_questions]
+    return {"questions": items}
 
-@app.post("/search")
-async def search_context(query: str, top_k: int = 5):
-    """Search for relevant context from the knowledge base"""
-    if rag_system is None:
-        raise HTTPException(status_code=503, detail="RAG system not initialized")
-    
-    try:
-        relevant_docs = rag_system.retrieve_relevant_context(query, top_k)
-        return {
-            "query": query,
-            "results": relevant_docs,
-            "count": len(relevant_docs)
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
-
-if __name__ == "__main__":
-    # Check if API key is set
-    if not os.getenv('GOOGLE_API_KEY'):
-        print("Error: GOOGLE_API_KEY environment variable is not set")
-        print("Please set your Google API key: export GOOGLE_API_KEY='your_api_key_here'")
-        print("You can get a free API key from: https://makersuite.google.com/app/apikey")
-        exit(1)
-    
-    # Run the API server
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.post("/submit")
+def submit_answer(resp: SubmitResponse):
+    # Placeholder: simply acknowledge
+    return {"status": "received", "count": len(resp.responses)}

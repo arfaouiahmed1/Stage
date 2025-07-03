@@ -1,7 +1,0 @@
-scoring_level,label,description,year_1_expectation,year_2_expectation,year_3_expectation,year_4_expectation,year_5_expectation
-0,No Evidence,No demonstration of the skill or competency,Expected for completely new concepts,Rare - only for advanced topics,Should not occur for core concepts,Should not occur,Should not occur
-1,Poor,Minimal demonstration with significant gaps,Expected when learning fundamentals,Expected for new advanced concepts,Expected when learning new frameworks,Rare - only for cutting-edge tech,Should not occur
-2,Below Average,Some demonstration but below expected level,Common during first projects,Expected for complex topics,Expected for new specializations,Expected for research-level topics,Expected for industry innovation
-3,Average,Meets basic expectations for the skill,Target for core programming concepts,Target for web development basics,Target for framework proficiency,Target for specialization basics,Target for advanced specialization
-4,Good,Exceeds expectations with solid demonstration,Exceptional for first year,Target for advanced concepts,Target for leadership skills,Target for specialization mastery,Target for research contribution
-5,Excellent,Exceptional demonstration of the skill,Rare - indicates exceptional talent,Exceptional achievement,Target for project leadership,Target for innovation leadership,Expected for thesis-level work

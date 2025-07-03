@@ -1,0 +1,39 @@
+[
+  {
+    "quiz_id": "quiz_1751548229",
+    "student_name": "Test Student",
+    "submitted_at": "2025-07-03T13:10:29.792027",
+    "responses": {
+      "test_001": 4
+    },
+    "scores": {
+      "creativity": 4.0
+    }
+  },
+  {
+    "quiz_id": "quiz_1751549299",
+    "student_name": "Test Student",
+    "submitted_at": "2025-07-03T13:28:19.681589",
+    "responses": {
+      "api_test_001": 4,
+      "api_test_002": 4,
+      "api_test_003": 4
+    },
+    "scores": {
+      "creativity": 4.0
+    }
+  },
+  {
+    "quiz_id": "quiz_1751549307",
+    "student_name": "Test Student",
+    "submitted_at": "2025-07-03T13:28:27.996211",
+    "responses": {
+      "api_test_001": 4,
+      "api_test_002": 4,
+      "api_test_003": 4
+    },
+    "scores": {
+      "creativity": 4.0
+    }
+  }
+]

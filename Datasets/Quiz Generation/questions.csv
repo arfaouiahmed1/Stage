@@ -1,161 +1,152 @@
-question_id,dimension,subcategory,question_text,question_type,time_limit_minutes,target_year_level,assessment_criteria_1,assessment_criteria_2,assessment_criteria_3,collaboration_indicator
-cip_001,creativity,innovation_problem_solving,"Your team is building a 2D game using SDL but the collision detection is causing lag. Your teammate suggests using a basic AABB approach but you think there might be better solutions. How would you research and propose alternative approaches while respecting their input?",collaboration_scenario,10,1,research_approach,respectful_communication,solution_creativity,high
-cip_002,creativity,innovation_problem_solving,"During your English presentation about technology trends, you realize your PowerPoint slides are too text-heavy and boring. How would you creatively redesign them to engage your audience?",presentation_creativity,12,1-5,visual_creativity,audience_engagement,content_adaptation,medium
-cip_003,creativity,innovation_problem_solving,"Your French literature analysis project requires comparing two authors. How would you find an original angle that hasn't been covered extensively by other students?",academic_creativity,15,1-5,original_thinking,research_depth,unique_perspective,medium
-cip_004,creativity,innovation_problem_solving,"Your web project team is stuck using the same HTML/CSS layout as everyone else. How would you brainstorm unique design approaches while ensuring accessibility?",design_creativity,10,2,innovative_thinking,practical_constraints,inclusive_design,medium
-cip_005,creativity,innovation_problem_solving,"For your English essay on environmental issues, how would you present your arguments in a way that stands out from typical academic writing?",writing_creativity,15,1-5,creative_expression,argument_structure,audience_appeal,low
-cip_006,creativity,innovation_problem_solving,"Your Qt application needs a user interface that elderly users can navigate easily. How would you approach this design challenge creatively?",user_centered_design,12,2,empathy_design,accessibility_thinking,creative_solutions,medium
-cip_007,creativity,innovation_problem_solving,"During your French oral presentation, you notice the audience is losing interest. How would you adapt your delivery in real-time to re-engage them?",adaptive_presentation,8,1-5,real_time_adaptation,audience_reading,engagement_strategies,medium
-cip_008,creativity,innovation_problem_solving,"Your Arduino controller project works but looks unprofessional. How would you improve its appearance and user experience with limited materials?",resourceful_design,10,1,resource_optimization,aesthetic_improvement,user_experience,low
-cip_009,creativity,innovation_problem_solving,"Your team's English research project topic has been heavily researched. How would you find a fresh perspective or unexplored angle?",research_innovation,18,1-5,research_creativity,critical_analysis,original_perspective,low
-cip_010,creativity,innovation_problem_solving,"Your web project needs to stand out in a class showcase. How would you add creative elements while maintaining functionality?",creative_enhancement,15,2,creative_integration,functional_balance,showcase_thinking,medium
-cip_011,creativity,innovation_problem_solving,"Your French presentation needs visual aids but you have no budget. How would you create engaging visuals with free resources?",resourceful_creativity,12,1-5,resource_management,visual_design,creative_solutions,low
-cip_012,creativity,innovation_problem_solving,"Your database project seems dry and technical. How would you present it in an engaging way to capture your audience's interest?",technical_presentation,10,3,technical_communication,audience_engagement,content_adaptation,medium
-cad_001,creativity,algorithm_design,"In your Arduino game controller project, you need to optimize button response time. Explain your approach and how you would teach a struggling teammate to understand the solution.",mentoring_scenario,15,1,technical_explanation,teaching_ability,patience_demonstration,high
-cad_002,creativity,algorithm_design,"Your Java project requires a sorting algorithm. One teammate wants to use bubble sort 'because it's simple' but you know it's inefficient. How do you handle this diplomatically?",technical_disagreement,10,3,diplomatic_skills,technical_knowledge,educational_approach,high
-cad_003,creativity,algorithm_design,"For your SDL game, you need to implement pathfinding for enemy AI. How would you explain different algorithmic approaches to a teammate who struggles with algorithms?",algorithm_teaching,20,1,teaching_clarity,algorithmic_thinking,patience_level,high
-cad_004,creativity,algorithm_design,"Your web project needs client-side form validation. How would you design a solution that's both user-friendly and secure, and explain it to your team?",solution_design,15,2,security_awareness,user_experience,clear_explanation,medium
-cad_005,creativity,algorithm_design,"Your Qt application needs to handle large datasets efficiently. How would you research and propose optimization strategies to your team?",optimization_research,18,2,research_skills,performance_thinking,collaborative_proposal,medium
-cad_006,creativity,algorithm_design,"In your database project, you need to design efficient queries. How would you approach this challenge and help teammates who are new to SQL?",database_optimization,20,3,sql_expertise,teaching_approach,collaborative_learning,high
-cad_007,creativity,algorithm_design,"Your game's collision detection algorithm is working but could be more elegant. How would you explore alternative approaches with your team?",algorithm_refinement,15,1,algorithmic_creativity,collaborative_exploration,elegance_appreciation,medium
-cad_008,creativity,algorithm_design,"Your Symfony project needs a complex data processing algorithm. How would you break it down for teammates with different skill levels?",algorithm_communication,18,3,complex_explanation,skill_adaptation,inclusive_teaching,high
-csa_001,creativity,system_architecture,"Your web project is growing complex with HTML, CSS, and JavaScript files everywhere. How would you propose a better file organization system to your team?",architecture_organization,12,2,organizational_thinking,team_communication,practical_solutions,medium
-csa_002,creativity,system_architecture,"Your Java project needs to handle both desktop and potential web deployment. How would you design the architecture to support both platforms?",flexible_architecture,25,3,architectural_thinking,future_planning,technical_vision,medium
-csa_003,creativity,system_architecture,"Your Qt application needs to work on different operating systems. How would you explain cross-platform considerations to your team?",cross_platform_design,15,2,platform_awareness,clear_explanation,collaborative_planning,medium
-csa_004,creativity,system_architecture,"Your team's Symfony project is becoming difficult to maintain. How would you propose refactoring the structure while keeping everyone on board?",refactoring_proposal,20,3,maintenance_thinking,change_management,team_consensus,high
-csa_005,creativity,system_architecture,"Your SDL game project needs better code organization as it grows. How would you suggest restructuring the codebase collaboratively?",code_organization,15,1,structural_thinking,collaborative_planning,maintainability_focus,medium
-csa_006,creativity,system_architecture,"Your database design is becoming unwieldy with many tables. How would you propose a cleaner architecture to your team?",database_architecture,18,3,database_design,architectural_clarity,team_coordination,medium
-cco_001,creativity,code_optimization,"Your SDL game runs slowly on older computers. How would you identify performance bottlenecks and explain optimization strategies to your team?",performance_analysis,15,1,analytical_thinking,optimization_knowledge,teaching_ability,high
-cco_002,creativity,code_optimization,"Your JavaScript code for the web project works but loads slowly. How would you approach optimization while ensuring your teammates understand the changes?",web_optimization,12,2,performance_awareness,educational_approach,collaborative_improvement,high
-cco_003,creativity,code_optimization,"Your Java application uses too much memory. How would you investigate and solve this problem with your team's input?",memory_optimization,18,3,debugging_skills,collaborative_problem_solving,technical_leadership,medium
-cco_004,creativity,code_optimization,"Your Qt application's user interface is sluggish. How would you optimize it while explaining the process to your teammates?",ui_optimization,15,2,performance_optimization,technical_teaching,user_experience,medium
-cco_005,creativity,code_optimization,"Your database queries are running slowly. How would you optimize them and help your teammates understand query performance?",query_optimization,20,3,database_performance,collaborative_optimization,teaching_skills,high
-cux_001,creativity,ux_design,"Your English presentation needs visual aids. How would you design slides that effectively support your spoken content and engage the audience?",presentation_design,10,1-5,visual_design,content_support,audience_engagement,low
-cux_002,creativity,ux_design,"Your web project's user interface confuses test users. How would you gather feedback and redesign it collaboratively with your team?",user_feedback_integration,15,2,user_empathy,collaborative_design,iterative_improvement,medium
-cux_003,creativity,ux_design,"Your Qt application needs to be intuitive for first-time users. How would you approach user experience design with your team?",intuitive_design,12,2,user_centered_thinking,collaborative_design,usability_focus,medium
-cux_004,creativity,ux_design,"For your French presentation, you need to make complex topics accessible to your classmates. How would you design your content flow and visual supports?",educational_design,12,1-5,content_organization,visual_communication,accessibility_thinking,low
-cux_005,creativity,ux_design,"Your game interface needs to be accessible to players with different abilities. How would you design inclusive interactions?",inclusive_design,15,1,accessibility_thinking,inclusive_design,empathy_driven_design,medium
-cux_006,creativity,ux_design,"Your database application needs a user-friendly interface for non-technical users. How would you approach this design challenge?",technical_simplification,18,3,user_empathy,simplification_skills,interface_design,medium
-tcd_001,teamwork,communication_documentation,"You need to document your Symfony project for other team members. How would you structure the documentation to help both French and English speakers on your team?",inclusive_documentation,20,3,inclusivity,clarity,practical_organization,very_high
-tcd_002,teamwork,communication_documentation,"During an English presentation about your web project, you notice a teammate made a factual error. How do you handle this situation?",presentation_crisis,5,2,tactful_correction,team_support,grace_under_pressure,very_high
-tcd_003,teamwork,communication_documentation,"Your team needs to prepare a joint English report on your project. How would you coordinate writing to ensure consistent style and quality?",collaborative_writing,15,1-5,coordination_skills,quality_standards,style_consistency,very_high
-tcd_004,teamwork,communication_documentation,"A teammate's code comments are unclear and in mixed languages. How would you address this to improve team efficiency?",code_documentation,10,2-5,diplomatic_feedback,practical_improvement,team_efficiency,high
-tcd_005,teamwork,communication_documentation,"You need to explain your database schema to teammates who are new to databases. How would you create clear documentation?",technical_documentation,15,3,teaching_through_docs,clarity_focus,beginner_friendly,high
-tcd_006,teamwork,communication_documentation,"Your French presentation group needs to coordinate research sources. How would you organize the information sharing process?",research_coordination,12,1-5,organizational_skills,collaborative_research,information_management,high
-tcd_007,teamwork,communication_documentation,"Your team's project README file is outdated and confusing. How would you improve it while getting input from all team members?",documentation_improvement,10,2-5,collaborative_improvement,user_focus,maintenance_thinking,high
-tcd_008,teamwork,communication_documentation,"During your English literature presentation, you need to reference sources in a way that's clear to the audience. How do you handle this professionally?",academic_presentation,8,1-5,academic_integrity,audience_clarity,professional_presentation,medium
-tcd_009,teamwork,communication_documentation,"Your team's code repository needs better commit messages and branch naming. How would you establish these standards collaboratively?",repository_organization,12,2-5,version_control_standards,collaborative_standards,process_improvement,medium
-tcd_010,teamwork,communication_documentation,"Your French essay group needs to coordinate citations and bibliography. How would you organize this academic collaboration?",academic_coordination,10,1-5,academic_standards,collaborative_organization,citation_management,high
-tcc_001,teamwork,code_review_collaboration,"Your teammate submitted HTML/CSS code that works but doesn't follow best practices. How do you provide feedback that helps them improve without discouraging them?",constructive_feedback,12,2,encouragement,technical_accuracy,growth_mindset,very_high
-tcc_002,teamwork,code_review_collaboration,"In your Glade project, a team member's code has bugs that are affecting the whole project. They seem defensive about feedback. How do you approach this?",sensitive_feedback,15,3,emotional_intelligence,problem_solving,conflict_prevention,very_high
-tcc_003,teamwork,code_review_collaboration,"Your teammate's JavaScript code works but is difficult to understand. How do you suggest improvements while maintaining a positive team dynamic?",code_clarity_feedback,12,2,constructive_criticism,code_quality_focus,relationship_maintenance,high
-tcc_004,teamwork,code_review_collaboration,"During code review, you find a security vulnerability in your teammate's work. How do you address this sensitively but urgently?",security_feedback,10,2-5,security_awareness,urgency_management,tactful_communication,high
-tcc_005,teamwork,code_review_collaboration,"Your team's Qt code has inconsistent styling across different files. How would you coordinate a standardization effort?",code_standardization,15,2,standardization_leadership,team_coordination,quality_improvement,high
-tcc_006,teamwork,code_review_collaboration,"A teammate consistently submits code that breaks the build. How do you address this pattern constructively?",build_quality_management,12,2-5,pattern_recognition,constructive_confrontation,process_improvement,high
-tcc_007,teamwork,code_review_collaboration,"Your teammate's database queries are inefficient and slowing down the application. How do you provide helpful feedback?",performance_feedback,15,3,performance_awareness,helpful_criticism,collaborative_optimization,high
-tcc_008,teamwork,code_review_collaboration,"You notice your teammate is copying code from online without understanding it. How do you address this learning opportunity?",learning_feedback,12,2-5,educational_approach,academic_integrity,skill_development,high
-tlm_001,teamwork,leadership_mentoring,"A first-year student in your group is struggling with basic C programming for the SDL game project. How would you help them catch up without doing the work for them?",mentoring_scenario,15,2-5,teaching_skills,patience,empowerment_approach,very_high
-tlm_002,teamwork,leadership_mentoring,"Your team is behind schedule on the Qt project. Two members are blaming each other. How do you help resolve this and get back on track?",leadership_crisis,10,2-5,mediation_skills,project_management,team_motivation,very_high
-tlm_003,teamwork,leadership_mentoring,"A teammate feels overwhelmed by the French presentation requirements. How would you support them while ensuring fair work distribution?",academic_support,10,1-5,emotional_support,fair_distribution,encouragement_skills,very_high
-tlm_004,teamwork,leadership_mentoring,"Your team member is excellent at coding but struggles with English presentations. How would you help them improve while leveraging their strengths?",skill_balancing,12,2-5,strength_recognition,weakness_support,balanced_development,very_high
-tlm_005,teamwork,leadership_mentoring,"A newer student asks for help understanding your Symfony project structure. How do you teach them effectively without slowing down your own work?",efficient_mentoring,15,3-5,time_management,effective_teaching,productivity_balance,high
-tlm_006,teamwork,leadership_mentoring,"Your teammate is discouraged after receiving poor feedback on their English essay. How do you motivate them to improve?",motivation_support,8,1-5,emotional_support,motivation_techniques,resilience_building,high
-tlm_007,teamwork,leadership_mentoring,"A team member wants to learn advanced JavaScript but it's beyond the project scope. How do you handle their enthusiasm appropriately?",scope_management,10,2-5,enthusiasm_management,scope_awareness,learning_guidance,medium
-tlm_008,teamwork,leadership_mentoring,"Your teammate is brilliant but tends to work alone and doesn't communicate progress. How do you help them become more collaborative?",collaboration_development,12,2-5,collaboration_coaching,communication_improvement,team_integration,high
-tlm_009,teamwork,leadership_mentoring,"A team member consistently volunteers for tasks but doesn't complete them well. How do you guide them toward better self-assessment?",self_awareness_development,10,2-5,gentle_guidance,skill_assessment,personal_development,high
-tlm_010,teamwork,leadership_mentoring,"Your teammate has great ideas but struggles to articulate them clearly in English. How do you help them improve their communication?",communication_development,12,1-5,language_support,idea_clarification,communication_coaching,high
-tcr_001,teamwork,conflict_resolution,"Two teammates disagree about using Flutter or native development for your mobile project. They're getting heated. How do you help them reach a decision?",technical_mediation,12,3-5,mediation_ability,technical_objectivity,decision_facilitation,very_high
-tcr_002,teamwork,conflict_resolution,"During your English presentation preparation, one teammate insists their grammar is correct when it's clearly wrong. How do you handle this delicately?",language_sensitivity,8,1-5,cultural_sensitivity,tactful_communication,ego_management,high
-tcr_003,teamwork,conflict_resolution,"Two team members have different visions for your web project's design. The disagreement is affecting team morale. How do you mediate?",design_conflict,10,2-5,design_mediation,team_morale,compromise_facilitation,very_high
-tcr_004,teamwork,conflict_resolution,"Your teammate consistently arrives late to French presentation practice sessions. Others are getting frustrated. How do you address this?",attendance_conflict,8,1-5,accountability_management,team_harmony,constructive_confrontation,high
-tcr_005,teamwork,conflict_resolution,"One team member dominates discussions during your database project meetings. Others feel unheard. How do you balance participation?",participation_balance,10,3-5,meeting_facilitation,inclusive_leadership,communication_balance,very_high
-tcr_006,teamwork,conflict_resolution,"Your teammates disagree about the difficulty level to target in your English presentation. How do you help them find common ground?",academic_mediation,8,1-5,academic_compromise,audience_analysis,consensus_building,high
-tcr_007,teamwork,conflict_resolution,"Two teammates have conflicting coding styles in your Java project. How do you help them establish common standards?",style_conflict,12,3-5,standards_mediation,technical_compromise,code_quality_focus,high
-tcr_008,teamwork,conflict_resolution,"Your team can't agree on the research direction for your French literature project. How do you facilitate a decision?",research_mediation,15,1-5,academic_mediation,research_coordination,collaborative_decision,high
-tcr_009,teamwork,conflict_resolution,"A personality clash between two teammates is affecting your Qt project progress. How do you address this sensitively?",personality_mediation,10,2-5,interpersonal_mediation,team_dynamics,diplomatic_intervention,very_high
-tcr_010,teamwork,conflict_resolution,"Your team disagrees about how much time to spend on visual design versus functionality in your web project. How do you mediate?",priority_mediation,12,2-5,priority_balancing,compromise_facilitation,project_focus,high
-tap_001,teamwork,agile_participation,"Your Qt project team needs to organize work sprints. How would you help establish an effective workflow that everyone can follow?",agile_organization,15,2-5,process_organization,team_buy_in,workflow_design,medium
-tap_002,teamwork,agile_participation,"Your Java project is behind schedule. How would you organize a team retrospective to identify and address issues?",retrospective_facilitation,12,3-5,process_improvement,team_reflection,problem_identification,high
-tap_003,teamwork,agile_participation,"Your web project requirements keep changing. How would you help your team adapt their workflow to handle changing requirements?",change_adaptation,10,2-5,adaptability_leadership,process_flexibility,team_resilience,medium
-tap_004,teamwork,agile_participation,"Your team struggles with estimating task difficulty for your Symfony project. How would you improve the estimation process?",estimation_improvement,12,3-5,estimation_skills,process_improvement,collaborative_planning,medium
-tap_005,teamwork,agile_participation,"Your database project team has different working styles and schedules. How would you coordinate effective collaboration?",schedule_coordination,10,3-5,coordination_skills,flexibility_management,inclusive_planning,high
-stm_001,soft_skills,time_management,"Your team has 6 weeks for the web project (HTML/CSS/JS) plus individual French presentations. How do you help your team balance both requirements?",project_coordination,15,2,organizational_skills,team_consideration,realistic_planning,high
-stm_002,soft_skills,time_management,"A teammate consistently misses deadlines for your Java project, affecting the whole team. How do you address this constructively?",accountability_management,10,3,diplomatic_accountability,team_welfare,constructive_confrontation,high
-stm_003,soft_skills,time_management,"You have overlapping deadlines for your English essay and Qt application project. How would you organize your time and potentially coordinate with teammates?",personal_time_management,8,2-5,priority_setting,coordination_skills,stress_management,medium
-stm_004,soft_skills,time_management,"Your French presentation is the same week as your database project demo. How would you plan to excel in both while supporting your team?",deadline_coordination,10,3-5,multi_project_management,team_support,quality_maintenance,medium
-stm_005,soft_skills,time_management,"Your teammate underestimated the time needed for their part of the Symfony project. How do you help reorganize the timeline?",timeline_recovery,12,3-5,crisis_management,collaborative_planning,realistic_adjustment,high
-stm_006,soft_skills,time_management,"Your team's English presentation is tomorrow but one member hasn't prepared their section. How do you handle this crisis?",last_minute_crisis,8,1-5,crisis_response,team_support,emergency_coordination,high
-stm_007,soft_skills,time_management,"Your SDL game project has multiple milestones but your team struggles with intermediate deadlines. How would you improve milestone management?",milestone_management,12,1-5,planning_skills,team_coordination,progress_tracking,medium
-stm_008,soft_skills,time_management,"Your team tends to procrastinate on the less interesting parts of your web project. How would you motivate consistent progress?",procrastination_management,10,2-5,motivation_techniques,progress_management,team_motivation,medium
-sal_001,soft_skills,adaptability_learning,"Your professor changed the Qt project requirements mid-semester. Your team is frustrated. How do you help them adapt and stay motivated?",change_management,12,2,adaptability_modeling,team_motivation,positive_influence,high
-sal_002,soft_skills,adaptability_learning,"A new framework is introduced for your Symfony project that none of your team knows. How do you organize learning and knowledge sharing?",learning_facilitation,15,3,learning_organization,knowledge_sharing,collaborative_growth,high
-sal_003,soft_skills,adaptability_learning,"Your English professor changes the essay format requirements after you've already started. How do you adapt and help teammates who are struggling with the change?",academic_adaptation,10,1-5,flexibility_demonstration,peer_support,change_leadership,high
-sal_004,soft_skills,adaptability_learning,"New accessibility requirements are added to your web project. How do you learn about accessibility and integrate it into your existing work?",technical_adaptation,15,2-5,learning_agility,integration_skills,quality_focus,medium
-sal_005,soft_skills,adaptability_learning,"Your French presentation topic is reassigned to something you know little about. How do you quickly get up to speed while maintaining quality?",rapid_learning,12,1-5,research_efficiency,quality_maintenance,stress_management,medium
-sal_006,soft_skills,adaptability_learning,"Your team discovers their chosen technology stack won't work for the project requirements. How do you pivot and learn new technologies together?",technology_adaptation,18,2-5,technology_learning,collaborative_adaptation,solution_orientation,high
-sal_007,soft_skills,adaptability_learning,"Your database project requirements expand to include features you've never implemented. How do you approach learning and implementing these new concepts?",skill_expansion,15,3-5,learning_approach,skill_development,growth_mindset,medium
-sal_008,soft_skills,adaptability_learning,"Your team's coding standards are inconsistent with what the professor now requires. How do you adapt and help your team transition?",standards_adaptation,10,2-5,standard_adoption,team_transition,quality_improvement,medium
-sct_001,soft_skills,critical_thinking,"Your teammate wants to add unnecessary features to your game project that will delay completion. How do you help them see the bigger picture?",scope_management,10,1-5,analytical_thinking,persuasive_communication,priority_setting,medium
-sct_002,soft_skills,critical_thinking,"During your machine learning project, you suspect your teammate's data analysis has errors. How do you verify and discuss this diplomatically?",quality_assurance,15,3,analytical_skills,diplomatic_inquiry,collaborative_problem_solving,high
-sct_003,soft_skills,critical_thinking,"Your team's English essay arguments seem weak and unconvincing. How would you help strengthen the logical flow and evidence?",argument_analysis,15,1-5,logical_reasoning,collaborative_improvement,academic_rigor,medium
-sct_004,soft_skills,critical_thinking,"Your web project's user feedback reveals usability issues your team didn't anticipate. How do you analyze and address these findings?",user_feedback_analysis,12,2-5,analytical_thinking,problem_solving,user_centered_thinking,medium
-sct_005,soft_skills,critical_thinking,"Your teammate proposes a database design that seems inefficient. How do you evaluate and discuss alternatives constructively?",technical_analysis,15,3-5,technical_evaluation,constructive_discussion,optimization_thinking,high
-sct_006,soft_skills,critical_thinking,"Your French literature analysis lacks depth according to feedback. How would you deepen your critical analysis while staying within the assignment scope?",academic_analysis,12,1-5,analytical_depth,scope_awareness,academic_improvement,low
-sct_007,soft_skills,critical_thinking,"Your team's project proposal was rejected for being too ambitious. How would you analyze and revise the scope realistically?",scope_analysis,15,2-5,realistic_assessment,scope_management,feasibility_analysis,medium
-sct_008,soft_skills,critical_thinking,"Your web project has performance issues but your team can't agree on the root cause. How would you systematically analyze the problem?",systematic_analysis,18,2-5,problem_analysis,systematic_thinking,collaborative_investigation,medium
-sct_009,soft_skills,critical_thinking,"Your English presentation argument has logical gaps that you need to address. How would you strengthen your reasoning?",logical_reasoning,12,1-5,argument_improvement,logical_analysis,persuasive_thinking,low
-sct_010,soft_skills,critical_thinking,"Your team's solution works but seems overcomplicated. How would you evaluate simpler alternatives critically?",solution_evaluation,15,2-5,simplification_thinking,solution_analysis,optimization_mindset,medium
-spc_001,soft_skills,presentation_communication,"You need to present your database project in English to a mixed audience of French and international students. How do you ensure everyone understands?",inclusive_presentation,12,3,inclusive_communication,technical_clarity,audience_adaptation,medium
-spc_002,soft_skills,presentation_communication,"Your teammate is very nervous about presenting their part of the UML project in French. How do you support them?",presentation_support,8,3,emotional_support,practical_assistance,encouragement_skills,high
-spc_003,soft_skills,presentation_communication,"During your English presentation about your web project, the audience seems confused by technical terms. How do you adapt your explanation?",real_time_adaptation,5,2-5,audience_reading,technical_translation,adaptive_communication,medium
-spc_004,soft_skills,presentation_communication,"You need to present your Qt application to non-technical stakeholders. How would you structure your presentation to be accessible?",technical_translation,15,2-5,audience_analysis,simplification_skills,stakeholder_communication,medium
-spc_005,soft_skills,presentation_communication,"Your French oral presentation about literature needs to engage a diverse class. How would you make it interactive and interesting?",engagement_strategies,10,1-5,audience_engagement,interactive_design,cultural_awareness,medium
-spc_006,soft_skills,presentation_communication,"You need to defend your team's design choices for your Symfony project to skeptical classmates. How do you present convincing arguments?",persuasive_presentation,12,3-5,persuasive_communication,technical_justification,confidence_building,medium
-spc_007,soft_skills,presentation_communication,"Your English presentation needs to explain complex algorithms to classmates who aren't strong in math. How do you make it accessible?",complex_simplification,15,1-5,simplification_skills,mathematical_communication,accessibility_focus,medium
-spc_008,soft_skills,presentation_communication,"During your French literature presentation, you need to present controversial interpretations respectfully. How do you handle this?",sensitive_presentation,12,1-5,respectful_communication,controversial_topics,diplomatic_presentation,medium
-spc_009,soft_skills,presentation_communication,"Your team's project demo needs to show both technical depth and practical value. How would you balance these aspects in your presentation?",balanced_presentation,15,2-5,technical_communication,value_demonstration,audience_balance,medium
-spc_010,soft_skills,presentation_communication,"You're presenting your database results but the data shows unexpected findings. How do you present these results honestly and constructively?",honest_communication,12,3-5,honest_reporting,constructive_analysis,scientific_communication,medium
-spm_001,soft_skills,project_management,"Your team's SDL game project has multiple components (graphics, sound, controls). How would you coordinate the development timeline?",project_coordination,15,1-5,coordination_skills,timeline_management,component_integration,medium
-spm_002,soft_skills,project_management,"Your English group project involves research, writing, and presentation components. How would you organize the workflow and responsibilities?",academic_project_management,12,1-5,workflow_organization,responsibility_distribution,academic_coordination,medium
-spm_003,soft_skills,project_management,"Your web project needs testing, debugging, and deployment phases. How would you plan and coordinate these overlapping activities?",development_lifecycle,15,2-5,lifecycle_management,phase_coordination,quality_assurance,medium
-spm_004,soft_skills,project_management,"Your team's Qt project has dependencies between different modules. How would you manage the integration timeline?",dependency_management,15,2-5,dependency_coordination,integration_planning,risk_management,medium
-spm_005,soft_skills,project_management,"Your French presentation group has members with different availability schedules. How would you coordinate the collaboration?",schedule_coordination,10,1-5,scheduling_skills,availability_management,collaborative_planning,high
-spm_006,soft_skills,project_management,"Your database project has both design and implementation phases that different team members prefer. How would you organize the work?",phase_organization,12,3-5,work_organization,skill_matching,project_phases,medium
-spm_007,soft_skills,project_management,"Your team's project scope is expanding beyond the original plan. How would you manage scope creep while keeping the team motivated?",scope_management,15,2-5,scope_control,team_motivation,realistic_planning,medium
-spm_008,soft_skills,project_management,"Your Symfony project has quality standards that some team members find overwhelming. How would you balance quality and progress?",quality_management,12,3-5,quality_balance,progress_management,standard_enforcement,medium
-hpl_001,hard_skills,programming_languages,"You're proficient in Java but your teammate only knows basic HTML/CSS for your web project. How do you bridge this knowledge gap collaboratively?",skill_bridging,15,2-3,knowledge_transfer,patience,collaborative_learning,high
-hpl_002,hard_skills,programming_languages,"Your Arduino project requires C programming that you understand well, but your teammate is struggling. How do you help them learn while ensuring project success?",technical_mentoring,20,1,teaching_effectiveness,technical_mastery,supportive_guidance,very_high
-hpl_003,hard_skills,programming_languages,"Your team needs to choose between JavaScript frameworks for your web project. How would you evaluate options and help your team make an informed decision?",technology_evaluation,18,2-5,technical_analysis,collaborative_decision,framework_knowledge,medium
-hpl_004,hard_skills,programming_languages,"Your Qt project requires C++ concepts that some team members haven't learned yet. How do you handle this knowledge gap?",cpp_mentoring,20,2-5,advanced_teaching,patience_with_complexity,knowledge_transfer,high
-hpl_005,hard_skills,programming_languages,"Your Java project team has mixed experience levels with object-oriented programming. How do you ensure everyone contributes effectively?",oop_mentoring,15,3-5,conceptual_teaching,inclusive_development,skill_leveraging,high
-hpl_006,hard_skills,programming_languages,"Your Symfony project requires PHP knowledge that your team is learning on the go. How do you coordinate the learning process?",collaborative_learning,18,3-5,learning_coordination,mutual_support,skill_development,high
-hpl_007,hard_skills,programming_languages,"Your web project team wants to use advanced JavaScript features but not everyone understands them. How do you handle this disparity?",javascript_mentoring,15,2-5,advanced_concepts,teaching_patience,collaborative_learning,high
-hpl_008,hard_skills,programming_languages,"Your database project requires SQL skills that vary greatly among team members. How do you level the playing field?",sql_skill_balancing,18,3-5,sql_teaching,skill_assessment,collaborative_learning,high
-hpl_009,hard_skills,programming_languages,"Your team needs to work with APIs but some members have never used them. How do you introduce API concepts effectively?",api_teaching,15,2-5,api_concepts,practical_teaching,hands_on_learning,medium
-hpl_010,hard_skills,programming_languages,"Your game project requires both low-level C programming and higher-level logic. How do you help teammates understand both levels?",multi_level_programming,20,1-5,conceptual_bridging,level_abstraction,comprehensive_teaching,high
-hse_001,hard_skills,software_engineering_principles,"Your teammate's code in the Symfony project violates several best practices. How do you help them improve without being condescending?",best_practices_guidance,18,3,technical_knowledge,respectful_teaching,practical_improvement,high
-hse_002,hard_skills,software_engineering_principles,"You notice potential security issues in your teammate's web project code. How do you address this sensitively but effectively?",security_awareness,15,2-3,security_knowledge,risk_communication,collaborative_improvement,high
-hse_003,hard_skills,software_engineering_principles,"Your team's Qt application code is becoming difficult to maintain. How would you introduce better coding practices collaboratively?",maintainability_improvement,20,2-5,code_quality_leadership,collaborative_refactoring,technical_leadership,medium
-hse_004,hard_skills,software_engineering_principles,"Your Java project lacks proper error handling. How do you help your team implement robust error management?",error_handling_teaching,15,3-5,exception_handling_knowledge,defensive_programming,collaborative_implementation,medium
-hse_005,hard_skills,software_engineering_principles,"Your team's code has inconsistent naming conventions across different files. How would you establish and implement standards?",naming_standards,12,2-5,coding_standards,standard_implementation,collaborative_improvement,medium
-hse_006,hard_skills,software_engineering_principles,"Your web project needs better separation of concerns but your team doesn't understand the concept. How do you teach this?",architecture_concepts,18,2-5,architectural_teaching,concept_explanation,practical_demonstration,medium
-hse_007,hard_skills,software_engineering_principles,"Your team's database design violates normalization principles. How do you explain and fix these issues collaboratively?",database_principles,20,3-5,database_theory,practical_application,collaborative_redesign,medium
-hse_008,hard_skills,software_engineering_principles,"Your project has code duplication issues that are making maintenance difficult. How do you address this with your team?",code_refactoring,15,2-5,refactoring_skills,duplication_elimination,collaborative_improvement,medium
-hdb_001,hard_skills,database_management,"Your database project partner designed a schema that you think could be more efficient. How do you suggest improvements collaboratively?",technical_collaboration,15,3,database_expertise,collaborative_design,constructive_suggestion,medium
-hdb_002,hard_skills,database_management,"A teammate is struggling with SQL queries for your shared project. How do you help them improve their skills?",sql_mentoring,12,3,sql_expertise,teaching_patience,skill_development,high
-hdb_003,hard_skills,database_management,"Your team's database design doesn't handle edge cases well. How do you identify and address these issues together?",database_robustness,18,3-5,edge_case_thinking,collaborative_problem_solving,system_reliability,medium
-hdb_004,hard_skills,database_management,"Your database queries are inefficient and slowing down your application. How do you optimize them with your team?",query_optimization,20,3-5,performance_optimization,collaborative_optimization,database_tuning,medium
-hdb_005,hard_skills,database_management,"Your team needs to implement database relationships but some members don't understand foreign keys. How do you teach this concept?",relationship_teaching,15,3-5,database_concepts,relational_theory,practical_teaching,medium
-hdb_006,hard_skills,database_management,"Your project requires data migration from old to new schema. How would you plan and execute this with your team?",data_migration,18,3-5,migration_planning,data_integrity,collaborative_execution,medium
-hdd_001,hard_skills,devops_deployment,"Your web project needs to be deployed but your team has no deployment experience. How do you coordinate learning and implementing deployment?",deployment_learning,20,2-5,devops_coordination,collaborative_learning,deployment_management,medium
-hdd_002,hard_skills,devops_deployment,"Your team's development environment setup is inconsistent across members. How do you standardize the development process?",environment_standardization,15,2-5,environment_management,process_standardization,team_coordination,medium
-hdd_003,hard_skills,devops_deployment,"Your project needs version control best practices but team members have different Git experience levels. How do you establish standards?",version_control_standards,12,2-5,git_teaching,workflow_standardization,collaborative_practices,medium
-hdd_004,hard_skills,devops_deployment,"Your application needs automated testing but your team is unfamiliar with testing frameworks. How do you introduce testing practices?",testing_introduction,18,2-5,testing_education,automation_concepts,quality_practices,medium
-htq_001,hard_skills,testing_qa,"Your teammate doesn't understand why testing is important for your Qt project. How do you explain testing concepts and get them involved?",testing_education,12,2-5,testing_knowledge,educational_approach,quality_advocacy,medium
-htq_002,hard_skills,testing_qa,"Your web project has bugs that only appear in certain browsers. How do you coordinate testing and debugging across your team?",cross_browser_testing,15,2-5,testing_coordination,debugging_collaboration,quality_assurance,medium
-htq_003,hard_skills,testing_qa,"Your team's code has inconsistent quality with some modules well-tested and others not. How do you improve overall testing coverage?",testing_standardization,15,2-5,quality_standards,testing_coordination,coverage_improvement,medium
-htq_004,hard_skills,testing_qa,"Your database project needs data validation but your team isn't sure how to test database operations. How do you approach this?",database_testing,18,3-5,database_testing_concepts,validation_strategies,collaborative_testing,medium
-hma_001,hard_skills,mathematics_algorithms,"Your teammate struggles with the algorithm complexity concepts needed for your Java project. How do you explain these concepts clearly?",complexity_teaching,15,3-5,algorithmic_teaching,conceptual_explanation,patience_with_concepts,high
-hma_002,hard_skills,mathematics_algorithms,"Your game project needs mathematical calculations for physics that one team member finds overwhelming. How do you help them understand and contribute?",mathematics_support,18,1-5,mathematical_teaching,physics_concepts,inclusive_problem_solving,high
-hma_003,hard_skills,mathematics_algorithms,"Your web project needs data analysis algorithms but your team has limited statistics background. How do you approach this learning challenge?",statistics_learning,20,2-5,statistical_concepts,collaborative_learning,analytical_thinking,medium
-hma_004,hard_skills,mathematics_algorithms,"Your database project requires optimization algorithms for query performance. How do you research and implement these with your team?",algorithm_research,18,3-5,algorithm_investigation,performance_optimization,collaborative_research,medium
+# 1=Strongly Disagree;2=Disagree;3=Neutral;4=Agree;5=Strongly Agree
+question_id,dimension,subdimension,question_text,target_year_level,response_scale
+sa_001,creativity,innovation_problem_solving,"How confident are you in innovation problem solving?",1,1-5
+sa_002,creativity,innovation_problem_solving,"How well do you perform innovation problem solving?",2,1-5
+sa_003,creativity,innovation_problem_solving,"How often do you engage in innovation problem solving?",3,1-5
+sa_004,creativity,innovation_problem_solving,"How comfortable are you with innovation problem solving?",1,1-5
+sa_005,creativity,innovation_problem_solving,"How effectively can you innovation problem solving?",2,1-5
+sa_006,creativity,innovation_problem_solving,"How confident are you in integrating feedback when solving problems creatively?",3,1-5
+sa_007,creativity,innovation_problem_solving,"How well do you perform integrating feedback in creative tasks?",1,1-5
+sa_008,creativity,innovation_problem_solving,"How often do you engage in generating multiple creative ideas?",2,1-5
+sa_009,creativity,innovation_problem_solving,"How comfortable are you with proposing alternative solutions?",3,1-5
+sa_010,creativity,algorithm_design,"How confident are you in algorithm design?",1,1-5
+sa_011,creativity,algorithm_design,"How well do you perform algorithm design?",2,1-5
+sa_012,creativity,algorithm_design,"How often do you engage in algorithm design?",3,1-5
+sa_013,creativity,algorithm_design,"How comfortable are you with algorithm design?",1,1-5
+sa_014,creativity,algorithm_design,"How effectively can you algorithm design?",2,1-5
+sa_015,creativity,algorithm_design,"How confident are you in optimizing algorithm performance?",3,1-5
+sa_016,creativity,algorithm_design,"How well do you perform explaining different algorithmic approaches?",1,1-5
+sa_017,creativity,algorithm_design,"How often do you engage in designing efficient algorithms under constraints?",2,1-5
+sa_018,creativity,algorithm_design,"How comfortable are you with explaining algorithms to others?",3,1-5
+sa_019,creativity,system_architecture,"How confident are you in system architecture?",1,1-5
+sa_020,creativity,system_architecture,"How well do you perform system architecture?",2,1-5
+sa_021,creativity,system_architecture,"How often do you engage in system architecture?",3,1-5
+sa_022,creativity,system_architecture,"How comfortable are you with system architecture?",1,1-5
+sa_023,creativity,system_architecture,"How effectively can you system architecture?",2,1-5
+sa_024,creativity,system_architecture,"How confident are you in organizing complex project architectures?",3,1-5
+sa_025,creativity,system_architecture,"How well do you perform incorporating security in architectures?",1,1-5
+sa_026,creativity,system_architecture,"How often do you engage in proposing maintainable system designs?",2,1-5
+sa_027,creativity,system_architecture,"How comfortable are you with scalable architecture planning?",3,1-5
+sa_028,creativity,ux_design,"How confident are you in ux design?",1,1-5
+sa_029,creativity,ux_design,"How well do you perform ux design?",2,1-5
+sa_030,creativity,ux_design,"How often do you engage in ux design?",3,1-5
+sa_031,creativity,ux_design,"How comfortable are you with ux design?",1,1-5
+sa_032,creativity,ux_design,"How effectively can you ux design?",2,1-5
+sa_033,creativity,ux_design,"How confident are you in designing intuitive user experiences?",3,1-5
+sa_034,creativity,ux_design,"How well do you perform gathering user feedback?",1,1-5
+sa_035,creativity,ux_design,"How often do you engage in balancing aesthetics with usability?",2,1-5
+sa_036,creativity,ux_design,"How comfortable are you with designing accessible interfaces?",3,1-5
+sa_037,teamwork,communication_documentation,"How confident are you in communication documentation?",1,1-5
+sa_038,teamwork,communication_documentation,"How well do you perform communication documentation?",2,1-5
+sa_039,teamwork,communication_documentation,"How often do you engage in communication documentation?",3,1-5
+sa_040,teamwork,communication_documentation,"How comfortable are you with communication documentation?",1,1-5
+sa_041,teamwork,communication_documentation,"How effectively can you communication documentation?",2,1-5
+sa_042,teamwork,communication_documentation,"How confident are you in structuring documentation for diverse audiences?",3,1-5
+sa_043,teamwork,communication_documentation,"How well do you perform maintaining clear documentation?",1,1-5
+sa_044,teamwork,communication_documentation,"How often do you engage in documenting your work?",2,1-5
+sa_045,teamwork,communication_documentation,"How comfortable are you with creating practical project documentation?",3,1-5
+sa_046,teamwork,code_review_collaboration,"How confident are you in code review collaboration?",1,1-5
+sa_047,teamwork,code_review_collaboration,"How well do you perform code review collaboration?",2,1-5
+sa_048,teamwork,code_review_collaboration,"How often do you engage in code review collaboration?",3,1-5
+sa_049,teamwork,code_review_collaboration,"How comfortable are you with code review collaboration?",1,1-5
+sa_050,teamwork,code_review_collaboration,"How effectively can you code review collaboration?",2,1-5
+sa_051,teamwork,code_review_collaboration,"How confident are you in giving constructive feedback on code quality?",3,1-5
+sa_052,teamwork,code_review_collaboration,"How well do you perform reviewing code for best practices?",1,1-5
+sa_053,teamwork,code_review_collaboration,"How often do you engage in addressing code issues diplomatically?",2,1-5
+sa_054,teamwork,code_review_collaboration,"How comfortable are you with mentoring during code reviews?",3,1-5
+sa_055,teamwork,conflict_resolution,"How confident are you in conflict resolution?",1,1-5
+sa_056,teamwork,conflict_resolution,"How well do you perform conflict resolution?",2,1-5
+sa_057,teamwork,conflict_resolution,"How often do you engage in conflict resolution?",3,1-5
+sa_058,teamwork,conflict_resolution,"How comfortable are you with conflict resolution?",1,1-5
+sa_059,teamwork,conflict_resolution,"How effectively can you conflict resolution?",2,1-5
+sa_060,teamwork,conflict_resolution,"How confident are you in navigating team conflicts effectively?",3,1-5
+sa_061,teamwork,conflict_resolution,"How well do you perform facilitating consensus?",1,1-5
+sa_062,teamwork,conflict_resolution,"How often do you engage in balancing individual and team priorities?",2,1-5
+sa_063,teamwork,conflict_resolution,"How comfortable are you with resolving disagreements?",3,1-5
+sa_064,teamwork,leadership_mentoring,"How confident are you in leadership mentoring?",1,1-5
+sa_065,teamwork,leadership_mentoring,"How well do you perform leadership mentoring?",2,1-5
+sa_066,teamwork,leadership_mentoring,"How often do you engage in leadership mentoring?",3,1-5
+sa_067,teamwork,leadership_mentoring,"How comfortable are you with leadership mentoring?",1,1-5
+sa_068,teamwork,leadership_mentoring,"How effectively can you leadership mentoring?",2,1-5
+sa_069,teamwork,leadership_mentoring,"How confident are you in supporting and mentoring teammates?",3,1-5
+sa_070,teamwork,leadership_mentoring,"How well do you perform coaching peers?",1,1-5
+sa_071,teamwork,leadership_mentoring,"How often do you engage in guiding team members?",2,1-5
+sa_072,teamwork,leadership_mentoring,"How comfortable are you with empowering others?",3,1-5
+sa_073,teamwork,agile_participation,"How confident are you in agile participation?",1,1-5
+sa_074,teamwork,agile_participation,"How well do you perform agile participation?",2,1-5
+sa_075,teamwork,agile_participation,"How often do you engage in agile participation?",3,1-5
+sa_076,teamwork,agile_participation,"How comfortable are you with agile participation?",1,1-5
+sa_077,teamwork,agile_participation,"How effectively can you agile participation?",2,1-5
+sa_078,teamwork,agile_participation,"How confident are you in facilitating agile ceremonies?",3,1-5
+sa_079,teamwork,agile_participation,"How well do you perform sprint planning?",1,1-5
+sa_080,teamwork,agile_participation,"How often do you engage in retrospectives?",2,1-5
+sa_081,teamwork,agile_participation,"How comfortable are you with adapting to change in agile workflows?",3,1-5
+sa_082,soft_skills,time_management,"How confident are you in time management?",1,1-5
+sa_083,soft_skills,time_management,"How well do you perform time management?",2,1-5
+sa_084,soft_skills,time_management,"How often do you engage in time management?",3,1-5
+sa_085,soft_skills,time_management,"How comfortable are you with time management?",1,1-5
+sa_086,soft_skills,time_management,"How effectively can you time management?",2,1-5
+sa_087,soft_skills,time_management,"How confident are you in prioritizing tasks under time pressure?",3,1-5
+sa_088,soft_skills,time_management,"How well do you perform balancing project milestones?",1,1-5
+sa_089,soft_skills,time_management,"How often do you engage in planning project deadlines?",2,1-5
+sa_090,soft_skills,time_management,"How comfortable are you with crisis time planning?",3,1-5
+sa_091,soft_skills,critical_thinking,"How confident are you in critical thinking?",1,1-5
+sa_092,soft_skills,critical_thinking,"How well do you perform critical thinking?",2,1-5
+sa_093,soft_skills,critical_thinking,"How often do you engage in critical thinking?",3,1-5
+sa_094,soft_skills,critical_thinking,"How comfortable are you with critical thinking?",1,1-5
+sa_095,soft_skills,critical_thinking,"How effectively can you critical thinking?",2,1-5
+sa_096,soft_skills,critical_thinking,"How confident are you in analyzing problems effectively?",3,1-5
+sa_097,soft_skills,critical_thinking,"How well do you perform evaluating complex solutions?",1,1-5
+sa_098,soft_skills,critical_thinking,"How often do you engage in systematic investigation?",2,1-5
+sa_099,soft_skills,critical_thinking,"How comfortable are you with root cause analysis?",3,1-5
+sa_100,soft_skills,adaptability_learning,"How confident are you in adaptability learning?",1,1-5
+sa_101,soft_skills,adaptability_learning,"How well do you perform adaptability learning?",2,1-5
+sa_102,soft_skills,adaptability_learning,"How often do you engage in adaptability learning?",3,1-5
+sa_103,soft_skills,adaptability_learning,"How comfortable are you with adaptability learning?",1,1-5
+sa_104,soft_skills,adaptability_learning,"How effectively can you adaptability learning?",2,1-5
+sa_105,soft_skills,adaptability_learning,"How confident are you in learning new tools under constraints?",3,1-5
+sa_106,soft_skills,adaptability_learning,"How well do you perform pivoting strategies when challenges arise?",1,1-5
+sa_107,soft_skills,adaptability_learning,"How often do you engage in quick upskilling?",2,1-5
+sa_108,soft_skills,adaptability_learning,"How comfortable are you with rapid learning in projects?",3,1-5
+sa_109,soft_skills,presentation_communication,"How confident are you in presentation communication?",1,1-5
+sa_110,soft_skills,presentation_communication,"How well do you perform presentation communication?",2,1-5
+sa_111,soft_skills,presentation_communication,"How often do you engage in presentation communication?",3,1-5
+sa_112,soft_skills,presentation_communication,"How comfortable are you with presentation communication?",1,1-5
+sa_113,soft_skills,presentation_communication,"How effectively can you presentation communication?",2,1-5
+sa_114,soft_skills,presentation_communication,"How confident are you in presenting technical ideas to diverse audiences?",3,1-5
+sa_115,soft_skills,presentation_communication,"How well do you perform adjusting style based on feedback?",1,1-5
+sa_116,soft_skills,presentation_communication,"How often do you engage in simplifying complex topics?",2,1-5
+sa_117,soft_skills,presentation_communication,"How comfortable are you with making presentations interactive?",3,1-5
+sa_118,hard_skills,programming_languages,"How confident are you in programming languages?",1,1-5
+sa_119,hard_skills,programming_languages,"How well do you perform programming languages?",2,1-5
+sa_120,hard_skills,programming_languages,"How often do you engage in programming languages?",3,1-5
+sa_121,hard_skills,programming_languages,"How comfortable are you with programming languages?",1,1-5
+sa_122,hard_skills,programming_languages,"How effectively can you programming languages?",2,1-5
+sa_123,hard_skills,programming_languages,"How confident are you in applying programming concepts to solve problems?",3,1-5
+sa_124,hard_skills,programming_languages,"How well do you perform writing clean and maintainable code?",1,1-5
+sa_125,hard_skills,programming_languages,"How often do you engage in bridging knowledge gaps with teammates?",2,1-5
+sa_126,hard_skills,programming_languages,"How comfortable are you with code refactoring?",3,1-5
+sa_127,hard_skills,database_management,"How confident are you in database management?",1,1-5
+sa_128,hard_skills,database_management,"How well do you perform database management?",2,1-5
+sa_129,hard_skills,database_management,"How often do you engage in database management?",3,1-5
+sa_130,hard_skills,database_management,"How comfortable are you with database management?",1,1-5
+sa_131,hard_skills,database_management,"How effectively can you database management?",2,1-5
+sa_132,hard_skills,database_management,"How confident are you in designing and optimizing database schemas?",3,1-5
+sa_133,hard_skills,database_management,"How well do you perform writing efficient SQL queries?",1,1-5
+sa_134,hard_skills,database_management,"How often do you engage in ensuring data integrity?",2,1-5
+sa_135,hard_skills,database_management,"How comfortable are you with data migration planning?",3,1-5
+sa_136,hard_skills,devops_deployment,"How confident are you in devops deployment?",1,1-5
+sa_137,hard_skills,devops_deployment,"How well do you perform devops deployment?",2,1-5
+sa_138,hard_skills,devops_deployment,"How often do you engage in devops deployment?",3,1-5
+sa_139,hard_skills,devops_deployment,"How comfortable are you with devops deployment?",1,1-5
+sa_140,hard_skills,devops_deployment,"How effectively can you devops deployment?",2,1-5
+sa_141,hard_skills,devops_deployment,"How confident are you in automating deployment processes?",3,1-5
+sa_142,hard_skills,devops_deployment,"How well do you perform ensuring environment consistency?",1,1-5
+sa_143,hard_skills,devops_deployment,"How often do you engage in automating testing pipelines?",2,1-5
+sa_144,hard_skills,devops_deployment,"How comfortable are you with managing deployment pipelines?",3,1-5
+sa_145,hard_skills,testing_qa,"How confident are you in testing qa?",1,1-5
+sa_146,hard_skills,testing_qa,"How well do you perform testing qa?",2,1-5
+sa_147,hard_skills,testing_qa,"How often do you engage in testing qa?",3,1-5
+sa_148,hard_skills,testing_qa,"How comfortable are you with testing qa?",1,1-5
+sa_149,hard_skills,testing_qa,"How effectively can you testing qa?",2,1-5
+sa_150,hard_skills,testing_qa,"How confident are you in writing and executing tests to ensure code quality?",3,1-5
