@@ -3,13 +3,12 @@ import streamlit as st
 from openai import OpenAI
 import PyPDF2
 
-# --- SETUP API CLIENT ---
+# ========== SETUP ==========
 client = OpenAI(
-    api_key="sk-c4ab21567aaf41de8680eaec02220f0f",  # Replace with your API key
+    api_key="sk-c4ab21567aaf41de8680eaec02220f0f",  # Replace with your key
     base_url="https://api.deepseek.com"
 )
 
-# --- FUNCTION: Extract text from reference PDF ---
 @st.cache_data
 def extract_text_from_pdf(pdf_path):
     with open(pdf_path, 'rb') as file:
@@ -21,90 +20,122 @@ def extract_text_from_pdf(pdf_path):
                 text += page_text + "\n"
         return text
 
-# --- FUNCTION: Build prompt for AI generation ---
-def build_prompt(reference_text, teacher_prompt):
-    return f"""
-You are an AI assistant that generates self-assessment questions for students.
+def extract_json_from_text(text):
+    """Extract JSON array from text, handling extra text around it."""
+    start = text.find('[')
+    end = text.rfind(']')
+    if start != -1 and end != -1:
+        json_str = text[start:end+1]
+        return json.loads(json_str)
+    else:
+        raise ValueError("No JSON array found in the response.")
 
-The teacher has provided the following prompt:
-"{teacher_prompt}"
+# ========== UI CONFIG ==========
+st.set_page_config(page_title="AI Self-Assessment Generator", layout="wide")
+st.title("🧠 AI Self-Assessment Question Generator")
 
-Guidelines:
-- Generate as many relevant **self-assessment** questions as needed based on the prompt.
-- Each question should be clearly worded.
-- Each question must have the same answer options: ["Bad", "Average", "Excellent"]
-- Format the result as a JSON array, like this:
+# ========== CONFIG DATA ==========
+categories = {
+    "Hard Skills": ["Programming", "Data Analysis", "Cybersecurity", "Database Management"],
+    "Soft Skills": ["Communication", "Time Management", "Adaptability", "Leadership"],
+    "Creativity": ["Idea Generation", "Design Thinking", "Storytelling"],
+    "Teamwork": ["Collaboration", "Conflict Resolution", "Peer Feedback"]
+}
+
+difficulty_levels = ["Beginner", "Intermediate", "Advanced"]
+
+# ========== INPUT STEPS ==========
+category = st.selectbox("📂 Choose a category", list(categories.keys()))
+subcategory = st.selectbox("🧩 Choose a sub-category", categories[category])
+difficulty = st.selectbox("🎯 Select level of difficulty", difficulty_levels)
+num_questions = st.number_input("🔢  Number of questions", min_value=1, max_value=10, value=3, step=1)
+prompt = st.text_area(
+    "✏️  Write your custom prompt (optional)", 
+    placeholder="e.g., Generate self-assessment questions on effective team collaboration"
+)
+
+if st.button("🚀  Generate Questions"):
+    # Load reference question bank text once
+    reference_text = extract_text_from_pdf("Models/Question Generation/Evaluation_Question_Bank.pdf")
+
+    # Build the prompt dynamically
+    full_prompt = f"""
+You are an AI that generates self-assessment questions for students.
+
+Context:
+- Category: {category}
+- Subcategory: {subcategory}
+- Difficulty: {difficulty}
+- Number of questions: {num_questions}
+"""
+
+    if prompt.strip():
+        full_prompt += f'- Custom prompt: "{prompt.strip()}"\n'
+
+    full_prompt += f"""
+Instructions:
+- Generate {num_questions} self-assessment questions on this topic.
+- Each question must have answer options: ["Bad", "Average", "Excellent"]
+- Format the output as a JSON array:
 
 [
   {{
-    "question": "How confident are you in applying basic cybersecurity principles?",
+    "question": "...",
     "choices": ["Bad", "Average", "Excellent"]
   }},
-  {{
-    "question": "How well do you understand data encryption methods?",
-    "choices": ["Bad", "Average", "Excellent"]
-  }}
+  ...
 ]
 
---- Reference Question Bank ---
+Reference Question Bank:
 {reference_text}
---- End Reference ---
-
-Now, generate the questions:
 """
 
-# --- Load Reference Question Bank ---
-pdf_path = "/workspaces/Stage/Models/Question Generation/Evaluation_Question_Bank.pdf"
-reference_text = extract_text_from_pdf(pdf_path)
-
-# --- Streamlit UI ---
-st.title(" AI Self-Assessment Question Generator")
-st.write("Generate self-evaluation questions like:")
-
-teacher_prompt = st.text_area("✏️ Enter your prompt:", height=150, placeholder="e.g., Generate 3 self-assessment questions on communication skills")
-
-if st.button(" Generate Questions"):
-    if teacher_prompt.strip() == "":
-        st.warning("Please enter a prompt before generating.")
-    else:
-        final_prompt = build_prompt(reference_text, teacher_prompt)
-
+    with st.spinner("🧠 Generating..."):
         try:
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant that generates self-assessment questions."},
-                    {"role": "user", "content": final_prompt}
-                ],
-                stream=False
+                    {"role": "system", "content": "You generate editable self-assessment questions for teachers."},
+                    {"role": "user", "content": full_prompt}
+                ]
             )
 
-            content = response.choices[0].message.content.strip()
+            raw_output = response.choices[0].message.content.strip()
 
             try:
-                questions_list = json.loads(content)
-                st.success(" Questions generated successfully!")
+                questions = extract_json_from_text(raw_output)
+                st.success("✅ Questions generated successfully!")
 
-                # Display Questions
-                for idx, q in enumerate(questions_list, 1):
-                    st.markdown(f"**Q{idx}:** {q['question']}")
-                    st.markdown(f"Choices: {', '.join(q['choices'])}")
+                st.markdown("### Edit Your Questions (optional)")
+                updated_questions = []
+                for idx, q in enumerate(questions):
+                    edited = st.text_input(f"Q{idx + 1}", value=q["question"])
+                    updated_questions.append({
+                        "question": edited,
+                        "choices": q["choices"]  # Keep fixed choices internally, no UI input
+                    })
 
-                # Download Button
-                output = {
-                    "teacher_prompt": teacher_prompt,
-                    "generated_questions": questions_list
+                final_output = {
+                    "category": category,
+                    "subcategory": subcategory,
+                    "difficulty": difficulty,
+                    "prompt": prompt,
+                    "questions": updated_questions
                 }
+
                 st.download_button(
-                    label=" Download as JSON",
-                    data=json.dumps(output, indent=2, ensure_ascii=False),
+                    label="📥 Download JSON",
+                    data=json.dumps(final_output, indent=2, ensure_ascii=False),
                     file_name="self_assessment_questions.json",
                     mime="application/json"
                 )
 
+            except ValueError as e:
+                st.error(f" Parsing error: {e}")
+                st.code(raw_output)
             except json.JSONDecodeError:
-                st.error("Failed to parse AI response. Here's the raw output:")
-                st.code(content)
+                st.error(" JSON decode error. Raw output:")
+                st.code(raw_output)
 
         except Exception as e:
-            st.error(f" Error: {e}")
+            st.error(f" API Error: {e}")
