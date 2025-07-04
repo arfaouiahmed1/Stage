@@ -1,0 +1,10 @@
+{
+  "teacher_prompt": "generate q question on deep learning",
+  "generated_questions": [
+    "Demonstrates understanding of key deep learning architectures (e.g., CNNs, RNNs, Transformers).",
+    "Implements neural network models with appropriate optimization techniques (e.g., hyperparameter tuning, regularization).",
+    "Analyzes and interprets model performance metrics (e.g., accuracy, loss, precision-recall).",
+    "Proposes novel modifications or applications of deep learning models to solve unique problems.",
+    "Experiments with emerging techniques (e.g., attention mechanisms, generative models) in projects or assignments."
+  ]
+}

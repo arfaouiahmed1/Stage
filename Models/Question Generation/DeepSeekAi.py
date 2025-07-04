@@ -1,11 +1,10 @@
 import json
-import re
 from openai import OpenAI
 import PyPDF2
 
 # --- SETUP API CLIENT ---
 client = OpenAI(
-    api_key="sk-c4ab21567aaf41de8680eaec02220f0f",  # Replace with your key
+    api_key="sk-c4ab21567aaf41de8680eaec02220f0f",  # Replace with your actual key
     base_url="https://api.deepseek.com"
 )
 
@@ -23,30 +22,40 @@ def extract_text_from_pdf(pdf_path):
 # --- FUNCTION: Build prompt for AI generation ---
 def build_prompt(reference_text, teacher_prompt):
     return f"""
-You are an expert assistant helping teachers generate student evaluation questions.
+You are an AI assistant that generates self-assessment questions for students.
 
-Below is a categorized question bank used to evaluate students on a 1–5 scale:
-(Hard Skills, Soft Skills, Team Spirit, and Creativity)
+The teacher has provided the following prompt:
+"{teacher_prompt}"
 
-Use the style and structure from the reference to generate new evaluation questions based on the teacher’s request.
+Guidelines:
+- Generate as many relevant **self-assessment** questions as needed based on the prompt.
+- Each question should be clearly worded.
+- Each question must have the same answer options: ["Bad", "Average", "Excellent"]
+- Format the result as a JSON array, like this:
+
+[
+  {{
+    "question": "How confident are you in applying basic cybersecurity principles?",
+    "choices": ["Bad", "Average", "Excellent"]
+  }},
+  {{
+    "question": "How well do you understand data encryption methods?",
+    "choices": ["Bad", "Average", "Excellent"]
+  }}
+]
 
 --- Reference Question Bank ---
 {reference_text}
 --- End Reference ---
 
-Teacher's request:
-"{teacher_prompt}"
-
-Your task:
-Generate 3–5 clear, measurable questions based on the request above.
-Avoid repeating the reference questions. Use objective, formal wording.
+Now, generate the questions:
 """
 
 # --- MAIN EXECUTION LOOP ---
-pdf_path = "C:/Users/EXTRA/Desktop/GameTeam/Evaluation_Question_Bank.pdf"  # Adjust this path if needed
+pdf_path = "/workspaces/Stage/Models/Question Generation/Evaluation_Question_Bank.pdf"
 reference_text = extract_text_from_pdf(pdf_path)
 
-print("=== AI Student Evaluation Question Generator ===")
+print("=== AI Self-Assessment Question Generator ===")
 print("Type 'exit' or press Enter without typing anything to quit.\n")
 
 while True:
@@ -58,35 +67,43 @@ while True:
     final_prompt = build_prompt(reference_text, teacher_prompt)
 
     try:
+        # Send prompt to DeepSeek AI
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[
-                {"role": "system", "content": "You are a helpful assistant that generates evaluation questions."},
+                {"role": "system", "content": "You are a helpful assistant that generates self-assessment questions."},
                 {"role": "user", "content": final_prompt}
             ],
             stream=False
         )
 
-        # Extract and parse questions from response
-        content = response.choices[0].message.content
-        questions = re.findall(r"\d+\.\s*(.+)", content.strip())
-        questions = [q.strip() for q in questions if q.strip()]
+        content = response.choices[0].message.content.strip()
 
-        # Build JSON structure
-        json_output = {
+        # Debug print raw content
+        print("\nRaw AI Response:\n", content)
+
+        # Try to parse response
+        questions_list = json.loads(content)
+
+        # Display results
+        output = {
             "teacher_prompt": teacher_prompt,
-            "generated_questions": questions
+            "generated_questions": questions_list
         }
 
-        # Print nicely
-        print("\n Generated Questions in JSON format:\n")
-        print(json.dumps(json_output, indent=2, ensure_ascii=False))
+        print("\nGenerated Self-Assessment Questions:\n")
+        print(json.dumps(output, indent=2, ensure_ascii=False))
 
         # Save to file
-        with open("generated_questions.json", "w", encoding="utf-8") as f:
-            json.dump(json_output, f, indent=2, ensure_ascii=False)
-            print(" Saved to generated_questions.json\n")
+        with open("self_assessment_questions.json", "w", encoding="utf-8") as f:
+            json.dump(output, f, indent=2, ensure_ascii=False)
+            print("\n📁 Saved to self_assessment_questions.json\n")
+
+    except json.JSONDecodeError:
+        print("\n Error: Failed to parse JSON. Here's the raw output:\n")
+        print(content)
+        print("\nPlease check your prompt and try again.\n")
 
     except Exception as e:
-        print(f" Error generating questions: {e}")
-        print("Please check your API key, internet connection, or try again.\n")
+        print(f"\n Unexpected Error: {e}")
+        print("Please try again.\n")
