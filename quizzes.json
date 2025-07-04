@@ -1,0 +1,93 @@
+{
+  "086489b5": {
+    "title": "",
+    "category": "Hard Skills",
+    "subcategory": "Programming",
+    "difficulty": "Beginner",
+    "prompt": "",
+    "questions": [
+      {
+        "question": "How often do you come up with original ideas when solving problems?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How comfortable are you with thinking outside the box during brainstorming sessions?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How willing are you to experiment with new approaches or tools?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      }
+    ]
+  },
+  "3e7d0c36": {
+    "title": "com",
+    "category": "Soft Skills",
+    "subcategory": "Communication",
+    "difficulty": "Beginner",
+    "prompt": "",
+    "questions": [
+      {
+        "question": "How clearly do you communicate your ideas to others?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How well do you listen and respond during conversations?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How effectively do you accept and apply constructive feedback?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      }
+    ]
+  },
+  "43af7702": {
+    "title": "hardskills",
+    "category": "Hard Skills",
+    "subcategory": "Programming",
+    "difficulty": "Intermediate",
+    "prompt": "",
+    "questions": [
+      {
+        "question": "How well can you apply object-oriented programming (OOP) principles (e.g., encapsulation, inheritance, polymorphism) to solve a real-world problem?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How comfortable are you in debugging and optimizing code to minimize errors and improve performance?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      }
+    ]
+  }
+}
