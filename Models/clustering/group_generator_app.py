@@ -34,8 +34,19 @@ else:
     
     # Add cluster labels to dataframe
     df["Cluster"] = labels
-    st.subheader("🎯 Students with Cluster Assignments")
-    st.dataframe(df[["Name", "Hard Skills", "Soft Skills", "Creativity", "Teamwork", "Cluster"]])
+
+    # Color highlighting function for cluster column
+    def highlight_clusters(val):
+        colors = ['#FFCDD2', '#C8E6C9', '#BBDEFB', '#FFF9C4']  # 4 cluster colors
+        if pd.isna(val):
+            return ''
+        return f'background-color: {colors[val % len(colors)]}'
+
+    st.subheader("🎯 Students with Cluster Assignments (Color Coded)")
+    styled_df = df[["Name", "Hard Skills", "Soft Skills", "Creativity", "Teamwork", "Cluster"]].style.applymap(
+        highlight_clusters, subset=["Cluster"]
+    )
+    st.dataframe(styled_df)
 
     # Group students by cluster
     cluster_map = defaultdict(list)
