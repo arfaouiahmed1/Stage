@@ -1,7 +1,6 @@
 import streamlit as st
 import requests
-import subprocess
-import webbrowser
+import os
 
 st.set_page_config(
     page_title="Quiz System Hub", 
@@ -10,12 +9,40 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Function to get the correct URLs based on environment
+def get_service_urls():
+    codespace_name = os.getenv('CODESPACE_NAME')
+    github_codespaces_port_forwarding_domain = os.getenv('GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN', 'preview.app.github.dev')
+    
+    if codespace_name:
+        # GitHub Codespace URLs
+        base_url = f"https://{codespace_name}-{{port}}.{github_codespaces_port_forwarding_domain}"
+        return {
+            "API Server": base_url.format(port=8000) + "/health",
+            "Teacher UI": base_url.format(port=8501),
+            "Student UI": base_url.format(port=8502),
+            "Main Hub": base_url.format(port=8503),
+            "API Docs": base_url.format(port=8000) + "/docs"
+        }
+    else:
+        # Local development URLs
+        return {
+            "API Server": "http://localhost:8000/health",
+            "Teacher UI": "http://localhost:8501",
+            "Student UI": "http://localhost:8502", 
+            "Main Hub": "http://localhost:8503",
+            "API Docs": "http://localhost:8000/docs"
+        }
+
+# Get URLs for current environment
+urls = get_service_urls()
+
 # Check if services are running
 def check_service_status():
     services = {
-        "API Server": "http://localhost:8000/health",
-        "Teacher UI": "http://localhost:8501",
-        "Student UI": "http://localhost:8502"
+        "API Server": urls["API Server"],
+        "Teacher UI": urls["Teacher UI"],
+        "Student UI": urls["Student UI"]
     }
     
     status = {}
@@ -35,13 +62,11 @@ def check_service_status():
     
     return status
 
-st.title("🎓 Question Generation System Hub")
-st.markdown("### Central control panel for the quiz system")
+st.title("🎓 Quiz System")
+st.markdown("### Central hub for quiz creation and management")
 
-# Service status in sidebar with auto-refresh
+# Service status in sidebar
 st.sidebar.header("🔧 System Status")
-if st.sidebar.button("🔄 Refresh Status"):
-    st.rerun()
 
 status = check_service_status()
 all_running = all(s["accessible"] for s in status.values())
@@ -50,31 +75,20 @@ for service, info in status.items():
     st.sidebar.write(f"{service}: {info['status']}")
 
 if all_running:
-    st.sidebar.success("✅ All services running!")
+    st.sidebar.success("✅ All services online")
 else:
-    st.sidebar.error("⚠️ Some services are offline")
-    offline_services = [name for name, info in status.items() if not info["accessible"]]
-    st.sidebar.write(f"Offline: {', '.join(offline_services)}")
-    
-    if st.sidebar.button("🚀 Restart Services"):
-        st.sidebar.info("Please run: ./run_robust.sh")
+    st.sidebar.warning("⚠️ Some services offline")
 
 # Add troubleshooting section
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 🛟 Troubleshooting")
+st.sidebar.markdown("### � Quick Help")
 if not all_running:
-    st.sidebar.markdown("""
-    **If services are offline:**
-    1. Stop current processes: `Ctrl+C`
-    2. Run: `./run_robust.sh`
-    3. Wait for all services to start
-    4. Refresh this page
-    """)
+    st.sidebar.markdown("Run `./run.sh` to start services")
 else:
     st.sidebar.markdown("All systems operational! 🎉")
 
 # Navigation
-st.markdown("## 🧭 Quick Navigation")
+st.markdown("## 🧭 Access Points")
 
 col1, col2, col3 = st.columns(3)
 
@@ -85,21 +99,16 @@ with col1:
     - Generate AI-powered questions
     - Edit and customize quizzes  
     - View student responses
-    - Download analytics
     """)
     
     # Check if teacher interface is accessible
     teacher_accessible = status.get("Teacher UI", {}).get("accessible", False)
-    teacher_url = "http://localhost:8501"
+    teacher_url = urls["Teacher UI"]
     
     if teacher_accessible:
         st.markdown(f'<a href="{teacher_url}" target="_blank" style="text-decoration: none;"><button style="background-color: #FF6B6B; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%;">🚀 Open Teacher Interface</button></a>', unsafe_allow_html=True)
-        st.markdown(f"**Status:** ✅ Ready")
     else:
         st.markdown(f'<button style="background-color: #cccccc; color: #666666; padding: 10px 20px; border: none; border-radius: 5px; width: 100%; cursor: not-allowed;">🚫 Teacher Interface Offline</button>', unsafe_allow_html=True)
-        st.markdown(f"**Status:** ❌ Not accessible")
-    
-    st.markdown(f"**Direct link:** [{teacher_url}]({teacher_url})")
 
 with col2:
     st.markdown("""
@@ -108,21 +117,16 @@ with col2:
     - Browse available quizzes
     - Complete self-assessments
     - View your results
-    - Download your scores
     """)
     
     # Check if student interface is accessible
     student_accessible = status.get("Student UI", {}).get("accessible", False)
-    student_url = "http://localhost:8502"
+    student_url = urls["Student UI"]
     
     if student_accessible:
         st.markdown(f'<a href="{student_url}" target="_blank" style="text-decoration: none;"><button style="background-color: #4ECDC4; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%;">🚀 Open Student Interface</button></a>', unsafe_allow_html=True)
-        st.markdown(f"**Status:** ✅ Ready")
     else:
         st.markdown(f'<button style="background-color: #cccccc; color: #666666; padding: 10px 20px; border: none; border-radius: 5px; width: 100%; cursor: not-allowed;">🚫 Student Interface Offline</button>', unsafe_allow_html=True)
-        st.markdown(f"**Status:** ❌ Not accessible")
-    
-    st.markdown(f"**Direct link:** [{student_url}]({student_url})")
 
 with col3:
     st.markdown("""
@@ -131,94 +135,52 @@ with col3:
     - REST API endpoints
     - Interactive testing
     - Schema documentation
-    - Example requests
     """)
     
     # Check if API is accessible
     api_accessible = status.get("API Server", {}).get("accessible", False)
-    api_url = "http://localhost:8000/docs"
+    api_url = urls["API Docs"]
     
     if api_accessible:
         st.markdown(f'<a href="{api_url}" target="_blank" style="text-decoration: none;"><button style="background-color: #95E1D3; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; width: 100%;">🚀 Open API Docs</button></a>', unsafe_allow_html=True)
-        st.markdown(f"**Status:** ✅ Ready")
     else:
         st.markdown(f'<button style="background-color: #cccccc; color: #666666; padding: 10px 20px; border: none; border-radius: 5px; width: 100%; cursor: not-allowed;">🚫 API Offline</button>', unsafe_allow_html=True)
-        st.markdown(f"**Status:** ❌ Not accessible")
-    
-    st.markdown(f"**Direct link:** [{api_url}]({api_url})")
 
 st.divider()
 
 # Quick links
-st.markdown("### 🔗 Quick Access Links")
+st.markdown("### 🔗 Quick Access")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.link_button("👩‍🏫 Teacher Portal", "http://localhost:8501", use_container_width=True)
+    st.link_button("👩‍🏫 Teacher Portal", urls["Teacher UI"], use_container_width=True)
 
 with col2:
-    st.link_button("🎯 Student Portal", "http://localhost:8502", use_container_width=True)
+    st.link_button("🎯 Student Portal", urls["Student UI"], use_container_width=True)
 
 with col3:
-    st.link_button("📚 API Documentation", "http://localhost:8000/docs", use_container_width=True)
-
-# Status check
-st.divider()
-st.markdown("### 📊 System Status")
-
-import requests
-import time
-
-def check_service(url, name):
-    try:
-        response = requests.get(url, timeout=2)
-        if response.status_code == 200:
-            return f"✅ {name} - Running"
-        else:
-            return f"⚠️ {name} - Error ({response.status_code})"
-    except:
-        return f"❌ {name} - Not responding"
-
-status_col1, status_col2, status_col3 = st.columns(3)
-
-with status_col1:
-    api_status = check_service("http://localhost:8000/docs", "API Server")
-    st.write(api_status)
-
-with status_col2:
-    teacher_status = check_service("http://localhost:8501", "Teacher UI")
-    st.write(teacher_status)
-
-with status_col3:
-    student_status = check_service("http://localhost:8502", "Student UI")
-    st.write(student_status)
+    st.link_button("📚 API Documentation", urls["API Docs"], use_container_width=True)
 
 # Instructions
 st.divider()
-st.markdown("### 📝 How to Use")
+st.markdown("### � Getting Started")
 
-with st.expander("🚀 Getting Started"):
+col1, col2 = st.columns(2)
+
+with col1:
     st.markdown("""
-    1. **Start the system**: Run `./run.sh` to start all services
-    2. **Teacher workflow**:
-       - Open Teacher Interface (port 8501)
-       - Generate questions using AI
-       - Save quizzes for students
-       - Monitor student responses
-    
-    3. **Student workflow**:
-       - Open Student Interface (port 8502)
-       - Select a quiz from the sidebar
-       - Complete the assessment
-       - View your results and download them
-    
-    4. **All interfaces run simultaneously** - just switch between browser tabs!
+    **For Teachers:**
+    1. Open Teacher Interface
+    2. Generate questions using AI
+    3. Save quizzes for students
+    4. Monitor student responses
     """)
 
-with st.expander("🔧 Troubleshooting"):
+with col2:
     st.markdown("""
-    - **Services not starting?** Check that ports 8000, 8501, 8502 are available
-    - **API errors?** Ensure your Google API key is set in `.env` file
-    - **Can't save quizzes?** Check file permissions in the `quiz_storage` directory
-    - **Students can't see quizzes?** Make sure teacher saved the quiz (not just downloaded)
+    **For Students:**
+    1. Open Student Interface
+    2. Select a quiz from the list
+    3. Complete the assessment
+    4. View your results
     """)

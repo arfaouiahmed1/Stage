@@ -3,6 +3,10 @@
 
 set -e  # Exit on any error
 
+# Change working directory to script's location
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$script_dir"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -58,6 +62,35 @@ wait_for_service() {
 # Function to check if command exists
 command_exists() {
     command -v "$1" >/dev/null 2>&1
+}
+
+# Function to detect environment and generate URLs
+get_base_url() {
+    if [ -n "$CODESPACE_NAME" ]; then
+        # We're in GitHub Codespaces
+        echo "https://${CODESPACE_NAME}-8503.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+    else
+        # Local environment
+        echo "http://localhost:8503"
+    fi
+}
+
+# Function to get service URLs
+get_service_urls() {
+    local base_url
+    if [ -n "$CODESPACE_NAME" ]; then
+        # Codespaces URLs
+        echo "API_URL=https://${CODESPACE_NAME}-8000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+        echo "TEACHER_URL=https://${CODESPACE_NAME}-8501.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+        echo "STUDENT_URL=https://${CODESPACE_NAME}-8502.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+        echo "MAIN_URL=https://${CODESPACE_NAME}-8503.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+    else
+        # Local URLs
+        echo "API_URL=http://localhost:8000"
+        echo "TEACHER_URL=http://localhost:8501"
+        echo "STUDENT_URL=http://localhost:8502"
+        echo "MAIN_URL=http://localhost:8503"
+    fi
 }
 
 # Cleanup function
@@ -145,11 +178,29 @@ if ! grep -q "GOOGLE_API_KEY=" .env || grep -q "GOOGLE_API_KEY=$" .env || grep -
 fi
 
 print_status "🚀 Starting all services..."
+
+# Get service URLs for current environment
+eval $(get_service_urls)
+
 echo "=================================="
-echo -e "${BLUE}Main Hub:   ${NC}http://localhost:8503"
-echo -e "${BLUE}API Server: ${NC}http://localhost:8000"
-echo -e "${BLUE}Teacher UI: ${NC}http://localhost:8501"
-echo -e "${BLUE}Student UI: ${NC}http://localhost:8502"
+echo -e "${BLUE}Environment: ${NC}$([ -n "$CODESPACE_NAME" ] && echo "GitHub Codespaces" || echo "Local")"
+if [ -n "$CODESPACE_NAME" ]; then
+    echo -e "${BLUE}Codespaces URLs:${NC}"
+    echo -e "  Main Hub:    $MAIN_URL"
+    echo -e "  API Server:  $API_URL"
+    echo -e "  Teacher UI:  $TEACHER_URL"
+    echo -e "  Student UI:  $STUDENT_URL"
+    echo -e "${YELLOW}Local URLs (use these if Codespaces URLs don't work):${NC}"
+    echo -e "  Main Hub:    http://127.0.0.1:8503"
+    echo -e "  API Server:  http://127.0.0.1:8000"
+    echo -e "  Teacher UI:  http://127.0.0.1:8501"
+    echo -e "  Student UI:  http://127.0.0.1:8502"
+else
+    echo -e "${BLUE}Main Hub:    ${NC}$MAIN_URL"
+    echo -e "${BLUE}API Server:  ${NC}$API_URL"
+    echo -e "${BLUE}Teacher UI:  ${NC}$TEACHER_URL"
+    echo -e "${BLUE}Student UI:  ${NC}$STUDENT_URL"
+fi
 echo "=================================="
 echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
 echo ""
@@ -170,7 +221,7 @@ fi
 
 # Start Teacher interface
 print_status "Starting Teacher interface on port 8501..."
-streamlit run streamlit_teacher.py --server.port 8501 --server.headless true --server.address 0.0.0.0 > logs/teacher.log 2>&1 &
+streamlit run streamlit_teacher.py --server.port 8501 --server.headless true --server.address 0.0.0.0 --browser.gatherUsageStats false --global.showWarningOnDirectExecution false > logs/teacher.log 2>&1 &
 TEACHER_PID=$!
 
 # Wait for Teacher interface
@@ -181,7 +232,7 @@ fi
 
 # Start Student interface
 print_status "Starting Student interface on port 8502..."
-streamlit run streamlit_student.py --server.port 8502 --server.headless true --server.address 0.0.0.0 > logs/student.log 2>&1 &
+streamlit run streamlit_student.py --server.port 8502 --server.headless true --server.address 0.0.0.0 --browser.gatherUsageStats false --global.showWarningOnDirectExecution false > logs/student.log 2>&1 &
 STUDENT_PID=$!
 
 # Wait for Student interface
@@ -193,20 +244,33 @@ fi
 # Start Main Hub (foreground)
 print_status "Starting Main Hub on port 8503..."
 print_status "🎉 All services started successfully!"
-print_status "🌐 Opening Main Hub in your browser..."
+
+if [ -n "$CODESPACE_NAME" ]; then
+    print_status "🌐 Try these URLs in your browser:"
+    echo -e "${GREEN}Codespaces: ${MAIN_URL}${NC}"
+    echo -e "${GREEN}Local:      http://127.0.0.1:8503${NC}"
+    print_status "📋 If Codespaces URLs don't work, use the local 127.0.0.1 URLs"
+else
+    print_status "🌐 Open the Main Hub in your browser at:"
+    echo -e "${GREEN}${MAIN_URL}${NC}"
+fi
 
 # Give services a moment to fully initialize
 sleep 2
 
-# Try to open browser (optional)
-if command_exists xdg-open; then
-    xdg-open "http://localhost:8503" 2>/dev/null || true
-elif command_exists open; then
-    open "http://localhost:8503" 2>/dev/null || true
+# Try to open browser (will work in local environments)
+if [ -z "$CODESPACE_NAME" ]; then
+    # Only try to open browser in local environment
+    main_url=$(get_base_url)
+    if command_exists xdg-open; then
+        xdg-open "$main_url" 2>/dev/null || true
+    elif command_exists open; then
+        open "$main_url" 2>/dev/null || true
+    fi
 fi
 
 # Start Main Hub (this will block)
-streamlit run streamlit_main.py --server.port 8503 --server.headless false --server.address 0.0.0.0
+streamlit run streamlit_main.py --server.port 8503 --server.headless true --server.address 0.0.0.0 --browser.gatherUsageStats false --global.showWarningOnDirectExecution false
 
 # If we get here, the main hub was closed, so cleanup
 print_status "Main Hub closed. Shutting down other services..."

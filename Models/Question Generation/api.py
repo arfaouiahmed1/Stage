@@ -1,6 +1,7 @@
-import os
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+import os
+from pathlib import Path
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 import pandas as pd
 from sentence_transformers import SentenceTransformer
@@ -9,15 +10,19 @@ import faiss
 import google.generativeai as genai  # type: ignore
 
 # Load environment variables
-load_dotenv()
+# Explicitly load .env from this file's directory
+dotenv_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=dotenv_path, override=True)
 
 # Configure Google Gemini API
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-model = genai.GenerativeModel("gemini-2.0-flash")
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 # Load questions for context retrieval
 CSV_PATH = "/workspaces/Stage/Datasets/Quiz Generation/questions.csv"
-df = pd.read_csv(CSV_PATH, comment="#")
+df = pd.read_csv(CSV_PATH, skiprows=1)
+# Strip whitespace in column names
+df.columns = df.columns.str.strip()
 texts = df["question_text"].tolist()
 metadatas = df[["dimension","subdimension","target_year_level","question_id"]].to_dict(orient="records")
 
@@ -39,7 +44,6 @@ class SubmitResponse(BaseModel):
     responses: dict
 
 app = FastAPI(title="Question Generation RAG API", version="1.0.0")
-
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -54,7 +58,7 @@ def list_subdimensions(dimension: str):
     return sorted(df[df["dimension"]==dimension]["subdimension"].unique().tolist())
 
 @app.post("/generate")
-def generate(req: GenerateRequest):
+def generate(req: GenerateRequest, debug: bool = Query(False, description="Include context snippets for debugging RAG")):
     # Filter by metadata
     mask = (df.dimension==req.dimension) & (df.subdimension==req.subdimension) & (df.target_year_level==req.target_year_level)
     candidates = df[mask]
@@ -75,15 +79,29 @@ def generate(req: GenerateRequest):
         + "Use these examples as context:\n" + "\n".join(f"- {txt}" for txt in context_snippets)
         + "\n\nGenerate exactly " + str(req.num_questions) + " questions, one per line. Do not include numbering or bullet points."
     )
-    # Call LLM
-    response = model.generate_content(prompt)
+    # Call LLM with error handling
+    try:
+        response = model.generate_content(prompt)
+        generated_text = response.text
+    except Exception as e:
+        # Authentication errors from Google Gemini
+        err_msg = str(e)
+        if "401" in err_msg or "UNAUTHENTICATED" in err_msg.upper():
+            raise HTTPException(status_code=401, detail="Invalid or missing Google API key")
+        # Other errors
+        raise HTTPException(status_code=500, detail=f"LLM generation error: {err_msg}")
     # Extract generated questions
     generated_text = response.text
     # Split by lines and clean up
     items = [line.strip() for line in generated_text.split('\n') if line.strip() and not line.strip().startswith(('*', '-', '1.', '2.', '3.', '4.', '5.'))]
     # Take only the requested number of questions
     items = items[:req.num_questions]
-    return {"questions": items}
+    # Build response
+    response_data = {"questions": items}
+    if debug:
+        # Include the RAG-retrieved context snippets
+        response_data["contexts"] = context_snippets
+    return response_data
 
 @app.post("/submit")
 def submit_answer(resp: SubmitResponse):

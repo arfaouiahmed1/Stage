@@ -33,7 +33,7 @@ MANIFEST
 .idea/
 *.swp
 *.swo
-
+*.streamlit
 # OS
 .DS_Store
 Thumbs.db
