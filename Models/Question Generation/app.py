@@ -252,7 +252,7 @@ elif mode == "Student":
             st.subheader("🧩 Your Personality Character")
             st.markdown(f"### **{personality}**")
             st.write(description)
-
+ 
     elif student_name and not available_quizzes:
         st.warning("⚠️ No quizzes available yet.")
     else:
