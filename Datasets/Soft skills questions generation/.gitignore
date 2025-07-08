@@ -1,0 +1,54 @@
+# Hugging Face API Token - Keep Secret!
+# Add your token here: hf_your_token_here
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Data files (if sensitive)
+# Uncomment if needed:
+# *.csv
+# data/
+
+# Model files (if large)
+*.pkl
+*.model
+*.h5
+
+# API keys and tokens
+*.token
+*.key
+api_keys.txt

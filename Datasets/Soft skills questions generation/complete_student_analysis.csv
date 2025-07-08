@@ -1,0 +1,121 @@
+student_id,archetype,communication_score,leadership_score,time_management_score,analytical_score,moyenne,specialization,preferred_programming_language,primary_learning_style,secondary_learning_style,primary_interest,previous_group_experience,extroversion_score,creativity_score,technical_confidence,cluster,group
+ETU_001,Creative Innovator,4.38,2.71,1.6,5.0,11.4,Cybersecurity,Angular,Kinesthetic,Reading,Startup Innovation,Moyen,1.23,3.89,4.75,0,16
+ETU_002,Well-Rounded Student,3.46,2.85,2.13,4.27,14.02,Cybersecurity,React,Visual,Reading,Technology Innovation,Moyen,1.36,3.47,2.53,0,5
+ETU_003,Mixed Profile,3.82,4.31,3.67,2.72,14.15,DevOps & Cloud Computing,C++,Auditory,Logical,Project Management,Moyen,2.56,1.73,4.02,1,18
+ETU_004,Emerging Scholar,1.6,2.36,3.24,3.15,10.31,DevOps & Cloud Computing,C++,Auditory,Solitary,Programming Fundamentals,Faible,2.09,4.31,2.43,0,12
+ETU_005,Well-Rounded Student,3.23,2.77,2.57,2.64,14.03,DevOps & Cloud Computing,JavaScript,Kinesthetic,Visual,Technology Innovation,Élevé,4.09,1.3,2.43,1,5
+ETU_006,Technical Leader,2.29,4.86,3.88,4.29,15.3,Cybersecurity,C++,Logical,Solitary,System Architecture,Élevé,2.89,1.48,3.85,2,9
+ETU_007,Mixed Profile,3.19,2.13,3.22,3.21,13.16,Mobile Development,Angular,Visual,Solitary,Network Security,Élevé,3.42,3.16,1.81,0,10
+ETU_008,Mixed Profile,4.13,4.51,3.62,4.07,13.25,Web Development,PHP,Kinesthetic,Auditory,Game Development,Faible,2.27,1.44,1.91,2,5
+ETU_009,Well-Rounded Student,2.99,2.79,3.78,2.73,14.7,Software Engineering,JavaScript,Visual,Reading,Technology Innovation,Élevé,2.29,3.08,3.81,0,8
+ETU_010,Technical Leader,2.82,3.71,4.76,5.0,14.59,Embedded Systems,Python,Visual,Visual,AI/Machine Learning,Moyen,2.64,1.13,2.38,2,12
+ETU_011,Emerging Scholar,2.77,1.27,3.64,3.68,10.83,DevOps & Cloud Computing,PHP,Reading,Social,Database Systems,Moyen,2.6,4.27,4.19,0,6
+ETU_012,Analytical Thinker,4.37,3.29,3.81,4.45,15.91,Embedded Systems,React,Solitary,Visual,Data Science,Élevé,4.75,1.55,2.36,2,19
+ETU_013,Emerging Scholar,1.88,2.79,1.0,3.11,13.49,Web Development,C++,Auditory,Social,Self-Improvement,Élevé,2.36,2.4,3.9,1,7
+ETU_014,Mixed Profile,4.43,2.96,4.77,3.4,14.11,Software Engineering,C++,Auditory,Reading,Web Development,Moyen,2.3,3.99,3.6,0,15
+ETU_015,Mixed Profile,3.46,4.04,3.3,3.05,13.45,Embedded Systems,JavaScript,Kinesthetic,Auditory,Creative Coding,Moyen,3.58,3.68,4.46,3,10
+ETU_016,Analytical Thinker,4.18,2.86,2.55,4.5,18.53,Network Engineering,Python,Visual,Social,Data Science,Moyen,4.87,4.85,4.41,3,21
+ETU_017,Creative Innovator,3.57,2.55,1.0,2.96,12.58,Web Development,Java,Kinesthetic,Solitary,Creative Coding,Élevé,4.96,1.56,3.07,1,10
+ETU_018,Mixed Profile,3.39,2.99,3.84,3.59,15.75,Mobile Development,C++,Visual,Logical,Mobile Development,Faible,1.78,1.28,2.59,2,24
+ETU_019,Analytical Thinker,2.08,1.15,3.92,4.26,15.14,Software Engineering,Java,Visual,Solitary,Data Science,Moyen,3.36,1.12,1.15,2,18
+ETU_020,Mixed Profile,3.93,4.08,2.95,3.44,14.87,Embedded Systems,C++,Social,Logical,Project Management,Élevé,1.55,1.53,4.88,2,2
+ETU_021,Analytical Thinker,2.47,3.27,3.25,4.55,15.1,Mobile Development,PHP,Visual,Logical,Data Science,Faible,1.23,4.66,2.77,0,18
+ETU_022,Emerging Scholar,3.65,3.21,2.88,4.49,12.14,DevOps & Cloud Computing,JavaScript,Reading,Auditory,Self-Improvement,Faible,1.48,2.37,1.37,0,1
+ETU_023,Emerging Scholar,3.2,2.82,1.57,2.95,11.72,DevOps & Cloud Computing,C++,Auditory,Solitary,Database Systems,Faible,2.59,3.46,3.54,1,19
+ETU_024,Collaborative Communicator,4.53,5.0,3.56,3.53,12.65,Embedded Systems,Angular,Auditory,Auditory,Web Development,Élevé,4.2,3.71,3.29,3,18
+ETU_025,Creative Innovator,4.48,3.26,3.24,3.1,14.62,Network Engineering,C#,Kinesthetic,Reading,Startup Innovation,Moyen,1.07,1.38,3.73,2,14
+ETU_026,Creative Innovator,3.59,3.88,3.16,2.58,13.52,Mobile Development,Angular,Visual,Visual,Game Development,Faible,2.13,1.71,4.0,2,14
+ETU_027,Mixed Profile,2.86,3.63,4.2,2.7,13.33,Software Engineering,PHP,Kinesthetic,Visual,Self-Improvement,Faible,2.28,4.58,2.56,0,19
+ETU_028,Technical Leader,3.17,4.79,4.07,4.63,15.93,Data Science & AI,React,Logical,Social,Software Development,Élevé,3.41,3.21,1.85,3,5
+ETU_029,Mixed Profile,3.45,2.46,4.38,4.02,15.32,Data Science & AI,React,Solitary,Visual,Network Security,Moyen,3.47,1.4,1.34,2,2
+ETU_030,Collaborative Communicator,4.94,3.64,3.24,1.86,12.93,Embedded Systems,Angular,Auditory,Visual,UI/UX Design,Faible,4.79,4.94,4.01,3,7
+ETU_031,Analytical Thinker,3.25,3.83,4.4,4.54,15.44,Cybersecurity,C#,Visual,Auditory,Algorithms,Moyen,3.96,4.07,4.29,3,18
+ETU_032,Analytical Thinker,3.39,2.58,2.79,4.26,18.47,Web Development,C#,Solitary,Auditory,Data Science,Faible,1.17,4.56,3.11,0,1
+ETU_033,Mixed Profile,3.54,3.37,4.75,3.19,16.66,Data Science & AI,Angular,Social,Solitary,Web Development,Faible,2.11,1.75,2.85,2,24
+ETU_034,Collaborative Communicator,4.1,2.86,2.91,1.47,12.13,Software Engineering,Python,Auditory,Reading,Web Development,Faible,1.53,1.3,4.76,1,6
+ETU_035,Creative Innovator,3.08,4.67,3.98,2.78,14.95,Software Engineering,JavaScript,Kinesthetic,Auditory,Startup Innovation,Faible,4.88,4.37,4.35,3,6
+ETU_036,Analytical Thinker,3.17,2.06,4.95,4.69,18.65,DevOps & Cloud Computing,C#,Visual,Social,Algorithms,Moyen,2.51,1.96,1.82,2,10
+ETU_037,Creative Innovator,3.04,3.63,3.86,4.59,12.43,Embedded Systems,React,Visual,Auditory,Creative Coding,Moyen,4.09,3.08,4.41,3,13
+ETU_038,Creative Innovator,3.61,5.0,4.2,2.85,13.56,Cybersecurity,JavaScript,Kinesthetic,Solitary,Creative Coding,Moyen,3.43,3.55,3.22,3,20
+ETU_039,Collaborative Communicator,4.6,2.28,2.76,3.87,14.49,Cybersecurity,Python,Auditory,Social,UI/UX Design,Faible,2.97,2.03,2.84,1,23
+ETU_040,Mixed Profile,2.13,3.73,2.34,5.0,16.19,Cybersecurity,PHP,Visual,Reading,Mobile Development,Faible,4.59,2.9,3.67,3,23
+ETU_041,Collaborative Communicator,4.81,3.43,2.05,1.76,12.13,Web Development,Python,Auditory,Visual,UI/UX Design,Moyen,2.46,3.01,3.76,1,12
+ETU_042,Technical Leader,5.0,4.08,3.14,4.52,15.51,Software Engineering,Java,Logical,Visual,Software Development,Élevé,1.74,1.84,2.48,2,23
+ETU_043,Collaborative Communicator,4.6,4.92,2.97,2.9,12.59,Cybersecurity,React,Auditory,Logical,Project Management,Moyen,4.0,1.12,4.47,1,1
+ETU_044,Analytical Thinker,2.35,1.69,3.67,4.58,16.29,DevOps & Cloud Computing,PHP,Solitary,Solitary,Data Science,Faible,2.37,2.9,2.42,0,7
+ETU_045,Collaborative Communicator,4.54,3.2,4.57,3.23,13.73,Cybersecurity,Java,Auditory,Social,UI/UX Design,Moyen,3.43,1.98,2.99,1,2
+ETU_046,Technical Leader,3.21,4.06,3.68,4.19,14.64,Cybersecurity,PHP,Logical,Solitary,System Architecture,Élevé,4.37,1.21,1.07,2,15
+ETU_047,Emerging Scholar,3.15,2.13,2.74,3.25,10.9,Embedded Systems,PHP,Auditory,Solitary,Programming Fundamentals,Moyen,3.23,3.29,2.12,1,17
+ETU_048,Mixed Profile,2.51,3.88,4.02,3.51,14.58,Mobile Development,PHP,Kinesthetic,Logical,Mobile Development,Faible,3.13,1.21,2.35,2,23
+ETU_049,Collaborative Communicator,4.2,4.33,4.2,3.42,14.38,Embedded Systems,PHP,Auditory,Kinesthetic,UI/UX Design,Élevé,4.72,4.32,4.86,3,4
+ETU_050,Analytical Thinker,3.07,2.36,4.62,4.7,15.56,Software Engineering,C#,Solitary,Reading,Algorithms,Élevé,1.66,4.26,3.66,0,14
+ETU_051,Well-Rounded Student,4.29,2.3,3.4,4.93,15.5,Embedded Systems,JavaScript,Kinesthetic,Solitary,Mobile Development,Élevé,2.75,3.31,2.42,0,15
+ETU_052,Collaborative Communicator,4.95,3.87,2.4,3.03,15.76,DevOps & Cloud Computing,JavaScript,Social,Auditory,Project Management,Élevé,3.48,3.13,4.58,1,14
+ETU_053,Mixed Profile,3.43,3.46,4.03,3.15,15.48,Data Science & AI,Python,Social,Solitary,Algorithms,Élevé,2.52,2.83,3.42,2,21
+ETU_054,Creative Innovator,2.2,2.89,4.13,5.0,13.86,Cybersecurity,C#,Visual,Kinesthetic,Creative Coding,Moyen,2.37,1.91,2.69,2,3
+ETU_055,Analytical Thinker,3.22,1.49,5.0,4.65,15.07,Network Engineering,JavaScript,Solitary,Reading,Data Science,Faible,3.83,1.61,3.31,2,1
+ETU_056,Emerging Scholar,2.5,1.82,2.1,2.61,12.93,Software Engineering,React,Reading,Logical,Self-Improvement,Élevé,2.6,1.22,2.34,1,16
+ETU_057,Mixed Profile,4.09,2.66,3.05,3.95,13.18,Cybersecurity,Python,Visual,Kinesthetic,Self-Improvement,Élevé,1.56,1.71,2.99,2,24
+ETU_058,Technical Leader,4.36,3.09,3.29,4.76,17.84,Software Engineering,C++,Logical,Solitary,System Architecture,Faible,1.74,2.2,2.24,2,17
+ETU_059,Analytical Thinker,3.16,2.37,3.4,4.38,15.15,Web Development,Angular,Solitary,Kinesthetic,Algorithms,Faible,4.1,2.81,3.1,3,11
+ETU_060,Collaborative Communicator,5.0,3.79,2.93,2.23,12.3,Cybersecurity,Angular,Social,Auditory,Project Management,Moyen,3.11,4.2,4.92,3,22
+ETU_061,Mixed Profile,4.55,2.86,3.06,3.57,14.95,DevOps & Cloud Computing,Angular,Social,Kinesthetic,Technology Innovation,Moyen,4.32,2.59,3.67,3,12
+ETU_062,Collaborative Communicator,4.66,2.92,4.03,2.65,15.27,Network Engineering,JavaScript,Social,Logical,UI/UX Design,Élevé,3.36,2.07,3.5,2,4
+ETU_063,Emerging Scholar,3.65,1.91,2.14,3.23,11.98,Cybersecurity,PHP,Auditory,Visual,Database Systems,Élevé,3.05,3.97,3.8,1,13
+ETU_064,Technical Leader,3.64,4.09,4.01,4.67,14.69,DevOps & Cloud Computing,C#,Visual,Solitary,AI/Machine Learning,Faible,4.26,2.99,1.27,3,21
+ETU_065,Emerging Scholar,2.38,2.62,4.12,4.41,12.33,DevOps & Cloud Computing,Java,Auditory,Visual,Database Systems,Faible,2.53,3.08,1.19,0,4
+ETU_066,Analytical Thinker,2.82,3.59,3.96,4.77,17.44,Web Development,Java,Visual,Logical,Algorithms,Moyen,3.93,1.86,1.12,2,6
+ETU_067,Analytical Thinker,3.19,2.71,3.46,5.0,16.38,Embedded Systems,Python,Visual,Visual,Data Science,Élevé,3.39,2.84,1.3,2,20
+ETU_068,Well-Rounded Student,3.15,4.15,2.64,4.4,13.32,Cybersecurity,Python,Kinesthetic,Visual,Network Security,Faible,2.78,1.74,3.17,1,8
+ETU_069,Mixed Profile,4.17,3.66,3.65,3.75,15.1,Software Engineering,C#,Visual,Logical,Network Security,Élevé,5.0,3.22,2.89,3,19
+ETU_070,Creative Innovator,3.43,3.69,2.6,2.33,14.18,DevOps & Cloud Computing,PHP,Visual,Logical,Startup Innovation,Moyen,3.09,3.58,3.6,3,15
+ETU_071,Well-Rounded Student,3.17,4.39,3.54,3.69,14.1,Software Engineering,C++,Kinesthetic,Solitary,Mobile Development,Faible,3.5,4.54,3.46,3,21
+ETU_072,Analytical Thinker,3.07,3.46,3.44,5.0,16.92,Software Engineering,Angular,Solitary,Reading,Research & Development,Faible,4.07,2.67,2.69,3,22
+ETU_073,Emerging Scholar,2.79,2.09,3.29,2.59,12.5,Mobile Development,Python,Reading,Visual,Programming Fundamentals,Moyen,1.18,1.44,2.57,2,13
+ETU_074,Analytical Thinker,2.87,1.76,5.0,4.33,15.67,Network Engineering,C++,Visual,Reading,Data Science,Élevé,1.92,4.32,1.48,0,13
+ETU_075,Technical Leader,3.0,3.87,3.55,5.0,14.23,DevOps & Cloud Computing,React,Visual,Visual,System Architecture,Moyen,3.1,2.04,3.06,2,9
+ETU_076,Technical Leader,3.77,3.97,3.51,4.15,16.15,Software Engineering,C++,Logical,Social,AI/Machine Learning,Élevé,4.51,2.06,1.52,3,16
+ETU_077,Mixed Profile,3.33,2.18,2.38,4.43,13.45,Web Development,Angular,Auditory,Social,Algorithms,Moyen,1.32,1.88,3.73,0,8
+ETU_078,Technical Leader,4.23,4.22,5.0,4.91,16.18,Mobile Development,C#,Visual,Solitary,System Architecture,Faible,1.63,1.64,2.34,2,20
+ETU_079,Creative Innovator,4.71,4.43,2.15,3.63,14.52,Data Science & AI,Python,Kinesthetic,Logical,Startup Innovation,Moyen,1.52,2.34,3.97,1,17
+ETU_080,Well-Rounded Student,4.74,3.74,3.23,3.17,13.29,Cybersecurity,Python,Kinesthetic,Visual,Technology Innovation,Moyen,3.54,3.16,4.12,1,11
+ETU_081,Emerging Scholar,2.76,1.94,2.15,4.0,10.63,Mobile Development,C#,Reading,Reading,Database Systems,Élevé,1.67,4.08,3.83,0,3
+ETU_082,Emerging Scholar,2.37,2.3,2.87,2.53,10.09,Cybersecurity,Python,Reading,Logical,Self-Improvement,Élevé,2.01,1.0,1.64,1,15
+ETU_083,Well-Rounded Student,2.93,1.96,3.96,3.25,15.43,Network Engineering,Angular,Visual,Logical,Network Security,Moyen,1.53,4.47,4.85,0,17
+ETU_084,Creative Innovator,3.92,3.71,1.57,4.69,12.1,Cybersecurity,JavaScript,Kinesthetic,Auditory,Creative Coding,Élevé,3.98,1.8,4.47,1,4
+ETU_085,Collaborative Communicator,4.46,4.58,3.51,3.17,15.08,Web Development,Java,Social,Logical,Project Management,Faible,1.52,1.13,4.68,2,16
+ETU_086,Emerging Scholar,4.27,3.4,2.87,1.58,10.79,Network Engineering,React,Reading,Solitary,Programming Fundamentals,Faible,3.36,2.73,4.94,1,20
+ETU_087,Creative Innovator,3.88,2.65,5.0,2.75,12.17,Mobile Development,Python,Kinesthetic,Reading,Creative Coding,Faible,1.16,2.92,1.42,0,5
+ETU_088,Technical Leader,3.24,4.23,2.97,4.46,15.38,Embedded Systems,Angular,Logical,Reading,Software Development,Moyen,3.14,4.53,1.33,3,8
+ETU_089,Mixed Profile,4.34,4.26,3.53,3.78,13.89,Cybersecurity,C#,Kinesthetic,Kinesthetic,Technology Innovation,Faible,4.74,1.21,3.17,3,17
+ETU_090,Collaborative Communicator,5.0,4.19,2.9,4.73,14.64,Embedded Systems,C++,Social,Auditory,UI/UX Design,Moyen,2.92,1.16,1.66,2,11
+ETU_091,Collaborative Communicator,3.98,3.43,3.76,3.7,13.99,Data Science & AI,PHP,Social,Kinesthetic,UI/UX Design,Faible,4.99,4.9,3.6,3,20
+ETU_092,Analytical Thinker,2.67,1.23,4.14,4.43,15.7,Mobile Development,React,Solitary,Social,Data Science,Moyen,4.95,1.16,4.47,2,22
+ETU_093,Well-Rounded Student,3.75,3.24,4.61,4.75,15.78,DevOps & Cloud Computing,Java,Kinesthetic,Kinesthetic,Network Security,Moyen,2.44,2.54,2.86,2,24
+ETU_094,Mixed Profile,2.29,3.86,1.0,3.44,10.76,Software Engineering,PHP,Visual,Reading,Database Systems,Élevé,3.37,3.32,3.65,1,12
+ETU_095,Technical Leader,3.8,4.15,4.57,3.88,15.3,Embedded Systems,C++,Logical,Reading,Software Development,Élevé,2.82,1.94,1.29,2,6
+ETU_096,Collaborative Communicator,5.0,3.39,3.05,1.88,14.35,Network Engineering,Python,Auditory,Solitary,Web Development,Élevé,3.95,3.66,2.9,1,3
+ETU_097,Mixed Profile,3.83,3.87,3.54,3.63,15.12,Network Engineering,Java,Visual,Visual,System Architecture,Moyen,1.72,1.35,1.41,2,24
+ETU_098,Well-Rounded Student,3.88,3.82,3.62,4.36,14.8,Data Science & AI,React,Visual,Solitary,Technology Innovation,Moyen,2.23,3.82,1.81,0,4
+ETU_099,Collaborative Communicator,4.8,3.23,2.79,2.32,15.85,DevOps & Cloud Computing,Java,Auditory,Logical,Project Management,Moyen,2.5,1.07,1.98,1,9
+ETU_100,Mixed Profile,4.36,4.06,3.8,4.54,12.89,Data Science & AI,Java,Social,Solitary,Game Development,Faible,2.63,4.48,4.13,3,3
+ETU_101,Technical Leader,3.74,3.73,4.63,4.43,17.51,DevOps & Cloud Computing,JavaScript,Visual,Kinesthetic,Software Development,Moyen,3.18,1.02,2.3,2,13
+ETU_102,Creative Innovator,4.61,1.47,3.86,5.0,12.78,Web Development,Java,Kinesthetic,Kinesthetic,Creative Coding,Moyen,3.48,2.85,2.52,0,9
+ETU_103,Mixed Profile,1.51,2.5,1.1,3.45,14.56,Web Development,Java,Reading,Kinesthetic,Research & Development,Faible,4.29,2.72,4.59,3,3
+ETU_104,Technical Leader,2.55,5.0,3.93,3.8,14.78,Web Development,C#,Logical,Social,AI/Machine Learning,Élevé,4.72,3.13,3.32,3,2
+ETU_105,Emerging Scholar,1.91,2.95,1.52,2.8,10.63,DevOps & Cloud Computing,C++,Reading,Logical,Programming Fundamentals,Élevé,3.84,1.43,3.27,1,11
+ETU_106,Well-Rounded Student,3.31,3.39,3.42,4.41,14.84,DevOps & Cloud Computing,JavaScript,Kinesthetic,Logical,Network Security,Moyen,3.06,3.37,4.17,3,9
+ETU_107,Collaborative Communicator,4.87,3.62,3.49,4.01,13.02,Network Engineering,Java,Social,Kinesthetic,Project Management,Moyen,4.24,4.07,1.6,3,19
+ETU_108,Creative Innovator,4.37,2.61,2.45,3.61,11.38,Embedded Systems,C#,Kinesthetic,Kinesthetic,Startup Innovation,Élevé,1.93,2.56,3.38,1,21
+ETU_109,Collaborative Communicator,4.83,2.72,2.64,4.32,13.78,Software Engineering,Python,Auditory,Logical,UI/UX Design,Élevé,3.41,2.35,4.62,1,7
+ETU_110,Mixed Profile,2.88,2.47,2.29,2.73,12.95,Data Science & AI,C++,Auditory,Reading,Project Management,Faible,2.08,3.37,3.72,0,11
+ETU_111,Collaborative Communicator,5.0,2.95,4.71,3.14,13.86,Embedded Systems,PHP,Social,Auditory,Web Development,Faible,3.54,4.02,1.68,3,16
+ETU_112,Emerging Scholar,4.23,1.95,3.81,1.91,12.78,Embedded Systems,PHP,Auditory,Logical,Self-Improvement,Moyen,4.97,4.71,3.16,3,1
+ETU_113,Mixed Profile,3.59,3.6,4.01,5.0,15.14,Mobile Development,PHP,Solitary,Visual,AI/Machine Learning,Faible,2.44,1.35,4.75,2,7
+ETU_114,Analytical Thinker,2.56,3.23,4.11,4.39,17.3,Network Engineering,C#,Solitary,Auditory,Research & Development,Faible,1.47,4.27,2.52,0,2
+ETU_115,Mixed Profile,3.64,4.64,4.17,3.73,15.3,Mobile Development,PHP,Visual,Reading,Project Management,Faible,3.43,4.06,1.7,3,10
+ETU_116,Technical Leader,3.91,4.8,3.96,3.97,16.02,DevOps & Cloud Computing,C++,Visual,Reading,Software Development,Élevé,3.02,2.76,1.42,2,22
+ETU_117,Creative Innovator,4.03,3.02,1.49,1.79,13.26,Data Science & AI,Java,Kinesthetic,Auditory,Creative Coding,Élevé,4.02,3.48,2.19,1,22
+ETU_118,Technical Leader,3.01,4.02,3.73,4.59,16.04,DevOps & Cloud Computing,Angular,Visual,Social,System Architecture,Faible,3.5,3.11,2.7,3,14
+ETU_119,Well-Rounded Student,4.83,2.76,3.93,2.08,14.69,DevOps & Cloud Computing,C#,Kinesthetic,Solitary,Mobile Development,Moyen,1.99,1.54,2.67,2,8
+ETU_120,Mixed Profile,2.61,3.97,3.84,4.4,13.91,Network Engineering,JavaScript,Kinesthetic,Social,Mobile Development,Élevé,1.6,1.51,4.46,2,23
