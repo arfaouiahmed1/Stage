@@ -1,0 +1,52 @@
+{
+  "clustering_approach": "Soft Skills Only (No Academic/Learning Style Factors)",
+  "total_students": 120,
+  "total_groups": 30,
+  "average_group_size": 4.0,
+  "removed_factors": [
+    "moyenne_range",
+    "learning_styles",
+    "interests"
+  ],
+  "focus_factors": [
+    "communication_score",
+    "leadership_score",
+    "time_management_score",
+    "analytical_score"
+  ],
+  "balance_principle": "Complementary skills - mix strong and weak in each area",
+  "archetype_distribution": {
+    "Strong Communicator": 23,
+    "Balanced Profile": 23,
+    "Developing Potential": 21,
+    "Analytical Thinker": 20,
+    "Time Manager": 17,
+    "Natural Leader": 16
+  },
+  "skill_statistics": {
+    "communication_score": {
+      "mean": 2.9241286672034543,
+      "std": 0.9063943531782164,
+      "min": 1.0,
+      "max": 4.935482587685891
+    },
+    "leadership_score": {
+      "mean": 2.720465610022683,
+      "std": 0.9180801601329055,
+      "min": 1.0,
+      "max": 4.876071053338383
+    },
+    "time_management_score": {
+      "mean": 3.1290916059053244,
+      "std": 0.7847016422390902,
+      "min": 1.0,
+      "max": 4.740466376778683
+    },
+    "analytical_score": {
+      "mean": 2.834827557936937,
+      "std": 0.9117860561136674,
+      "min": 1.0,
+      "max": 5.0
+    }
+  }
+}
