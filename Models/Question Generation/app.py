@@ -73,8 +73,8 @@ def generate_pdf(name, style, responses):
     pdf.cell(200, 10, f"Dominant Style: {style}", ln=True)
     pdf.ln(5)
 
-    for i, (q, score) in enumerate(zip(questions, responses)):
-        pdf.multi_cell(0, 10, f"Q{i+1}: {q}\nScore: {score}/3")
+    for i, (q, score) in enumerate(responses):
+        pdf.multi_cell(0, 10, f"Q{i+1}: {q}\nAnswer: {score}")
         pdf.ln(1)
 
     pdf.output("report.pdf")
@@ -90,7 +90,6 @@ mode = st.sidebar.selectbox("Select Interface", ["Teacher", "Student"])
 # ========== TEACHER INTERFACE ==========
 if mode == "Teacher":
     st.title("👩‍🏫 Teacher Interface")
-
     st.header("📘 Create a New Quiz")
 
     categories = {
@@ -101,11 +100,9 @@ if mode == "Teacher":
     }
     difficulty_levels = ["Beginner", "Intermediate", "Advanced"]
 
-    # Category and Subcategory outside the form for dynamic update
     category = st.selectbox("📂 Choose Category", list(categories.keys()), key="cat")
     subcategory = st.selectbox("🧩 Choose Subcategory", categories[category], key="sub")
 
-    # Rest of inputs inside the form
     with st.form("generate_quiz_form"):
         quiz_title = st.text_input("📝 Quiz Name", placeholder="Ex: Teamwork Assessment")
         difficulty = st.selectbox("🎯 Difficulty Level", difficulty_levels, key="difficulty")
@@ -115,7 +112,6 @@ if mode == "Teacher":
 
     if submit_gen:
         reference_text = extract_text_from_pdf("Models/Question Generation/Evaluation_Question_Bank.pdf")
-
         full_prompt = f"""
 You are an AI that generates self-assessment questions for students.
 
@@ -156,7 +152,6 @@ Reference:
                 questions = extract_json_from_text(raw_output)
                 st.session_state.generated_questions = questions
                 st.success("✅ Questions generated!")
-
             except Exception as e:
                 st.error(f"❌ Error: {e}")
 
@@ -181,9 +176,8 @@ Reference:
             }
             save_data(st.session_state.quizzes, QUIZ_STORAGE_FILE)
             st.success(f"✅ Quiz '{quiz_title}' saved!")
-            st.session_state.generated_questions = []  # clear after save
+            st.session_state.generated_questions = []
 
-    # === Monitor Submissions ===
     st.header("📊 Student Submissions")
     if not st.session_state.quizzes:
         st.info("No quizzes saved yet.")
@@ -195,7 +189,7 @@ Reference:
                 st.write("No student submissions yet.")
             else:
                 for resp in responses:
-                    st.markdown(f"👤 **{resp['student']}** — Score: **{resp['score']}** / {len(quiz['questions']) * 3}")
+                    st.markdown(f"👤 **{resp['student']}** — Score: **{resp['score']}** / 5")
                     with st.expander("View Answers"):
                         for idx, ans in enumerate(resp['answers']):
                             st.write(f"Q{idx+1}: {quiz['questions'][idx]['question']}")
@@ -218,37 +212,43 @@ elif mode == "Student":
         total_score = 0
 
         for idx, q in enumerate(quiz["questions"]):
-            slider_val = st.slider(q["question"], 1, 3, 2, format="%d", key=f"slider_{idx}")
-            answers.append(["Bad", "Average", "Excellent"][slider_val - 1])
-            total_score += slider_val
+            st.markdown(f"**Q{idx+1}: {q['question']}**")
+            choice = st.radio(
+                label="Select your answer:",
+                options=["Bad", "Average", "Excellent"],
+                key=f"radio_{idx}",
+                horizontal=True
+            )
+            answers.append(choice)
+            score_val = {"Bad": 1, "Average": 2, "Excellent": 3}[choice]
+            total_score += score_val
+
+        max_score = len(quiz["questions"]) * 3
+        normalized_score = round((total_score / max_score) * 5, 2)
 
         if st.button("🎯 Submit Quiz"):
             result = {
                 "student": student_name,
-                "score": total_score,
+                "score": normalized_score,
                 "answers": answers
             }
             if selected_quiz_id not in st.session_state.responses:
                 st.session_state.responses[selected_quiz_id] = []
             st.session_state.responses[selected_quiz_id].append(result)
             save_data(st.session_state.responses, RESPONSES_STORAGE_FILE)
-            st.success(f"✅ Your score is {total_score} / {len(quiz['questions']) * 3}")
+            st.success(f"✅ Your score is {normalized_score} / 5")
 
-            # Calculate average score per question
-            avg_score = total_score / len(quiz['questions'])
-
-            # Map average score to personality style
-            if avg_score <= 1.5:
+            # Personality mapping
+            if normalized_score <= 1.6:
                 personality = "Reflective Thinker"
                 description = "You tend to be thoughtful and introspective, carefully analyzing situations."
-            elif avg_score <= 2.5:
+            elif normalized_score <= 3.3:
                 personality = "Balanced Achiever"
                 description = "You have a balanced approach, combining effort and adaptability to succeed."
             else:
                 personality = "Dynamic Leader"
                 description = "You are confident, energetic, and often take charge in challenging situations."
 
-            # Show personality result
             st.subheader("🧩 Your Personality Character")
             st.markdown(f"### **{personality}**")
             st.write(description)

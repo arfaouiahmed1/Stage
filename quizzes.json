@@ -89,5 +89,79 @@
         ]
       }
     ]
+  },
+  "ca7ccc89": {
+    "title": "soft",
+    "category": "Soft Skills",
+    "subcategory": "Communication",
+    "difficulty": "Beginner",
+    "prompt": "",
+    "questions": [
+      {
+        "question": "How clearly do you communicate your ideas to others?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How well do you accept constructive feedback from others?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How actively do you listen during group discussions?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      }
+    ]
+  },
+  "7badd1fd": {
+    "title": "teamwork",
+    "category": "Teamwork",
+    "subcategory": "Conflict Resolution",
+    "difficulty": "Beginner",
+    "prompt": "",
+    "questions": [
+      {
+        "question": "How well do you handle disagreements with teammates?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How often do you listen to others' viewpoints before responding in a conflict?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How effectively do you suggest compromises to resolve team conflicts?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How well do you stay calm and respectful during disagreements?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      }
+    ]
   }
 }
