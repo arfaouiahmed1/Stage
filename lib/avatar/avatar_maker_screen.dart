@@ -75,34 +75,42 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
       );
 
       // Get your existing controller
-      final avatarController = Get.find<AvatarMakerController>();
-      final firebaseService = Get.find<FirebaseAvatarService>();
-      
-      // Create avatar data from your controller state
-      final avatarData = AvatarData(
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        avatarName: "My Custom Avatar",
-        userId: null,
-        selectedCategory: avatarController.selectedCategory,
-        selectedColor: avatarController.selectedColor,
-        selectedBody: avatarController.selectedBody,
-        selectedEyes: avatarController.selectedEyes,
-        selectedNose: avatarController.selectedNose,
-        selectedMouth: avatarController.selectedMouth,
-        selectedHairType: avatarController.selectedHairType == HairType.short ? "short" : "long",
-        selectedShortHair: avatarController.selectedShortHair,
-        selectedLongHair: avatarController.selectedLongHair,
-        selectedFacialHair: avatarController.selectedFacialHair,
-        selectedFacialHairColor: avatarController.selectedFacialHairColor,
-        selectedClothing: avatarController.selectedClothing,
-        selectedClothingColor: avatarController.selectedClothingColor,
-        selectedAccessory: avatarController.selectedAccessory,
-        selectedAccessoryColor: avatarController.selectedAccessoryColor,
-        selectedHat: avatarController.selectedHat,
-        selectedBackgroundColor: avatarController.selectedBackgroundColor,
-        selectedBackgroundShape: _backgroundShapeToString(avatarController.selectedBackgroundShape),
-      );
+     // Get your existing controller
+final avatarController = Get.find<AvatarMakerController>();
+final firebaseService = Get.find<FirebaseAvatarService>();
+
+// Randomize avatar
+avatarController.randomize();
+
+// Attend que les valeurs soient bien mises à jour (200 ms)
+await Future.delayed(Duration(milliseconds: 200));
+
+// Crée ensuite l'objet AvatarData
+final avatarData = AvatarData(
+  createdAt: DateTime.now(),
+  updatedAt: DateTime.now(),
+  avatarName: "My Custom Avatar",
+  userId: null,
+  selectedCategory: avatarController.selectedCategory,
+  selectedColor: avatarController.selectedColor,
+  selectedBody: avatarController.selectedBody,
+  selectedEyes: avatarController.selectedEyes,
+  selectedNose: avatarController.selectedNose,
+  selectedMouth: avatarController.selectedMouth,
+  selectedHairType: avatarController.selectedHairType == HairType.short ? "short" : "long",
+  selectedShortHair: avatarController.selectedShortHair,
+  selectedLongHair: avatarController.selectedLongHair,
+  selectedFacialHair: avatarController.selectedFacialHair,
+  selectedFacialHairColor: avatarController.selectedFacialHairColor,
+  selectedClothing: avatarController.selectedClothing,
+  selectedClothingColor: avatarController.selectedClothingColor,
+  selectedAccessory: avatarController.selectedAccessory,
+  selectedAccessoryColor: avatarController.selectedAccessoryColor,
+  selectedHat: avatarController.selectedHat,
+  selectedBackgroundColor: avatarController.selectedBackgroundColor,
+  selectedBackgroundShape: _backgroundShapeToString(avatarController.selectedBackgroundShape),
+);
+
 
       // Save to Firebase with optional download
       String? avatarId = await firebaseService.saveAvatarWithImage(avatarData, _avatarKey, downloadToPC: downloadToPC);
@@ -271,8 +279,11 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
-              },
+
+             Navigator.of(context).pop(); // Ferme la boîte de dialogue
+             Navigator.pushReplacementNamed(context, '/listquiz'); // Redirige vers la page des quiz
+},
+
               style: TextButton.styleFrom(
                 backgroundColor: Colors.red.shade700,
                 shape: RoundedRectangleBorder(
@@ -652,5 +663,6 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
         ),
       ),
     );
+    
   } 
 }

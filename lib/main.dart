@@ -3,6 +3,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'firebase_options.dart'; // Your Firebase configuration file
 import 'screens/login_screen.dart';
+import 'screens/quiz_list.dart'; // Import your QuizListScreen
+import 'screens/waiting_screen.dart';
+import 'screens/quiz_code_entry_screen.dart'; // Import your QuizCodeEntryScreen  
 
 void main() async {
   // Ensure that plugin services are initialized so that Firebase can be used
@@ -201,6 +204,11 @@ class QuizApp extends StatelessWidget {
       // Fallback routes for compatibility
       routes: {
         '/login': (context) => const LoginScreen(),
+        '/listquiz': (context) =>  QuizListScreen(),
+        '/waiting': (context) => WaitingScreen(),
+                '/code': (context) => QuizCodeEntryScreen(),
+
+        
         // Add more routes as you create more screens
         // '/avatar-designer': (context) => AvatarDesignerScreen(),
         // '/quiz': (context) => QuizScreen(),
