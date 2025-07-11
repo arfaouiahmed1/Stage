@@ -80,16 +80,54 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
       _isLoading = true;
     });
 
-    await Future.delayed(const Duration(seconds: 1));
+    // Simulate code validation (accept any code for frontend demo)
+    await Future.delayed(const Duration(seconds: 2));
 
     if (mounted) {
-      Navigator.pushReplacementNamed(context, '/islands');
+      // Show success animation first
+      await _showSuccessAnimation();
+      
+      // Navigate back to quiz list with success result
+      Navigator.pop(context, true);
+    }
+  }
+
+  Future<void> _showSuccessAnimation() async {
+    // Stop the current animation
+    _controller.stop();
+    
+    // Show success overlay
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const _SuccessDialog(),
+    );
+
+    // Wait for animation to complete
+    await Future.delayed(const Duration(seconds: 2));
+    
+    // Close success dialog
+    if (mounted) {
+      Navigator.of(context).pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Enter Quiz Code',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           AnimatedBuilder(
@@ -125,54 +163,75 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
                         opacity: _fadeAnimation,
                         child: ScaleTransition(
                           scale: _scaleAnimation,
-                          child: const Column(
-                            children: [
-                              Icon(
-                                Icons.lock_outlined,
-                                size: 60,
-                                color: Colors.white,
+                          child: Container(
+                            padding: const EdgeInsets.all(30),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.1),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 2,
                               ),
-                              SizedBox(height: 20),
-                              Text(
-                                'Quiz Access',
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.5,
-                                  shadows: [
-                                    Shadow(
-                                      blurRadius: 8,
-                                      color: Colors.black45,
-                                      offset: Offset(2, 2),
-                                    )
-                                  ],
-                                ),
-                              ),
+                            ),
+                            child: const Icon(
+                              Icons.lock_open_outlined,
+                              size: 60,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: const Text(
+                          'Unlock Your Quiz',
+                          style: TextStyle(
+                            fontSize: 32,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            shadows: [
+                              Shadow(
+                                blurRadius: 8,
+                                color: Colors.black45,
+                                offset: Offset(2, 2),
+                              )
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 15),
                       FadeTransition(
                         opacity: _fadeAnimation,
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: Text(
-                            'Enter the code provided by your instructor',
+                            'Enter the access code provided by your instructor to unlock your quiz adventure',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.white70,
+                              color: Colors.white.withOpacity(0.9),
                               height: 1.5,
                             ),
                             textAlign: TextAlign.center,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 50),
                       _buildCodeInputField(),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 30),
                       _buildSubmitButton(),
+                      const SizedBox(height: 20),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -194,9 +253,9 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.2),
-              blurRadius: 10,
-              spreadRadius: 2,
-              offset: const Offset(0, 4),
+              blurRadius: 15,
+              spreadRadius: 3,
+              offset: const Offset(0, 5),
             )
           ],
         ),
@@ -205,18 +264,19 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 22,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 3,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 4,
           ),
           decoration: InputDecoration(
-            hintText: 'ABC123',
+            hintText: 'QUIZ123',
             hintStyle: TextStyle(
-              color: Colors.white.withOpacity(0.5),
-              letterSpacing: 2,
+              color: Colors.white.withOpacity(0.4),
+              letterSpacing: 3,
+              fontSize: 20,
             ),
             filled: true,
-            fillColor: Colors.black.withOpacity(0.25),
+            fillColor: Colors.black.withOpacity(0.3),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
               borderSide: BorderSide.none,
@@ -224,19 +284,26 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
               borderSide: BorderSide(
-                color: Colors.white.withOpacity(0.3),
-                width: 1,
+                color: Colors.white.withOpacity(0.4),
+                width: 2,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
               borderSide: const BorderSide(
                 color: Colors.white,
-                width: 2,
+                width: 3,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: const BorderSide(
+                color: Colors.amber,
+                width: 3,
               ),
             ),
             contentPadding: const EdgeInsets.symmetric(
-              vertical: 20,
+              vertical: 22,
               horizontal: 25,
             ),
             errorText: _errorText,
@@ -247,9 +314,11 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
             ),
             suffixIcon: _codeController.text.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(Icons.clear, 
-                              size: 24,
-                              color: Colors.white54),
+                    icon: Icon(
+                      Icons.clear,
+                      size: 26,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
                     onPressed: () {
                       _codeController.clear();
                       setState(() {});
@@ -258,6 +327,7 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
                 : null,
           ),
           onChanged: (value) => setState(() {}),
+          textCapitalization: TextCapitalization.characters,
         ),
       ),
     );
@@ -269,50 +339,77 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
       builder: (context, child) {
         return Transform.scale(
           scale: _buttonScaleAnimation.value,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _submitCode,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 211, 47, 47),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 50,
-                vertical: 18,
+          child: Container(
+            width: double.infinity,
+            height: 60,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFD32F2F), Color(0xFFB71C1C)],
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              elevation: 8,
-              shadowColor: Colors.black.withOpacity(0.4),
-              disabledBackgroundColor: Colors.grey.shade700,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFD32F2F).withOpacity(0.4),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'SUBMIT',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _submitCode,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: _isLoading
+                  ? const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 12),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                    ],
-                  ),
+                        SizedBox(width: 15),
+                        Text(
+                          'VALIDATING...',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ],
+                    )
+                  : const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.rocket_launch,
+                          size: 24,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'UNLOCK QUIZ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
           ),
         );
       },
@@ -332,6 +429,108 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
   }
 }
 
+// Success Dialog Widget
+class _SuccessDialog extends StatefulWidget {
+  const _SuccessDialog();
+
+  @override
+  State<_SuccessDialog> createState() => _SuccessDialogState();
+}
+
+class _SuccessDialogState extends State<_SuccessDialog>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _scaleAnim;
+  late Animation<double> _rotationAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _scaleAnim = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.elasticOut),
+    );
+
+    _rotationAnim = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
+
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: AnimatedBuilder(
+        animation: _animController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnim.value,
+            child: Container(
+              padding: const EdgeInsets.all(30),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
+                ),
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF4CAF50).withOpacity(0.4),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Transform.rotate(
+                    angle: _rotationAnim.value * 2 * pi,
+                    child: const Icon(
+                      Icons.check_circle,
+                      size: 80,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Success!',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Quiz unlocked successfully',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _ParticlePainter extends CustomPainter {
   final double animationValue;
 
@@ -339,7 +538,7 @@ class _ParticlePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final particleCount = 20;
+    final particleCount = 25;
     final center = Offset(size.width / 2, size.height / 2);
     final paint = Paint()
       ..style = PaintingStyle.fill
@@ -347,14 +546,23 @@ class _ParticlePainter extends CustomPainter {
 
     for (int i = 0; i < particleCount; i++) {
       final angle = 2 * pi * i / particleCount;
-      final distance = 150 + sin(animationValue * pi * 2 + i) * 50;
-      final x = center.dx + cos(angle + animationValue * pi * 0.5) * distance;
-      final y = center.dy + sin(angle + animationValue * pi * 0.5) * distance;
-      final radius = 2 + sin(animationValue * pi + i) * 3;
-      final opacity = 0.3 + sin(animationValue * pi * 0.5 + i) * 0.2;
+      final distance = 120 + sin(animationValue * pi * 2 + i) * 60;
+      final x = center.dx + cos(angle + animationValue * pi * 0.4) * distance;
+      final y = center.dy + sin(angle + animationValue * pi * 0.4) * distance;
+      final radius = 1.5 + sin(animationValue * pi + i) * 2.5;
+      final opacity = 0.2 + sin(animationValue * pi * 0.7 + i) * 0.3;
 
       paint.color = Colors.white.withOpacity(opacity);
       canvas.drawCircle(Offset(x, y), radius, paint);
+    }
+
+    // Add some sparkle effects
+    for (int i = 0; i < 15; i++) {
+      final sparkleX = (i * 80.0 + sin(animationValue * 3 + i) * 40) % size.width;
+      final sparkleY = (size.height * 0.3 + cos(animationValue * 2 + i) * 200) % size.height;
+      
+      paint.color = Colors.amber.withOpacity(0.4);
+      canvas.drawCircle(Offset(sparkleX, sparkleY), 1.0, paint);
     }
   }
 

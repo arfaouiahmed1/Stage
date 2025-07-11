@@ -6,6 +6,7 @@ import 'screens/login_screen.dart';
 import 'screens/quiz_list.dart'; // Import your QuizListScreen
 import 'screens/waiting_screen.dart';
 import 'screens/quiz_code_entry_screen.dart'; // Import your QuizCodeEntryScreen  
+import 'screens/islands_map_screen.dart'; // Import your IslandsMapScreen
 
 void main() async {
   // Ensure that plugin services are initialized so that Firebase can be used
@@ -195,6 +196,10 @@ class QuizApp extends StatelessWidget {
       // GetX Route Configuration (enhanced for GetX)
       getPages: [
         GetPage(name: '/login', page: () => const LoginScreen()),
+        GetPage(name: '/listquiz', page: () => QuizListScreen()),
+        GetPage(name: '/waiting', page: () => WaitingScreen()),
+        GetPage(name: '/code', page: () => QuizCodeEntryScreen()),
+        GetPage(name: '/islands', page: () => const IslandsMapScreen()),
         // Add more GetX routes as you create more screens
         // GetPage(name: '/avatar-maker', page: () => const AvatarMakerScreen()),
         // GetPage(name: '/quiz', page: () => const QuizScreen()),
@@ -204,10 +209,10 @@ class QuizApp extends StatelessWidget {
       // Fallback routes for compatibility
       routes: {
         '/login': (context) => const LoginScreen(),
-        '/listquiz': (context) =>  QuizListScreen(),
+        '/listquiz': (context) => QuizListScreen(),
         '/waiting': (context) => WaitingScreen(),
-                '/code': (context) => QuizCodeEntryScreen(),
-
+        '/code': (context) => QuizCodeEntryScreen(),
+        '/islands': (context) => const IslandsMapScreen(),
         
         // Add more routes as you create more screens
         // '/avatar-designer': (context) => AvatarDesignerScreen(),

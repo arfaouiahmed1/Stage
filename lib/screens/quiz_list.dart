@@ -5,10 +5,18 @@ import 'package:fluttermoji/fluttermoji.dart';
 import 'package:get/get.dart';
 
 import '../models/quiz.dart';
-import 'profile_screen.dart'; // Add this import
+import 'profile_screen.dart';
 
-class QuizListScreen extends StatelessWidget {
-  final List<Quiz> quizList = [
+class QuizListScreen extends StatefulWidget {
+  @override
+  State<QuizListScreen> createState() => _QuizListScreenState();
+}
+
+class _QuizListScreenState extends State<QuizListScreen> {
+  List<Quiz> quizList = []; // Start with empty list
+
+  // Available quizzes that can be unlocked
+  final List<Quiz> availableQuizzes = [
     Quiz(
       id: "1",
       title: "Technical Skills Assessment",
@@ -19,24 +27,98 @@ class QuizListScreen extends StatelessWidget {
     Quiz(
       id: "2",
       title: "Team Dynamics Navigator",
-      expiryDate: DateTime.now().subtract(const Duration(days: 1)),
+      expiryDate: DateTime.now().add(const Duration(days: 5)),
       duration: 15,
-      status: QuizStatus.expired,
+      status: QuizStatus.pending,
     ),
     Quiz(
       id: "3",
       title: "UX Design Mastery Test",
-      expiryDate: DateTime.now().add(const Duration(days: 1)),
+      expiryDate: DateTime.now().add(const Duration(days: 3)),
       duration: 12,
-      status: QuizStatus.done,
+      status: QuizStatus.pending,
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuizzes();
+  }
+
+  Future<void> _loadQuizzes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final unlockedQuizIds = prefs.getStringList('unlocked_quizzes') ?? [];
+    
+    setState(() {
+      quizList = availableQuizzes.where((quiz) => unlockedQuizIds.contains(quiz.id)).toList();
+    });
+  }
+
+  Future<void> _addQuizFromCode() async {
+    // Navigate to code entry screen and wait for result
+    final result = await Navigator.pushNamed(context, '/code');
+    
+    if (result == true) {
+      // Code was entered successfully, unlock a random quiz
+      await _unlockRandomQuiz();
+    }
+  }
+
+  Future<void> _unlockRandomQuiz() async {
+    final prefs = await SharedPreferences.getInstance();
+    final unlockedQuizIds = prefs.getStringList('unlocked_quizzes') ?? [];
+    
+    // Find quizzes that haven't been unlocked yet
+    final lockedQuizzes = availableQuizzes.where((quiz) => !unlockedQuizIds.contains(quiz.id)).toList();
+    
+    if (lockedQuizzes.isNotEmpty) {
+      // Pick a random quiz to unlock
+      final randomQuiz = lockedQuizzes[DateTime.now().millisecondsSinceEpoch % lockedQuizzes.length];
+      unlockedQuizIds.add(randomQuiz.id);
+      
+      // Save to preferences
+      await prefs.setStringList('unlocked_quizzes', unlockedQuizIds);
+      
+      // Update the UI
+      setState(() {
+        quizList.add(randomQuiz);
+      });
+      
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 10),
+              Expanded(child: Text('🎉 New quiz unlocked: ${randomQuiz.title}')),
+            ],
+          ),
+          backgroundColor: const Color(0xFF4CAF50),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       // Add the drawer property
       drawer: _buildDrawer(context),
+      // Add floating action button
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addQuizFromCode,
+        backgroundColor: const Color(0xFFD32F2F),
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add, size: 28),
+        tooltip: 'Add Quiz with Code',
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -69,19 +151,10 @@ class QuizListScreen extends StatelessWidget {
                     elevation: 0,
                     centerTitle: true,
                     iconTheme: const IconThemeData(color: Colors.white),
-                    // The drawer icon will automatically appear on the left
                   ),
                   Expanded(
                     child: quizList.isEmpty
-                        ? const Center(
-                            child: Text(
-                              "No quizzes available at the moment.",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.white,
-                              ),
-                            ),
-                          )
+                        ? _buildEmptyState()
                         : ListView.builder(
                             padding: const EdgeInsets.all(16),
                             itemCount: quizList.length,
@@ -99,6 +172,75 @@ class QuizListScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.1),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: const Icon(
+              Icons.quiz_outlined,
+              size: 80,
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(height: 30),
+          const Text(
+            "No Quizzes Yet",
+            style: TextStyle(
+              fontSize: 28,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 15),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              "Get started by adding your first quiz with an access code from your instructor.",
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white.withOpacity(0.8),
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 40),
+          ElevatedButton.icon(
+            onPressed: _addQuizFromCode,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFFD32F2F),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+              elevation: 8,
+            ),
+            icon: const Icon(Icons.add, size: 24),
+            label: const Text(
+              "Add Quiz with Code",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -190,7 +332,40 @@ class QuizListScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            // Settings Option (optional)
+            // Add Quiz Option
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withOpacity(0.05),
+              ),
+              child: ListTile(
+                leading: const Icon(
+                  Icons.add_circle_outline,
+                  color: Colors.white70,
+                  size: 28,
+                ),
+                title: const Text(
+                  'Add Quiz',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white54,
+                  size: 16,
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _addQuizFromCode();
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Settings Option
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
@@ -218,7 +393,6 @@ class QuizListScreen extends StatelessWidget {
                 ),
                 onTap: () {
                   Navigator.pop(context);
-                  // Add settings navigation here if needed
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Settings coming soon!'),
@@ -229,7 +403,7 @@ class QuizListScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            // About Option (optional)
+            // About Option
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
@@ -269,7 +443,6 @@ class QuizListScreen extends StatelessWidget {
 
   // Method to navigate to profile screen
   Future<void> _navigateToProfile(BuildContext context) async {
-    // Navigate to profile screen and wait for return
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -340,7 +513,7 @@ class QuizListScreen extends StatelessWidget {
     };
 
     final statusText = {
-      QuizStatus.pending: "🕒 Pending",
+      QuizStatus.pending: "🕒 Ready to Start",
       QuizStatus.done: "✅ Completed",
       QuizStatus.expired: "⏰ Expired",
     };
@@ -355,7 +528,7 @@ class QuizListScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: () {
           if (quiz.status == QuizStatus.pending) {
-            _startQuiz(context);
+            _startQuiz(context, quiz);
           }
         },
         child: Padding(
@@ -430,7 +603,7 @@ class QuizListScreen extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => _startQuiz(context),
+                    onPressed: () => _startQuiz(context, quiz),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFD32F2F),
                       shape: RoundedRectangleBorder(
@@ -441,10 +614,10 @@ class QuizListScreen extends StatelessWidget {
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.play_arrow, color: Colors.white),
+                        Icon(Icons.explore, color: Colors.white),
                         SizedBox(width: 8),
                         Text(
-                          "Start Quiz",
+                          "Start Adventure",
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -461,20 +634,28 @@ class QuizListScreen extends StatelessWidget {
     );
   }
 
-  void _startQuiz(BuildContext context) {
+  void _startQuiz(BuildContext context, Quiz quiz) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text("Preparing your quiz..."),
+        content: Row(
+          children: [
+            const Icon(Icons.sailing, color: Colors.white),
+            const SizedBox(width: 10),
+            Text("🚀 Launching ${quiz.title}..."),
+          ],
+        ),
         backgroundColor: const Color(0xFFD32F2F),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
+        duration: const Duration(seconds: 2),
       ),
     );
 
-    Future.delayed(const Duration(milliseconds: 800), () {
-      Navigator.pushNamed(context, '/waiting');
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      // Navigate directly to islands map
+      Navigator.pushNamed(context, '/islands');
     });
   }
 }
