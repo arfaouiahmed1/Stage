@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fluttermoji/fluttermoji.dart';
+import 'package:get/get.dart';
 
 import '../models/quiz.dart';
+import 'profile_screen.dart'; // Add this import
 
 class QuizListScreen extends StatelessWidget {
   final List<Quiz> quizList = [
@@ -31,6 +35,8 @@ class QuizListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Add the drawer property
+      drawer: _buildDrawer(context),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -63,6 +69,7 @@ class QuizListScreen extends StatelessWidget {
                     elevation: 0,
                     centerTitle: true,
                     iconTheme: const IconThemeData(color: Colors.white),
+                    // The drawer icon will automatically appear on the left
                   ),
                   Expanded(
                     child: quizList.isEmpty
@@ -93,6 +100,202 @@ class QuizListScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  // New method to build the drawer
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFD32F2F),
+              Color(0xFF1A1A1A),
+            ],
+          ),
+        ),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            // Drawer Header
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      Icons.person,
+                      size: 40,
+                      color: Color(0xFFD32F2F),
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Quiz App',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Menu',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Profile Option
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withOpacity(0.1),
+              ),
+              child: ListTile(
+                leading: const Icon(
+                  Icons.person_outline,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                title: const Text(
+                  'Profile',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white70,
+                  size: 16,
+                ),
+                onTap: () async {
+                  Navigator.pop(context); // Close the drawer
+                  await _navigateToProfile(context);
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Settings Option (optional)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withOpacity(0.05),
+              ),
+              child: ListTile(
+                leading: const Icon(
+                  Icons.settings_outlined,
+                  color: Colors.white70,
+                  size: 28,
+                ),
+                title: const Text(
+                  'Settings',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white54,
+                  size: 16,
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  // Add settings navigation here if needed
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Settings coming soon!'),
+                      backgroundColor: Color(0xFFD32F2F),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            // About Option (optional)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withOpacity(0.05),
+              ),
+              child: ListTile(
+                leading: const Icon(
+                  Icons.info_outline,
+                  color: Colors.white70,
+                  size: 28,
+                ),
+                title: const Text(
+                  'About',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white54,
+                  size: 16,
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showAboutDialog(context);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Method to navigate to profile screen
+  Future<void> _navigateToProfile(BuildContext context) async {
+    // Navigate to profile screen and wait for return
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ProfileScreen(),
+      ),
+    );
+  }
+
+  // Optional: Show about dialog
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('About Quiz App'),
+          content: const Text(
+            'This is a quiz application where you can take various assessments and track your progress.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
     );
   }
 

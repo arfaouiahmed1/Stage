@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../avatar/avatar_maker_screen.dart';
+import '../screens/signup_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -148,6 +150,11 @@ class _LoginScreenState extends State<LoginScreen>
     
     // Simulate login process
     await Future.delayed(const Duration(seconds: 2));
+    
+    // Sauvegarde email (et nom si disponible)
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profile_email', _emailController.text);
+    // Si tu as un champ nom, ajoute aussi : await prefs.setString('profile_name', ...);
     
     setState(() {
       _isLoading = false;
@@ -832,11 +839,9 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                   GestureDetector(
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Sign up feature coming soon!'),
-                          backgroundColor: Color.fromARGB(255, 121, 29, 27),
-                        ),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SignUpScreen()),
                       );
                     },
                     child: Text(
