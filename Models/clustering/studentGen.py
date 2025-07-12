@@ -2,12 +2,14 @@ import random
 import csv
 
 # === Configuration ===
-NUM_STUDENTS = 40  # You can change this
+NUM_STUDENTS = 200  # Changed from 40 to 200
 CATEGORIES = ["Hard Skills", "Soft Skills", "Creativity", "Teamwork"]
 
 # === Random name generator ===
-first_names = ["Alice", "Bob", "Clara", "Daniel", "Eva", "Faris", "Grace", "Hassan", "Ines", "Jamal", "Khadija", "Leo", "Maya", "Nabil", "Omar", "Paul", "Quinn", "Rania", "Sara", "Tariq"]
-last_names = ["Smith", "Johnson", "Lee", "Brown", "Jones", "Garcia", "Miller", "Davis", "Wilson", "Martinez", "Anderson", "Taylor", "Thomas", "Hernandez", "Lopez", "Ali", "Ben Ali", "Jouini", "Cherif", "Kacem"]
+first_names = ["Alice", "Bob", "Clara", "Daniel", "Eva", "Faris", "Grace", "Hassan", "Ines", "Jamal", 
+               "Khadija", "Leo", "Maya", "Nabil", "Omar", "Paul", "Quinn", "Rania", "Sara", "Tariq"]
+last_names = ["Smith", "Johnson", "Lee", "Brown", "Jones", "Garcia", "Miller", "Davis", "Wilson", "Martinez",
+              "Anderson", "Taylor", "Thomas", "Hernandez", "Lopez", "Ali", "Ben Ali", "Jouini", "Cherif", "Kacem"]
 
 def generate_name():
     return f"{random.choice(first_names)} {random.choice(last_names)}"
