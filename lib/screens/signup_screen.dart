@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../avatar/avatar_maker_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,20 +13,28 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _classeController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  String _selectedGender = '';
+  
+  // Replace with your actual Symfony server URL
+  static const String _baseUrl = 'http://127.0.0.1:8000'; // Change this to your server URL
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _classeController.dispose();
     super.dispose();
   }
 
@@ -32,23 +42,120 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    // Additional validation for gender selection
+    if (_selectedGender.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select your gender'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
-    // Simulate sign up process
-    await Future.delayed(const Duration(seconds: 2));
-    // Sauvegarde nom et email
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profile_name', _nameController.text);
-    await prefs.setString('profile_email', _emailController.text);
-    setState(() {
-      _isLoading = false;
-    });
-    // Navigate to Avatar Designer
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const AvatarMakerScreen()),
-    );
+
+    try {
+      // Prepare data for API
+      final userData = {
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text,
+        'firstname': _firstNameController.text.trim(),
+        'lastname': _lastNameController.text.trim(),
+        'sexe': _selectedGender,
+        'classe': _classeController.text.trim(),
+      };
+
+      // Make API call to Symfony backend
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/register'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode(userData),
+      );
+
+      if (response.statusCode == 201) {
+        // Success response
+        final responseData = json.decode(response.body);
+        
+        // Save user data locally for future reference
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('profile_email', _emailController.text.trim());
+        await prefs.setString('profile_firstname', _firstNameController.text.trim());
+        await prefs.setString('profile_lastname', _lastNameController.text.trim());
+        await prefs.setString('profile_name', '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}');
+        await prefs.setString('profile_gender', _selectedGender);
+        await prefs.setString('profile_classe', _classeController.text.trim());
+        
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(responseData['message'] ?? 'Account created successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          
+          // Navigate to Avatar Designer
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AvatarMakerScreen()),
+          );
+        }
+      } else {
+        // Handle error responses
+        final errorData = json.decode(response.body);
+        String errorMessage = 'Registration failed';
+        
+        if (response.statusCode == 409) {
+          errorMessage = 'Email already in use';
+        } else if (response.statusCode == 400) {
+          errorMessage = errorData['error'] ?? 'Invalid data provided';
+        } else {
+          errorMessage = errorData['error'] ?? 'Server error occurred';
+        }
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } on http.ClientException catch (e) {
+      // Network error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Network error. Please check your internet connection.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Other errors
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unexpected error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -88,21 +195,71 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             TextFormField(
-                              controller: _nameController,
+                              controller: _firstNameController,
                               decoration: const InputDecoration(
-                                labelText: 'Name',
+                                labelText: 'First Name',
                                 prefixIcon: Icon(Icons.person),
                               ),
-                              validator: (value) => value == null || value.isEmpty ? 'Enter your name' : null,
+                              validator: (value) => value == null || value.trim().isEmpty 
+                                  ? 'Enter your first name' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _lastNameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Last Name',
+                                prefixIcon: Icon(Icons.person_outline),
+                              ),
+                              validator: (value) => value == null || value.trim().isEmpty 
+                                  ? 'Enter your last name' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            DropdownButtonFormField<String>(
+                              value: _selectedGender.isEmpty ? null : _selectedGender,
+                              decoration: const InputDecoration(
+                                labelText: 'Gender',
+                                prefixIcon: Icon(Icons.wc),
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: 'Male', child: Text('Male')),
+                                DropdownMenuItem(value: 'Female', child: Text('Female')),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedGender = value ?? '';
+                                });
+                              },
+                              validator: (value) => value == null || value.isEmpty 
+                                  ? 'Please select your gender' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _classeController,
+                              decoration: const InputDecoration(
+                                labelText: 'Class',
+                                prefixIcon: Icon(Icons.school),
+                                hintText: 'e.g., 6th Grade, Class A, etc.',
+                              ),
+                              validator: (value) => value == null || value.trim().isEmpty 
+                                  ? 'Enter your class' : null,
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _emailController,
+                              keyboardType: TextInputType.emailAddress,
                               decoration: const InputDecoration(
                                 labelText: 'Email',
                                 prefixIcon: Icon(Icons.email),
                               ),
-                              validator: (value) => value == null || !value.contains('@') ? 'Enter a valid email' : null,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Enter your email';
+                                }
+                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                                  return 'Enter a valid email';
+                                }
+                                return null;
+                              },
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
@@ -120,7 +277,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   },
                                 ),
                               ),
-                              validator: (value) => value == null || value.length < 6 ? 'Password must be at least 6 characters' : null,
+                              validator: (value) => value == null || value.length < 6 
+                                  ? 'Password must be at least 6 characters' : null,
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
@@ -138,7 +296,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   },
                                 ),
                               ),
-                              validator: (value) => value != _passwordController.text ? 'Passwords do not match' : null,
+                              validator: (value) => value != _passwordController.text 
+                                  ? 'Passwords do not match' : null,
                             ),
                             const SizedBox(height: 24),
                             SizedBox(
@@ -152,7 +311,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 ),
                                 child: _isLoading
                                     ? const CircularProgressIndicator(color: Colors.white)
-                                    : const Text('Sign Up', style: TextStyle(fontSize: 18)),
+                                    : const Text(
+                                        'Sign Up', 
+                                        style: TextStyle(fontSize: 18, color: Colors.white),
+                                      ),
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -177,4 +339,4 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
   }
-} 
+}
