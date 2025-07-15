@@ -533,7 +533,7 @@ elif page == "Group Formation":
                                         break
                                         
                                     # Check if we're taking too long
-                                    if time.time() - start_time > max_time:
+                                    if time.time() - start_time > max_time: 
                                         st.warning(f"Group formation taking too long (>{max_time}s). Completing current group with best available students.")
                                         # Add some students to complete the group
                                         needed = min(group_size - len(group_members), len(unassigned_indices))
