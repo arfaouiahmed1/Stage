@@ -163,5 +163,46 @@
         ]
       }
     ]
+  },
+  "a5453144": {
+    "title": "Creativity",
+    "category": "Creativity",
+    "subcategory": "Design Thinking",
+    "difficulty": "Intermediate",
+    "prompt": "",
+    "questions": [
+      {
+        "question": "How well do you offer original solutions to design problems?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How effectively do you think outside the box during brainstorming sessions?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How often do you experiment with new tools or approaches in your design process?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How well do you bring new perspectives to traditional design methods?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      }
+    ]
   }
 }

@@ -2,7 +2,7 @@ import random
 import csv
 
 # === Configuration ===
-NUM_STUDENTS = 200  # Changed from 40 to 200
+NUM_STUDENTS = 40  # Réduit de 200 à 40
 CATEGORIES = ["Hard Skills", "Soft Skills", "Creativity", "Teamwork"]
 
 # === Random name generator ===
@@ -33,4 +33,4 @@ with open(output_file, mode="w", newline='', encoding="utf-8") as f:
     writer.writeheader()
     writer.writerows(students)
 
-print(f"✅ Data saved to {output_file}")
+print(f" Data saved to {output_file}")

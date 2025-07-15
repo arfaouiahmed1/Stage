@@ -236,7 +236,7 @@ elif mode == "Student":
                 st.session_state.responses[selected_quiz_id] = []
             st.session_state.responses[selected_quiz_id].append(result)
             save_data(st.session_state.responses, RESPONSES_STORAGE_FILE)
-            st.success(f"✅ Your score is {normalized_score} / 5")
+            st.success(f" Your score is {normalized_score} / 5")
 
             # Personality mapping
             if normalized_score <= 1.6:
