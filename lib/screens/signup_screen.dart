@@ -25,7 +25,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String _selectedGender = '';
   
   // Replace with your actual Symfony server URL
-  static const String _baseUrl = 'http://127.0.0.1:8000'; // Change this to your server URL
+  static const String _baseUrl = 'http://127.0.0.1:8000'; // Change this to your server URL (Student Registration)
 
   @override
   void dispose() {
@@ -59,7 +59,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
 
     try {
-      // Prepare data for API
+      // Prepare data for Student API
       final userData = {
         'email': _emailController.text.trim(),
         'password': _passwordController.text,
@@ -67,11 +67,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
         'lastname': _lastNameController.text.trim(),
         'sexe': _selectedGender,
         'classe': _classeController.text.trim(),
+        // Note: userRole will be set to 'etudiant' (student) by the backend
       };
 
-      // Make API call to Symfony backend
+      // Make API call to Symfony backend (Student Registration)
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/register'),
+        Uri.parse('$_baseUrl/api/student/register'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -91,12 +92,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         await prefs.setString('profile_name', '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}');
         await prefs.setString('profile_gender', _selectedGender);
         await prefs.setString('profile_classe', _classeController.text.trim());
+        await prefs.setString('profile_role', 'etudiant'); // Student role
         
         // Show success message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(responseData['message'] ?? 'Account created successfully!'),
+              content: Text(responseData['message'] ?? 'Student account created successfully!'),
               backgroundColor: Colors.green,
             ),
           );

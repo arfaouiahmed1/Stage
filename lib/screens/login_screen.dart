@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'dart:math' as math;
 import '../avatar/avatar_maker_screen.dart';
 import '../screens/signup_screen.dart';
@@ -19,6 +21,9 @@ class _LoginScreenState extends State<LoginScreen>
   
   bool _isLoading = false;
   bool _obscurePassword = true;
+  
+  // Replace with your actual Symfony server URL
+  static const String _baseUrl = 'http://127.0.0.1:8000'; // Change this to your server URL
   
   late AnimationController _slideController;
   late AnimationController _fadeController;
@@ -147,23 +152,161 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() {
       _isLoading = true;
     });
-    
-    // Simulate login process
-    await Future.delayed(const Duration(seconds: 2));
-    
-    // Sauvegarde email (et nom si disponible)
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profile_email', _emailController.text);
-    // Si tu as un champ nom, ajoute aussi : await prefs.setString('profile_name', ...);
-    
-    setState(() {
-      _isLoading = false;
-    });
-    
-    // Navigate to Avatar Designer
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const AvatarMakerScreen()),
+
+    try {
+      // Prepare login data
+      final loginData = {
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text,
+      };
+
+      // Make API call to Symfony backend
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/login'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode(loginData),
+      );
+
+      if (response.statusCode == 200) {
+        // Success response
+        final responseData = json.decode(response.body);
+        final userData = responseData['user'];
+        
+        // Save user data locally
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('profile_email', userData['email'] ?? '');
+        await prefs.setString('profile_firstname', userData['firstname'] ?? '');
+        await prefs.setString('profile_lastname', userData['lastname'] ?? '');
+        await prefs.setString('profile_name', '${userData['firstname'] ?? ''} ${userData['lastname'] ?? ''}');
+        await prefs.setString('profile_gender', userData['sexe'] ?? '');
+        await prefs.setString('profile_role', userData['userRole'] ?? '');
+        
+        // Save photo if available
+        if (userData['photoBase64'] != null && userData['photoBase64'].isNotEmpty) {
+          await prefs.setString('profile_photo', userData['photoBase64']);
+        }
+        
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Welcome back, ${userData['firstname'] ?? 'User'}!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+          
+          // Navigate to Avatar Designer
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AvatarMakerScreen()),
+          );
+        }
+      } else {
+        // Handle error responses
+        final errorData = json.decode(response.body);
+        String errorMessage = 'Login failed';
+        
+        switch (response.statusCode) {
+          case 400:
+            errorMessage = 'Please enter both email and password';
+            break;
+          case 401:
+            errorMessage = 'Wrong email or password';
+            break;
+          case 403:
+            errorMessage = 'Account access denied. Please contact your administrator.';
+            break;
+          case 404:
+            errorMessage = 'User not found. Please check your email or sign up first.';
+            break;
+          case 500:
+            errorMessage = 'Server error. Please try again later.';
+            break;
+          default:
+            errorMessage = errorData['error'] ?? 'An unexpected error occurred';
+        }
+        
+        if (mounted) {
+          _showErrorDialog(errorMessage);
+        }
+      }
+    } on http.ClientException catch (e) {
+      // Network error
+      if (mounted) {
+        _showErrorDialog('Network error. Please check your internet connection.');
+      }
+    } catch (e) {
+      // Other errors
+      if (mounted) {
+        _showErrorDialog('An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.red.shade600,
+                size: 28,
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Login Failed',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.red.shade600,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  'OK',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
