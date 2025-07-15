@@ -14,6 +14,7 @@ class AvatarMakerScreen extends StatefulWidget {
   State<AvatarMakerScreen> createState() => _AvatarMakerScreenState();
 }
 
+
 class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
   // GlobalKey for capturing the avatar as an image
   final GlobalKey _avatarKey = GlobalKey();

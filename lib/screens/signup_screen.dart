@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../avatar/avatar_maker_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -84,30 +83,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
         // Success response
         final responseData = json.decode(response.body);
         
-        // Save user data locally for future reference
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('profile_email', _emailController.text.trim());
-        await prefs.setString('profile_firstname', _firstNameController.text.trim());
-        await prefs.setString('profile_lastname', _lastNameController.text.trim());
-        await prefs.setString('profile_name', '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}');
-        await prefs.setString('profile_gender', _selectedGender);
-        await prefs.setString('profile_classe', _classeController.text.trim());
-        await prefs.setString('profile_role', 'etudiant'); // Student role
-        
-        // Show success message
+        // Show success message with instructions
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(responseData['message'] ?? 'Student account created successfully!'),
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Account created successfully! Please login with your credentials.',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
               backgroundColor: Colors.green,
+              duration: const Duration(seconds: 4),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           );
           
-          // Navigate to Avatar Designer
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const AvatarMakerScreen()),
-          );
+          // Show success dialog with option to go to login
+          await _showSuccessDialog();
         }
       } else {
         // Handle error responses
@@ -160,6 +162,108 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
+  Future<void> _showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap button to dismiss
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: Colors.green.shade600,
+                size: 28,
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Success!',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Your student account has been created successfully!',
+                style: const TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue.shade600),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'You can now login with your email and password.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue.shade800,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                _navigateToLogin();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade600,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.login, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text(
+                    'Go to Login',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateToLogin() {
+    // Navigate back to login screen and remove signup screen from stack
+    Navigator.of(context).pushReplacementNamed('/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -196,6 +300,34 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            // Header
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Column(
+                                children: [
+                                  const Text(
+                                    'Create Student Account',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1A1A1A),
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Join the QuizMaster community',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            
                             TextFormField(
                               controller: _firstNameController,
                               decoration: const InputDecoration(
@@ -225,6 +357,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               items: const [
                                 DropdownMenuItem(value: 'Male', child: Text('Male')),
                                 DropdownMenuItem(value: 'Female', child: Text('Female')),
+                                DropdownMenuItem(value: 'Other', child: Text('Other')),
                               ],
                               onChanged: (value) {
                                 setState(() {
@@ -314,7 +447,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 child: _isLoading
                                     ? const CircularProgressIndicator(color: Colors.white)
                                     : const Text(
-                                        'Sign Up', 
+                                        'Create Account', 
                                         style: TextStyle(fontSize: 18, color: Colors.white),
                                       ),
                               ),

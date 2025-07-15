@@ -14,6 +14,8 @@ class QuizListScreen extends StatefulWidget {
 
 class _QuizListScreenState extends State<QuizListScreen> {
   List<Quiz> quizList = []; // Start with empty list
+  String _userName = '';
+  String _userEmail = '';
 
   // Available quizzes that can be unlocked
   final List<Quiz> availableQuizzes = [
@@ -44,6 +46,15 @@ class _QuizListScreenState extends State<QuizListScreen> {
   void initState() {
     super.initState();
     _loadQuizzes();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('profile_name') ?? 'User';
+      _userEmail = prefs.getString('profile_email') ?? '';
+    });
   }
 
   Future<void> _loadQuizzes() async {
@@ -104,6 +115,94 @@ class _QuizListScreenState extends State<QuizListScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _logout() async {
+    // Show confirmation dialog
+    bool confirmed = await _showLogoutConfirmDialog();
+    if (!confirmed) return;
+
+    try {
+      // Clear all stored user data (destroy session)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      
+      // Show logout success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.logout, color: Colors.white),
+                SizedBox(width: 10),
+                Text('Logged out successfully'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        
+        // Navigate to login screen and clear navigation stack
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error logging out. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<bool> _showLogoutConfirmDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.logout, color: Color(0xFFD32F2F)),
+              SizedBox(width: 10),
+              Text('Logout'),
+            ],
+          ),
+          content: const Text(
+            'Are you sure you want to logout? You will need to sign in again to access your quizzes.',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD32F2F),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Logout',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    ) ?? false;
   }
 
   @override
@@ -245,7 +344,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
     );
   }
 
-  // New method to build the drawer
+  // Updated method to build the drawer with logout
   Widget _buildDrawer(BuildContext context) {
     return Drawer(
       child: Container(
@@ -259,19 +358,18 @@ class _QuizListScreenState extends State<QuizListScreen> {
             ],
           ),
         ),
-        child: ListView(
-          padding: EdgeInsets.zero,
+        child: Column(
           children: [
-            // Drawer Header
-            const DrawerHeader(
-              decoration: BoxDecoration(
+            // Drawer Header with user info
+            DrawerHeader(
+              decoration: const BoxDecoration(
                 color: Colors.transparent,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircleAvatar(
+                  const CircleAvatar(
                     radius: 30,
                     backgroundColor: Colors.white,
                     child: Icon(
@@ -280,159 +378,221 @@ class _QuizListScreenState extends State<QuizListScreen> {
                       color: Color(0xFFD32F2F),
                     ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(
-                    'Quiz App',
-                    style: TextStyle(
+                    _userName.isNotEmpty ? _userName : 'Quiz App',
+                    style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    'Menu',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
+                  if (_userEmail.isNotEmpty)
+                    Text(
+                      _userEmail,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  else
+                    const Text(
+                      'Student Portal',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            
+            // Expanded area for menu items
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  // Profile Option
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.person_outline,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      title: const Text(
+                        'Profile',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white70,
+                        size: 16,
+                      ),
+                      onTap: () async {
+                        Navigator.pop(context); // Close the drawer
+                        await _navigateToProfile(context);
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Add Quiz Option
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white.withOpacity(0.05),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.add_circle_outline,
+                        color: Colors.white70,
+                        size: 28,
+                      ),
+                      title: const Text(
+                        'Add Quiz',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white54,
+                        size: 16,
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _addQuizFromCode();
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Settings Option
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white.withOpacity(0.05),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.settings_outlined,
+                        color: Colors.white70,
+                        size: 28,
+                      ),
+                      title: const Text(
+                        'Settings',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white54,
+                        size: 16,
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Settings coming soon!'),
+                            backgroundColor: Color(0xFFD32F2F),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // About Option
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white.withOpacity(0.05),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.info_outline,
+                        color: Colors.white70,
+                        size: 28,
+                      ),
+                      title: const Text(
+                        'About',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white54,
+                        size: 16,
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showAboutDialog(context);
+                      },
                     ),
                   ),
                 ],
               ),
             ),
-            // Profile Option
+            
+            // Logout button at the bottom
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.white.withOpacity(0.1),
-              ),
-              child: ListTile(
-                leading: const Icon(
-                  Icons.person_outline,
-                  color: Colors.white,
-                  size: 28,
+              margin: const EdgeInsets.all(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.red.withOpacity(0.2),
+                  border: Border.all(
+                    color: Colors.red.withOpacity(0.3),
+                    width: 1,
+                  ),
                 ),
-                title: const Text(
-                  'Profile',
-                  style: TextStyle(
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.logout,
                     color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
+                    size: 28,
                   ),
-                ),
-                trailing: const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white70,
-                  size: 16,
-                ),
-                onTap: () async {
-                  Navigator.pop(context); // Close the drawer
-                  await _navigateToProfile(context);
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Add Quiz Option
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.white.withOpacity(0.05),
-              ),
-              child: ListTile(
-                leading: const Icon(
-                  Icons.add_circle_outline,
-                  color: Colors.white70,
-                  size: 28,
-                ),
-                title: const Text(
-                  'Add Quiz',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                trailing: const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white54,
-                  size: 16,
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _addQuizFromCode();
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Settings Option
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.white.withOpacity(0.05),
-              ),
-              child: ListTile(
-                leading: const Icon(
-                  Icons.settings_outlined,
-                  color: Colors.white70,
-                  size: 28,
-                ),
-                title: const Text(
-                  'Settings',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                trailing: const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white54,
-                  size: 16,
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Settings coming soon!'),
-                      backgroundColor: Color(0xFFD32F2F),
+                  title: const Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            // About Option
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.white.withOpacity(0.05),
-              ),
-              child: ListTile(
-                leading: const Icon(
-                  Icons.info_outline,
-                  color: Colors.white70,
-                  size: 28,
-                ),
-                title: const Text(
-                  'About',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
                   ),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white70,
+                    size: 16,
+                  ),
+                  onTap: () {
+                    Navigator.pop(context); // Close drawer first
+                    _logout();
+                  },
                 ),
-                trailing: const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.white54,
-                  size: 16,
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showAboutDialog(context);
-                },
               ),
             ),
           ],
@@ -449,6 +609,8 @@ class _QuizListScreenState extends State<QuizListScreen> {
         builder: (context) => const ProfileScreen(),
       ),
     );
+    // Reload user info when returning from profile
+    _loadUserInfo();
   }
 
   // Optional: Show about dialog

@@ -183,11 +183,15 @@ class _LoginScreenState extends State<LoginScreen>
         await prefs.setString('profile_name', '${userData['firstname'] ?? ''} ${userData['lastname'] ?? ''}');
         await prefs.setString('profile_gender', userData['sexe'] ?? '');
         await prefs.setString('profile_role', userData['userRole'] ?? '');
+        await prefs.setString('profile_classe', userData['classe'] ?? '');
         
         // Save photo if available
         if (userData['photoBase64'] != null && userData['photoBase64'].isNotEmpty) {
           await prefs.setString('profile_photo', userData['photoBase64']);
         }
+        
+        // Check if this is the first time login (avatar not customized yet)
+        bool isFirstLogin = !prefs.containsKey('has_customized_avatar');
         
         // Show success message
         if (mounted) {
@@ -199,11 +203,16 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           );
           
-          // Navigate to Avatar Designer
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const AvatarMakerScreen()),
-          );
+          if (isFirstLogin) {
+            // First time login - go to Avatar Designer
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AvatarMakerScreen()),
+            );
+          } else {
+            // Subsequent logins - go directly to Quiz List
+            Navigator.pushReplacementNamed(context, '/quiz-list');
+          }
         }
       } else {
         // Handle error responses
