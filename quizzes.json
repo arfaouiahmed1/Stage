@@ -204,5 +204,38 @@
         ]
       }
     ]
+  },
+  "643d1b68": {
+    "title": "",
+    "category": "Soft Skills",
+    "subcategory": "Communication",
+    "difficulty": "Beginner",
+    "prompt": "",
+    "questions": [
+      {
+        "question": "How clearly do you communicate your ideas in a group discussion?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How well do you listen and respond to others during a conversation?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      },
+      {
+        "question": "How effectively do you accept and apply constructive feedback?",
+        "choices": [
+          "Bad",
+          "Average",
+          "Excellent"
+        ]
+      }
+    ]
   }
 }

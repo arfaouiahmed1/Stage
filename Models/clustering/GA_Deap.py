@@ -9,7 +9,7 @@ st.set_page_config(layout="wide")
 st.title("🧬 Optimisation de la formation de groupes (Algorithme Génétique)")
 
 # --- Chargement CSV ---
-CSV_PATH = "/workspaces/Stage/Models/clustering/synthetic_students.csv"
+CSV_PATH = "/workspaces/Stage/Models/Datasets/students_train.csv"
 
 try:
     df = pd.read_csv(CSV_PATH)
