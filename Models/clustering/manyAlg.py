@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
+from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN, SpectralClustering
+from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score, davies_bouldin_score
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -27,50 +28,58 @@ def try_all_clustering_models(X_scaled, max_k):
     for k in range(3, max_k + 1):
         # KMeans
         kmeans = KMeans(n_clusters=k, random_state=42)
-        kmeans_labels = kmeans.fit_predict(X_scaled)
-        if len(set(kmeans_labels)) > 1:
-            sil = silhouette_score(X_scaled, kmeans_labels)
-            db = davies_bouldin_score(X_scaled, kmeans_labels)
-            results[f"KMeans_{k}"] = (kmeans_labels, sil, db)
+        labels = kmeans.fit_predict(X_scaled)
+        if len(set(labels)) > 1:
+            sil = silhouette_score(X_scaled, labels)
+            db = davies_bouldin_score(X_scaled, labels)
+            results[f"KMeans_{k}"] = (labels, sil, db)
 
         # Agglomerative
         agg = AgglomerativeClustering(n_clusters=k)
-        agg_labels = agg.fit_predict(X_scaled)
-        if len(set(agg_labels)) > 1:
-            sil = silhouette_score(X_scaled, agg_labels)
-            db = davies_bouldin_score(X_scaled, agg_labels)
-            results[f"Agglomerative_{k}"] = (agg_labels, sil, db)
+        labels = agg.fit_predict(X_scaled)
+        if len(set(labels)) > 1:
+            sil = silhouette_score(X_scaled, labels)
+            db = davies_bouldin_score(X_scaled, labels)
+            results[f"Agglomerative_{k}"] = (labels, sil, db)
 
-    # DBSCAN
+        # Gaussian Mixture
+        gmm = GaussianMixture(n_components=k, random_state=42)
+        labels = gmm.fit_predict(X_scaled)
+        if len(set(labels)) > 1:
+            sil = silhouette_score(X_scaled, labels)
+            db = davies_bouldin_score(X_scaled, labels)
+            results[f"GMM_{k}"] = (labels, sil, db)
+
+        # Spectral Clustering
+        spectral = SpectralClustering(n_clusters=k, affinity='nearest_neighbors', random_state=42)
+        labels = spectral.fit_predict(X_scaled)
+        if len(set(labels)) > 1:
+            sil = silhouette_score(X_scaled, labels)
+            db = davies_bouldin_score(X_scaled, labels)
+            results[f"Spectral_{k}"] = (labels, sil, db)
+
+    # DBSCAN (only once, no k parameter)
     dbscan = DBSCAN(eps=0.4, min_samples=3)
-    dbscan_labels = dbscan.fit_predict(X_scaled)
-    if len(set(dbscan_labels)) > 1 and len(set(dbscan_labels)) < len(X_scaled):
-        sil = silhouette_score(X_scaled, dbscan_labels)
-        db = davies_bouldin_score(X_scaled, dbscan_labels)
-        results["DBSCAN"] = (dbscan_labels, sil, db)
+    labels = dbscan.fit_predict(X_scaled)
+    if len(set(labels)) > 1 and len(set(labels)) < len(X_scaled):
+        sil = silhouette_score(X_scaled, labels)
+        db = davies_bouldin_score(X_scaled, labels)
+        results["DBSCAN"] = (labels, sil, db)
 
     return results
 
-# --- Group Evaluation ---
+# --- Evaluate Clusters ---
 def evaluate_clusters(clustered_df):
     group_sizes = clustered_df['cluster'].value_counts().sort_index()
-    max_size = group_sizes.max()
-    min_size = group_sizes.min()
-    std_dev = group_sizes.std()
-    return group_sizes, max_size, min_size, std_dev
+    return group_sizes, group_sizes.max(), group_sizes.min(), group_sizes.std()
 
-# --- Form Heterogeneous Groups of 5 to 7 Students ---
+# --- Form Heterogeneous Groups ---
 def form_groups(df, n_groups):
-    # Sort by each feature to distribute heterogeneity
-    df_sorted = df.sort_values(by=['hard_skills', 'soft_skills', 'creativity', 'teamwork'], ascending=[False]*4)
-    df_sorted = df_sorted.reset_index(drop=True)
-
+    df_sorted = df.sort_values(by=['hard_skills', 'soft_skills', 'creativity', 'teamwork'], ascending=[False]*4).reset_index(drop=True)
     groups = [[] for _ in range(n_groups)]
     for i, (_, row) in enumerate(df_sorted.iterrows()):
         groups[i % n_groups].append(row)
-
-    group_dfs = [pd.DataFrame(group) for group in groups]
-    return group_dfs
+    return [pd.DataFrame(group) for group in groups]
 
 # --- Main App ---
 st.set_page_config(layout="wide")
@@ -83,7 +92,6 @@ if not df.empty:
     df_class = df[df["class"] == selected_class].copy().reset_index(drop=True)
     st.write(f"✅ {len(df_class)} students found in class `{selected_class}`.")
 
-    # Scale features
     features = ['hard_skills', 'soft_skills', 'creativity', 'teamwork']
     X = df_class[features]
     scaler = MinMaxScaler()
@@ -95,14 +103,10 @@ if not df.empty:
     if not results:
         st.error("❌ No valid clustering found.")
     else:
-        summary = []
-        for name, (_, sil, db) in results.items():
-            summary.append((name, sil, db))
-
+        summary = [(name, sil, db) for name, (_, sil, db) in results.items()]
         results_df = pd.DataFrame(summary, columns=["Model", "Silhouette Score", "Davies-Bouldin"])
         st.dataframe(results_df.sort_values("Silhouette Score", ascending=False))
 
-        # Pick the best model (highest silhouette score)
         best_model = results_df.sort_values("Silhouette Score", ascending=False).iloc[0]["Model"]
         st.success(f"✅ Best clustering model: `{best_model}`")
 
@@ -123,7 +127,6 @@ if not df.empty:
         st.subheader("👥 Clustered Students")
         st.dataframe(df_class[["first_name", "last_name", "cluster"] + features])
 
-        # Form balanced heterogeneous groups
         group_size = st.slider("👫 Group Size", 5, 7, 6)
         n_groups = len(df_class) // group_size
 
@@ -133,7 +136,6 @@ if not df.empty:
                 st.markdown(f"#### 🧠 Group {i+1}")
                 st.dataframe(group_df[["first_name", "last_name", "hard_skills", "soft_skills", "creativity", "teamwork"]])
 
-            # Export
             export_df = pd.concat([group.assign(group=i+1) for i, group in enumerate(groups)])
             csv = export_df.to_csv(index=False).encode('utf-8')
             st.download_button("⬇️ Download Grouped CSV", csv, f"{selected_class}_grouped.csv", "text/csv")
