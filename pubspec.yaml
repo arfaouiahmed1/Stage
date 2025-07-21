@@ -28,7 +28,10 @@ dependencies:
   cloud_firestore: ^4.13.6
   intl: ^0.20.2
   shared_preferences: ^2.0.0
-
+  
+  # 3D Model Rendering (Cross-platform)
+  model_viewer_plus: ^1.7.2
+  flutter_staggered_animations: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -50,3 +53,7 @@ flutter:
     - assets/avatar/head/accessories/
     - assets/avatar/head/hair/long/
     - assets/avatar/head/hair/short/
+    # 3D Models (GLB/FBX/OBJ formats supported)
+    - assets/models/
+    # 3D Models (OBJ format)
+    - assets/models/
