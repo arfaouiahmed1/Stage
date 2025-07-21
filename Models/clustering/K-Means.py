@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 
 st.set_page_config(layout="wide")
-st.title("🧠 Optimizing Balanced Student Group Formation")
+st.title(" Optimizing Balanced Student Group Formation")
 
 CSV_PATH = "/workspaces/Stage/Datasets/students_train.csv"
 

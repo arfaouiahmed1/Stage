@@ -7,7 +7,7 @@ from sklearn.metrics import silhouette_score, davies_bouldin_score
 import random
 
 st.set_page_config(layout="wide")
-st.title(" Hybrid Group Formation: Improved Grouping + GA with Repair")
+st.title("🤖 Hybrid Group Formation: Clustering + GA with Repair")
 
 CSV_PATH = "/workspaces/Stage/Datasets/students_dataset.csv"
 
@@ -32,65 +32,69 @@ if filtered_df.empty:
     st.stop()
 
 filtered_df["Name"] = filtered_df["first_name"] + " " + filtered_df["last_name"]
-st.subheader(f"📊 Students from class {selected_class}")
-st.dataframe(filtered_df["Name"])
 
 features_raw = filtered_df[['hard_skills', 'soft_skills', 'creativity', 'teamwork']].values
 scaler = MinMaxScaler()
 features = scaler.fit_transform(features_raw)
 
 num_students = len(filtered_df)
-group_size = st.slider("🎯 Target group size (between 5 and 7 members)", min_value=5, max_value=7, value=6, step=1)
-num_groups = int(np.ceil(num_students / group_size))
+group_size_min, group_size_max = 5, 7
+num_groups = int(np.ceil(num_students / group_size_min))
 
-# KMeans clustering
-kmeans = KMeans(n_clusters=4, random_state=42, n_init='auto')
+# --- Step 1: KMeans clustering ---
+kmeans = KMeans(n_clusters=num_groups, random_state=42, n_init='auto')
 clusters = kmeans.fit_predict(features)
 filtered_df['Cluster'] = clusters
 
-st.subheader("🔍 Cluster Assignments (K-Means)")
+# --- Step 2: Evaluate clustering only ---
+sil_score = silhouette_score(features, clusters)
+db_score = davies_bouldin_score(features, clusters)
+
+st.subheader("🔍 Initial Clustering (KMeans)")
 st.dataframe(filtered_df[['Name', 'Cluster', 'hard_skills', 'soft_skills', 'creativity', 'teamwork']])
 
-# Students with good skills (score > 3)
-good_students_per_skill = {}
-for skill in ['hard_skills', 'soft_skills', 'creativity', 'teamwork']:
-    good_students_per_skill[skill] = set(filtered_df.index[filtered_df[skill] > 3].tolist())
+st.subheader("📈 Clustering Metrics")
+st.metric("Silhouette Score (Higher is Better)", f"{sil_score:.3f}")
+st.metric("Davies-Bouldin Index (Lower is Better)", f"{db_score:.3f}")
+
+# --- Step 3: Initialize groups from clustering ---
+initial_groups = [set() for _ in range(num_groups)]
+for idx, cluster_label in enumerate(clusters):
+    initial_groups[cluster_label].add(idx)
+
+def fix_group_sizes(groups, min_size=5, max_size=7):
+    changed = True
+    while changed:
+        changed = False
+        for g in groups:
+            while len(g) > max_size:
+                student_to_move = g.pop()
+                possible_receivers = [grp for grp in groups if len(grp) < min_size or len(grp) < max_size]
+                if not possible_receivers:
+                    receiver = min(groups, key=len)
+                else:
+                    receiver = min(possible_receivers, key=len)
+                receiver.add(student_to_move)
+                changed = True
+        for g in groups:
+            while len(g) < min_size:
+                donor_groups = [grp for grp in groups if len(grp) > max_size]
+                if not donor_groups:
+                    break
+                donor = max(donor_groups, key=len)
+                student_to_move = donor.pop()
+                g.add(student_to_move)
+                changed = True
+    return groups
 
 def create_individual():
-    groups = [set() for _ in range(num_groups)]
-    assigned_students = set()
-    skills = ['hard_skills', 'soft_skills', 'creativity', 'teamwork']
-    for skill in skills:
-        good_students = list(good_students_per_skill[skill] - assigned_students)
-        random.shuffle(good_students)
-        for i in range(num_groups):
-            if i < len(good_students):
-                groups[i].add(good_students[i])
-                assigned_students.add(good_students[i])
-            else:
-                break
-    remaining_students = list(set(range(num_students)) - assigned_students)
-    random.shuffle(remaining_students)
-    idx = 0
-    for g in range(num_groups):
-        while len(groups[g]) < group_size - 1 and idx < len(remaining_students):
-            groups[g].add(remaining_students[idx])
-            idx += 1
-    leftovers = remaining_students[idx:]
-    for student in leftovers:
-        for g in range(num_groups):
-            if len(groups[g]) < group_size:
-                groups[g].add(student)
-                break
-    # Fix groups smaller than 5
-    for g in range(num_groups):
-        while len(groups[g]) < 5:
-            donor_groups = [gg for gg in range(num_groups) if len(groups[gg]) > 5 and gg != g]
-            if not donor_groups:
-                break
-            donor = random.choice(donor_groups)
-            moved_student = groups[donor].pop()
-            groups[g].add(moved_student)
+    groups = [set(g) for g in initial_groups]
+    assigned = set().union(*groups)
+    missing = set(range(num_students)) - assigned
+    for student in missing:
+        smallest = min(groups, key=len)
+        smallest.add(student)
+    groups = fix_group_sizes(groups, group_size_min, group_size_max)
     return groups
 
 def diversity_score(group, df):
@@ -99,18 +103,24 @@ def diversity_score(group, df):
     return genders + nationalities
 
 def fitness(grouping):
-    alpha, beta, gamma = 1.5, 0.3, 0.3
+    alpha, beta, gamma, delta = 1.5, 0.3, 0.3, 3.0
     scores = []
     for group in grouping:
         group_feats = features[list(group)]
+        size = len(group)
+        size_penalty = 0
+        if size < group_size_min or size > group_size_max:
+            size_penalty = -delta * abs(size - ((group_size_min + group_size_max)/2))
         if len(group_feats) > 1:
             mean_skill = np.mean(np.mean(group_feats, axis=0))
             std_dev = np.mean(np.std(group_feats, axis=0))
         else:
             mean_skill = 0
             std_dev = 5
+        skills_present = [any(filtered_df.loc[list(group), skill] > 3) for skill in ['hard_skills', 'soft_skills', 'creativity', 'teamwork']]
+        skill_penalty = -delta * (4 - sum(skills_present))
         div_score = diversity_score(group, filtered_df)
-        score = alpha * mean_skill - beta * std_dev + gamma * div_score
+        score = alpha * mean_skill - beta * std_dev + gamma * div_score + size_penalty + skill_penalty
         scores.append(score)
     return np.mean(scores)
 
@@ -121,11 +131,8 @@ def repair(groups):
     counts = {}
     for s in all_assigned:
         counts[s] = counts.get(s, 0) + 1
-
     duplicates = [s for s, c in counts.items() if c > 1]
     missing = set(range(num_students)) - set(all_assigned)
-
-    # Remove duplicates, keep one occurrence
     for d in duplicates:
         occurrences = 0
         for g in groups:
@@ -133,29 +140,12 @@ def repair(groups):
                 occurrences += 1
                 if occurrences > 1:
                     g.remove(d)
-
-    # Assign missing students to groups with space
     for m in missing:
-        assigned = False
         for g in groups:
-            if len(g) < group_size:
+            if len(g) < group_size_max:
                 g.add(m)
-                assigned = True
                 break
-        if not assigned:
-            smallest = min(groups, key=len)
-            smallest.add(m)
-
-    # Ensure no group smaller than 5 by borrowing from bigger groups
-    for g in groups:
-        while len(g) < 5:
-            donor_groups = [gg for gg in groups if len(gg) > 5 and gg != g]
-            if not donor_groups:
-                break
-            donor = random.choice(donor_groups)
-            moved_student = donor.pop()
-            g.add(moved_student)
-    return groups
+    return fix_group_sizes(groups, group_size_min, group_size_max)
 
 def mutate(individual):
     if len(individual) < 2:
@@ -168,8 +158,7 @@ def mutate(individual):
         individual[g1].add(i2)
         individual[g2].remove(i2)
         individual[g2].add(i1)
-    individual = repair(individual)
-    return individual
+    return repair(individual)
 
 def crossover(p1, p2):
     all_indices = set(range(num_students))
@@ -179,36 +168,26 @@ def crossover(p1, p2):
     for group in combined:
         valid_group = set()
         for idx in group:
-            if idx not in seen and len(valid_group) < group_size:
+            if idx not in seen and len(valid_group) < group_size_max:
                 valid_group.add(idx)
                 seen.add(idx)
-        if 5 <= len(valid_group) <= group_size:
+        if len(valid_group) >= group_size_min:
             new_groups.append(valid_group)
     left = list(all_indices - seen)
-    for i in range(0, len(left), group_size):
-        chunk = set(left[i:i + group_size])
-        if 5 <= len(chunk) <= group_size:
+    for i in range(0, len(left), group_size_max):
+        chunk = set(left[i:i + group_size_max])
+        if len(chunk) >= group_size_min:
             new_groups.append(chunk)
-    new_groups = repair(new_groups)
-    return new_groups
+    return repair(new_groups)
 
-def verify_groups(groups):
-    all_assigned = set().union(*groups)
-    if len(all_assigned) != num_students:
-        st.warning(f"Warning: Only {len(all_assigned)}/{num_students} students assigned.")
-    elif sum(len(g) for g in groups) != num_students:
-        st.warning(f"Warning: Total group sizes {sum(len(g) for g in groups)} != number of students {num_students}")
-    else:
-        st.success(f"All {num_students} students assigned correctly.")
-
-# Run GA
+# --- Run Genetic Algorithm ---
 pop_size = 50
 num_gen = 100
 population = [create_individual() for _ in range(pop_size)]
 
 for generation in range(num_gen):
     population.sort(key=fitness, reverse=True)
-    next_gen = population[:5]  # elitism
+    next_gen = population[:5]
     while len(next_gen) < pop_size:
         p1, p2 = random.sample(population[:15], 2)
         child = mutate(crossover(p1, p2))
@@ -216,9 +195,17 @@ for generation in range(num_gen):
     population = next_gen
 
 best_solution = population[0]
-verify_groups(best_solution)
 
-# Build DataFrame for groups
+# --- Step 4: Final Evaluation and Display ---
+
+labels = np.empty(num_students, dtype=int)
+for g_id, group in enumerate(best_solution):
+    for idx in group:
+        labels[idx] = g_id
+
+sil_score_final = silhouette_score(features, labels)
+db_score_final = davies_bouldin_score(features, labels)
+
 group_rows = []
 for g_id, group in enumerate(best_solution, start=1):
     for idx in group:
@@ -229,14 +216,8 @@ for g_id, group in enumerate(best_solution, start=1):
 
 groups_df = pd.DataFrame(group_rows)
 
-def highlight_group(val):
-    colors = ['#FFCDD2', '#C8E6C9', '#BBDEFB', '#FFF9C4', '#D1C4E9',
-              '#B2DFDB', '#F8BBD0', '#DCEDC8', '#FFE0B2', '#CFD8DC']
-    return f'background-color: {colors[(val-1) % len(colors)]}' if pd.notnull(val) else ''
-
 st.subheader(f"📋 Final Groups for class {selected_class}")
-st.dataframe(groups_df[['Group', 'Name', 'hard_skills', 'soft_skills', 'creativity', 'teamwork']]
-             .style.map(highlight_group, subset=['Group']))
+st.dataframe(groups_df[['Group', 'Name', 'hard_skills', 'soft_skills', 'creativity', 'teamwork']])
 
 st.subheader("📊 Group Skill Averages")
 st.dataframe(groups_df.groupby('Group')[['hard_skills', 'soft_skills', 'creativity', 'teamwork']].mean().style.format("{:.2f}"))
@@ -256,21 +237,15 @@ nationality_diversity = groups_df.groupby('Group')['nationality'].nunique().rena
 diversity_df = pd.concat([gender_diversity, nationality_diversity], axis=1)
 st.dataframe(diversity_df.style.format("{}"))
 
-# Clustering metrics for overall silhouette and DB index (on full features)
-try:
-    sil_score = silhouette_score(features, clusters)
-    db_index = davies_bouldin_score(features, clusters)
-    st.subheader("📈 Clustering Evaluation (K-Means)")
-    st.metric("Silhouette Score (higher better)", f"{sil_score:.3f}")
-    st.metric("Davies-Bouldin Index (lower better)", f"{db_index:.3f}")
-except Exception as e:
-    st.warning(f"Could not compute clustering metrics: {e}")
+st.subheader("📈 Final Grouping Clustering Quality Metrics")
+st.metric("Silhouette Score (Higher is Better)", f"{sil_score_final:.3f}")
+st.metric("Davies-Bouldin Index (Lower is Better)", f"{db_score_final:.3f}")
 
 st.subheader("📤 Export Full Group Members")
 export_df = groups_df[['Group', 'first_name', 'last_name', 'gender', 'nationality',
                        'hard_skills', 'soft_skills', 'creativity', 'teamwork']]
 export_df = export_df.sort_values(by='Group')
 st.dataframe(export_df)
-
 csv_data = export_df.to_csv(index=False).encode('utf-8')
-st.download_button("📥 Download Groups CSV", csv_data, file_name=f"grouped_students_{selected_class}.csv", mime='text/csv')
+st.download_button("📥 Download Groups CSV", csv_data,
+                   file_name=f"grouped_students_{selected_class}.csv", mime='text/csv')
