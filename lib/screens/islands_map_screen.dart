@@ -12,6 +12,20 @@ import 'category2_quiz_screen.dart';
 import 'category3_quiz_screen.dart';
 import 'category4_quiz_screen.dart';
 
+/*
+ * MANUAL ZOOM POSITIONING GUIDE:
+ * 
+ * 1. Set _useManualZoomCenters = true to enable manual positioning
+ * 2. Run the app and use the menu (three dots) -> "Debug Positions" 
+ * 3. Check your console/debug log for the calculated positions
+ * 4. Copy those coordinates to _manualZoomCenters map below
+ * 5. Adjust the coordinates as needed for perfect positioning
+ * 6. Test and fine-tune until the zoom targets exactly where you want
+ * 
+ * Example: If debug shows "Island 1: Offset(150, 250)" but you want it 
+ * slightly to the right and down, change it to "1: Offset(160, 260)"
+ */
+
 class IslandsMapScreen extends StatefulWidget {
   const IslandsMapScreen({Key? key}) : super(key: key);
 
@@ -42,6 +56,27 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
   int? _selectedIsland;
   bool _showQuiz = false;
   
+  // GlobalKeys for precise positioning (optional for pixel-perfect zoom)
+  final Map<int, GlobalKey> _islandKeys = {};
+  
+  // Manual zoom centers for each island (set to null to use automatic calculation)
+  // You can set specific pixel coordinates for pinpoint accuracy
+  final Map<int, Offset?> _manualZoomCenters = {
+    1: Offset(150, 250),    // Island 1: Adjust these coordinates as needed
+    2: Offset(280, 200),    // Island 2: Adjust these coordinates as needed  
+    3: Offset(120, 450),    // Island 3: Adjust these coordinates as needed
+    4: Offset(300, 480),    // Island 4: Adjust these coordinates as needed
+    
+    // Set to null to use automatic calculation:
+    // 1: null,
+    // 2: null,
+    // 3: null,
+    // 4: null,
+  };
+
+  // Set this to true to enable manual zoom positioning
+  final bool _useManualZoomCenters = true;
+
   // Island Data for Quiz Game with PNG Images
   final List<QuizIsland> _islands = [
     QuizIsland(
@@ -106,6 +141,7 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
+    _initializeIslandKeys();
   }
 
   void _initializeAnimations() {
@@ -192,6 +228,12 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
       parent: _lightController,
       curve: Curves.easeInOut,
     ));
+  }
+
+  void _initializeIslandKeys() {
+    for (final island in _islands) {
+      _islandKeys[island.id] = GlobalKey();
+    }
   }
 
   @override
@@ -370,20 +412,80 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
   }
 
   void _startQuiz(QuizIsland island) {
-    // Get the island's position on screen for zoom transition
-    final screenSize = MediaQuery.of(context).size;
-    final islandX = island.position.dx * screenSize.width;
-    final islandY = island.position.dy * screenSize.height;
-    final islandCenter = Offset(islandX, islandY);
+    Offset zoomCenter;
     
-    // Navigate with cinematic zoom transition
+    // Check if manual zoom center is enabled and available for this island
+    if (_useManualZoomCenters && _manualZoomCenters[island.id] != null) {
+      zoomCenter = _manualZoomCenters[island.id]!;
+      print('Using MANUAL zoom center for island ${island.id}: $zoomCenter');
+    } else {
+      // Try pixel-perfect positioning first
+      final RenderBox? renderBox = _islandKeys[island.id]?.currentContext?.findRenderObject() as RenderBox?;
+      
+      if (renderBox != null) {
+        // Get the exact position of the rendered island
+        final position = renderBox.localToGlobal(Offset.zero);
+        final size = renderBox.size;
+        
+        // Calculate the exact center of the rendered island
+        zoomCenter = Offset(
+          position.dx + size.width / 2,
+          position.dy + size.height / 2,
+        );
+        
+        print('Using pixel-perfect zoom center for island ${island.id}: $zoomCenter');
+      } else {
+        // Fallback to calculated position
+        zoomCenter = _getCalculatedZoomCenter(island);
+        print('Using calculated zoom center for island ${island.id}: $zoomCenter');
+      }
+    }
+    
     Navigator.of(context).push(
       IslandZoomPageRoute(
         builder: (context) => _getQuizScreenForIsland(island),
-        zoomCenter: islandCenter,
+        zoomCenter: zoomCenter,
         island: island,
+        currentFloatOffset: _islandAnimation.value * island.floatAmplitude,
       ),
     );
+  }
+
+  Offset _getCalculatedZoomCenter(QuizIsland island) {
+    // Get the current screen size
+    final screenSize = MediaQuery.of(context).size;
+    final mediaQuery = MediaQuery.of(context);
+    
+    // Account for SafeArea padding
+    final safePadding = mediaQuery.padding;
+    
+    // Calculate base island position (same as in _buildIsland)
+    final islandX = island.position.dx * screenSize.width;
+    final islandY = island.position.dy * screenSize.height;
+    
+    // Get the EXACT current floating animation offset
+    final currentFloatOffset = _islandAnimation.value * island.floatAmplitude;
+    
+    // Calculate the exact center of the island PNG
+    // The island container is positioned with its center at these coordinates
+    final exactIslandCenterX = islandX;
+    final exactIslandCenterY = islandY + currentFloatOffset;
+    
+    // Account for SafeArea top padding
+    final adjustedCenterY = exactIslandCenterY + safePadding.top;
+    
+    return Offset(exactIslandCenterX, adjustedCenterY);
+  }
+
+  // Helper method to print current island positions (useful for setting manual coordinates)
+  void _printIslandPositions() {
+    final screenSize = MediaQuery.of(context).size;
+    print('\n=== ISLAND POSITIONS FOR MANUAL SETUP ===');
+    for (final island in _islands) {
+      final calculatedCenter = _getCalculatedZoomCenter(island);
+      print('Island ${island.id} (${island.name}): Offset(${calculatedCenter.dx.round()}, ${calculatedCenter.dy.round()})');
+    }
+    print('==========================================\n');
   }
 
   Widget _getQuizScreenForIsland(QuizIsland island) {
@@ -515,125 +617,132 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
         return Positioned(
           left: islandX - island.size / 2,
           top: islandY - island.size / 2 + floatOffset,
-          child: GestureDetector(
-            onTap: () => _onIslandTapped(island),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              transform: Matrix4.identity()
-                ..scale(isSelected ? 1.02 : 1.0), // Very subtle scale
-              child: Container(
-                width: island.size.toDouble(),
-                height: island.size.toDouble(),
-                child: Stack(
-                  clipBehavior: Clip.none, // Allow overflow for selection effects
-                  children: [
-                    // Island Shadow (only under the island)
-                    Positioned(
-                      bottom: -8,
-                      left: 4,
-                      right: -4,
-                      child: Container(
-                        height: island.size * 0.2,
-                        decoration: BoxDecoration(
-                          gradient: RadialGradient(
-                            colors: [
-                              Colors.black.withOpacity(0.3),
-                              Colors.black.withOpacity(0.1),
-                              Colors.transparent,
-                            ],
+          child: RepaintBoundary( // Add this for better performance
+            key: _islandKeys[island.id], // Add the key for pixel-perfect positioning
+            child: GestureDetector(
+              onTap: () => _onIslandTapped(island),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                transform: Matrix4.identity()
+                  ..scale(isSelected ? 1.02 : 1.0), // Very subtle scale
+                child: Container(
+                  width: island.size.toDouble(),
+                  height: island.size.toDouble(),
+                  child: Stack(
+                    clipBehavior: Clip.none, // Allow overflow for selection effects
+                    children: [
+                      // Island Shadow (only under the island)
+                      Positioned(
+                        bottom: -8,
+                        left: 4,
+                        right: -4,
+                        child: Container(
+                          height: island.size * 0.2,
+                          decoration: BoxDecoration(
+                            gradient: RadialGradient(
+                              colors: [
+                                Colors.black.withOpacity(0.3),
+                                Colors.black.withOpacity(0.1),
+                                Colors.transparent,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(island.size / 2),
                           ),
-                          borderRadius: BorderRadius.circular(island.size / 2),
                         ),
                       ),
-                    ),
-                    
-                    // Raw PNG Island Image (NO DECORATIONS)
-                    Transform.rotate(
-                      angle: rotation,
-                      child: Container(
-                        width: island.size.toDouble(),
-                        height: island.size.toDouble(),
-                        child: island.imagePath != null
-                            ? Image.asset(
-                                island.imagePath!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) {
-                                  // Simple fallback - just an icon, no decorations
-                                  return Center(
+                      
+                      // Raw PNG Island Image (NO DECORATIONS)
+                      Transform.rotate(
+                        angle: rotation,
+                        child: Container(
+                          width: island.size.toDouble(),
+                          height: island.size.toDouble(),
+                          child: Center( // Ensure the image is centered within its container
+                            child: island.imagePath != null
+                                ? Image.asset(
+                                    island.imagePath!,
+                                    fit: BoxFit.contain,
+                                    width: island.size.toDouble(),
+                                    height: island.size.toDouble(),
+                                    errorBuilder: (context, error, stackTrace) {
+                                      // Simple fallback - just an icon, no decorations
+                                      return Center(
+                                        child: Icon(
+                                          island.icon,
+                                          color: island.color,
+                                          size: 40,
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Center(
                                     child: Icon(
                                       island.icon,
                                       color: island.color,
                                       size: 40,
                                     ),
-                                  );
-                                },
-                              )
-                            : Center(
-                                child: Icon(
-                                  island.icon,
-                                  color: island.color,
-                                  size: 40,
-                                ),
-                              ),
-                      ),
-                    ),
-                    
-                    // Selection Circle (only when selected) - sized for smaller islands
-                    if (isSelected)
-                      Positioned(
-                        top: -15, // Smaller expand for smaller islands
-                        left: -15,
-                        right: -15,
-                        bottom: -15,
-                        child: AnimatedBuilder(
-                          animation: _rotationController,
-                          builder: (context, child) {
-                            return Transform.rotate(
-                              angle: _rotationController.value * 2 * pi,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: island.color.withOpacity(0.8),
-                                    width: 3,
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: island.color.withOpacity(0.4),
-                                      blurRadius: 15,
-                                      spreadRadius: 3,
+                          ),
+                        ),
+                      ),
+                      
+                      // Selection Circle (only when selected) - sized for smaller islands
+                      if (isSelected)
+                        Positioned(
+                          top: -15, // Smaller expand for smaller islands
+                          left: -15,
+                          right: -15,
+                          bottom: -15,
+                          child: AnimatedBuilder(
+                            animation: _rotationController,
+                            builder: (context, child) {
+                              return Transform.rotate(
+                                angle: _rotationController.value * 2 * pi,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: island.color.withOpacity(0.8),
+                                      width: 3,
                                     ),
-                                  ],
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: island.color.withOpacity(0.4),
+                                        blurRadius: 15,
+                                        spreadRadius: 3,
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                              );
+                            },
+                          ),
+                        ),
+                      
+                      // Simple Category Name (clean text only)
+                      Positioned(
+                        bottom: -30,
+                        left: -20,
+                        right: -20,
+                        child: Text(
+                          island.name,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black87,
+                                offset: Offset(1, 1),
+                                blurRadius: 4,
                               ),
-                            );
-                          },
+                            ],
+                          ),
                         ),
                       ),
-                    
-                    // Simple Category Name (clean text only)
-                    Positioned(
-                      bottom: -30,
-                      left: -20,
-                      right: -20,
-                      child: Text(
-                        island.name,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black87,
-                              offset: Offset(1, 1),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -685,19 +794,81 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
                     ),
                   ),
                   const Spacer(),
-                  IconButton(
-                    onPressed: () {
-                      Get.snackbar(
-                        'Help',
-                        'Tap on any island to start a quiz adventure! Your island images will float and rotate beautifully on the ocean.',
-                        backgroundColor: Colors.blue.shade600,
-                        colorText: Colors.white,
-                        icon: Icon(Icons.help_outline, color: Colors.white),
-                        snackPosition: SnackPosition.TOP,
-                        duration: const Duration(seconds: 3),
-                      );
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'help':
+                          Get.snackbar(
+                            'Help',
+                            'Tap on any island to start a quiz adventure! Your island images will float and rotate beautifully on the ocean.',
+                            backgroundColor: Colors.blue.shade600,
+                            colorText: Colors.white,
+                            icon: Icon(Icons.help_outline, color: Colors.white),
+                            snackPosition: SnackPosition.TOP,
+                            duration: const Duration(seconds: 3),
+                          );
+                          break;
+                        case 'debug_positions':
+                          _printIslandPositions();
+                          Get.snackbar(
+                            'Debug',
+                            'Island positions printed to console. Check your debug log for coordinates to use in _manualZoomCenters.',
+                            backgroundColor: Colors.orange.shade600,
+                            colorText: Colors.white,
+                            icon: Icon(Icons.bug_report, color: Colors.white),
+                            snackPosition: SnackPosition.TOP,
+                            duration: const Duration(seconds: 4),
+                          );
+                          break;
+                        case 'toggle_manual':
+                          setState(() {
+                            // You can add a toggle here if you want to switch modes at runtime
+                          });
+                          Get.snackbar(
+                            'Manual Mode',
+                            _useManualZoomCenters ? 'Manual zoom positioning is ON' : 'Manual zoom positioning is OFF',
+                            backgroundColor: _useManualZoomCenters ? Colors.green.shade600 : Colors.red.shade600,
+                            colorText: Colors.white,
+                            icon: Icon(_useManualZoomCenters ? Icons.check : Icons.close, color: Colors.white),
+                            snackPosition: SnackPosition.TOP,
+                            duration: const Duration(seconds: 3),
+                          );
+                          break;
+                      }
                     },
-                    icon: const Icon(Icons.help_outline, color: Colors.white),
+                    itemBuilder: (BuildContext context) => [
+                      const PopupMenuItem<String>(
+                        value: 'help',
+                        child: Row(
+                          children: [
+                            Icon(Icons.help_outline),
+                            SizedBox(width: 8),
+                            Text('Help'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'debug_positions',
+                        child: Row(
+                          children: [
+                            Icon(Icons.location_on),
+                            SizedBox(width: 8),
+                            Text('Debug Positions'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'toggle_manual',
+                        child: Row(
+                          children: [
+                            Icon(Icons.settings),
+                            SizedBox(width: 8),
+                            Text('Manual Mode Info'),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -714,16 +885,18 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
   }
 }
 
-// Custom Page Route for Island Zoom Transition
+// Custom Page Route for Island Zoom Transition with improved precision
 class IslandZoomPageRoute<T> extends PageRoute<T> {
   final WidgetBuilder builder;
   final Offset zoomCenter;
   final QuizIsland island;
+  final double currentFloatOffset;
 
   IslandZoomPageRoute({
     required this.builder,
     required this.zoomCenter,
     required this.island,
+    this.currentFloatOffset = 0.0,
     RouteSettings? settings,
   }) : super(settings: settings);
 
@@ -748,10 +921,10 @@ class IslandZoomPageRoute<T> extends PageRoute<T> {
   Widget buildTransitions(BuildContext context, Animation<double> animation, Animation<double> secondaryAnimation, Widget child) {
     final screenSize = MediaQuery.of(context).size;
     
-    // Create multiple animation phases
-    final zoomAnimation = Tween<double>(
+    // Camera zoom animation (only background scales)
+    final cameraZoomAnimation = Tween<double>(
       begin: 1.0,
-      end: 8.0, // Zoom in 8x
+      end: 8.0, // Camera zooms in 8x
     ).animate(CurvedAnimation(
       parent: animation,
       curve: const Interval(0.0, 0.6, curve: Curves.easeInOut),
@@ -762,7 +935,7 @@ class IslandZoomPageRoute<T> extends PageRoute<T> {
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: animation,
-      curve: const Interval(0.4, 0.8, curve: Curves.easeInOut),
+      curve: const Interval(0.5, 0.8, curve: Curves.easeInOut),
     ));
 
     final fadeFromBlackAnimation = Tween<double>(
@@ -777,12 +950,13 @@ class IslandZoomPageRoute<T> extends PageRoute<T> {
       animation: animation,
       builder: (context, _) {
         if (animation.value <= 0.8) {
-          // Phase 1 & 2: Zoom in and fade to black
+          // Phase 1 & 2: Camera zoom and fade to black
           return Stack(
             children: [
-              // Zoomed background (ocean scene)
+              // Camera zoom effect - only the background/ocean scales
               Transform.scale(
-                scale: zoomAnimation.value,
+                scale: cameraZoomAnimation.value,
+                // Zoom toward the island's position (camera effect)
                 alignment: Alignment(
                   (zoomCenter.dx / screenSize.width) * 2 - 1,
                   (zoomCenter.dy / screenSize.height) * 2 - 1,
@@ -800,35 +974,50 @@ class IslandZoomPageRoute<T> extends PageRoute<T> {
                       ],
                     ),
                   ),
+                  child: Stack(
+                    children: [
+                      // Ocean waves (scaled with camera)
+                      CustomPaint(
+                        painter: EnhancedOceanPainter(0, 0.8), // Static values for transition
+                        size: Size.infinite,
+                      ),
+                      // Clouds (scaled with camera)
+                      CustomPaint(
+                        painter: CloudPainter(0, 0.8), // Static values for transition
+                        size: Size.infinite,
+                      ),
+                      // The island PNG stays in its exact original position and size
+                      // NO scaling, NO moving - pure camera zoom effect
+                      Positioned(
+                        left: zoomCenter.dx - island.size / 2,
+                        top: zoomCenter.dy - island.size / 2,
+                        child: Container(
+                          width: island.size.toDouble(),
+                          height: island.size.toDouble(),
+                          child: Center(
+                            child: island.imagePath != null
+                                ? Image.asset(
+                                    island.imagePath!,
+                                    fit: BoxFit.contain,
+                                    width: island.size.toDouble(),
+                                    height: island.size.toDouble(),
+                                  )
+                                : Icon(
+                                    island.icon,
+                                    color: island.color,
+                                    size: 40,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               // Black fade overlay
               Container(
                 color: Colors.black.withOpacity(fadeToBlackAnimation.value),
               ),
-              // Island zoom effect
-              if (animation.value <= 0.6)
-                Positioned(
-                  left: zoomCenter.dx - (island.size / 2) * zoomAnimation.value,
-                  top: zoomCenter.dy - (island.size / 2) * zoomAnimation.value,
-                  child: Transform.scale(
-                    scale: zoomAnimation.value,
-                    child: Container(
-                      width: island.size.toDouble(),
-                      height: island.size.toDouble(),
-                      child: island.imagePath != null
-                          ? Image.asset(
-                              island.imagePath!,
-                              fit: BoxFit.contain,
-                            )
-                          : Icon(
-                              island.icon,
-                              color: island.color,
-                              size: 40,
-                            ),
-                    ),
-                  ),
-                ),
             ],
           );
         } else {
