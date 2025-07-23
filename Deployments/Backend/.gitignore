@@ -1,0 +1,17 @@
+# Ignorer le fichier Firebase (secrets)
+stage2025-51a1d-firebase-adminsdk-fbsvc-75ceac9ce7.json
+
+# Ignorer les fichiers compilés Python
+__pycache__/
+*.pyc
+
+# Ignorer les environnements virtuels (si tu en utilises)
+venv/
+.env/
+*.env
+
+# Ignorer les fichiers temporaires
+*.log
+*.bak
+.DS_Store
+Thumbs.db
