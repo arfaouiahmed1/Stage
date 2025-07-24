@@ -1,0 +1,43 @@
+SOFT SKILLS CLUSTERING ANALYSIS SUMMARY
+========================================
+
+Total Students Analyzed: 100
+Number of Clusters: 4
+
+CLUSTER PROFILES:
+
+Cluster 0:
+- Number of Students: 30
+- Average Scores:
+  * Communication: 2.11/5.0
+  * Leadership: 3.90/5.0
+  * Time_Management: 2.69/5.0
+  * Analytical: 4.07/5.0
+- Overall Average: 3.19/5.0
+
+Cluster 1:
+- Number of Students: 27
+- Average Scores:
+  * Communication: 4.09/5.0
+  * Leadership: 2.40/5.0
+  * Time_Management: 3.16/5.0
+  * Analytical: 3.33/5.0
+- Overall Average: 3.25/5.0
+
+Cluster 2:
+- Number of Students: 21
+- Average Scores:
+  * Communication: 4.02/5.0
+  * Leadership: 4.53/5.0
+  * Time_Management: 2.61/5.0
+  * Analytical: 2.14/5.0
+- Overall Average: 3.32/5.0
+
+Cluster 3:
+- Number of Students: 22
+- Average Scores:
+  * Communication: 2.09/5.0
+  * Leadership: 2.41/5.0
+  * Time_Management: 4.12/5.0
+  * Analytical: 2.58/5.0
+- Overall Average: 2.80/5.0
