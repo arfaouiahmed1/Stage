@@ -129,7 +129,7 @@ class QuestionGenerationService:
     def generate_questions(self, dimension: str, subdimension: str, target_year_level: int, 
                           additional_context: str = None) -> Dict[str, Any]:
         """
-        Generate a single question using LLM with RAG context
+        Generate a single question using LLM with RAG context and enhanced variability
         
         Args:
             dimension: The dimension (e.g., 'creativity', 'teamwork')
@@ -145,15 +145,22 @@ class QuestionGenerationService:
         if not self.validate_generation_params(dimension, subdimension, target_year_level):
             raise ValueError(f"No questions found for dimension='{dimension}', subdimension='{subdimension}', target_year_level={target_year_level}")
         
-        # Get context questions
+        # Get context questions with enhanced diversity
         context_questions = self._get_context_questions(
-            dimension, subdimension, target_year_level, additional_context
+            dimension, subdimension, target_year_level, additional_context, num_context=3
         )
         
-        # Build prompt for LLM
+        # Add variation seed to ensure different outputs
+        variation_context = self._get_variation_context(additional_context)
+        
+        # Build enhanced prompt for LLM
         prompt = self._build_generation_prompt(
             dimension, subdimension, target_year_level, 1, context_questions
         )
+        
+        # Add variation context to the prompt
+        if variation_context:
+            prompt += f"\n\nADDITIONAL FOCUS: {variation_context}"
         
         # Generate questions using LLM
         try:
@@ -164,12 +171,16 @@ class QuestionGenerationService:
             questions = self._parse_generated_questions(generated_text, 1)
             question = questions[0] if questions else "Generated question could not be parsed"
             
+            # Validate that the question is a proper Likert scale question
+            validated_question = self._validate_likert_question(question, dimension, subdimension)
+            
             return {
-                "question": question,
+                "question": validated_question,
                 "dimension": dimension,
                 "subdimension": subdimension,
                 "target_year_level": target_year_level,
-                "context_used": context_questions
+                "context_used": context_questions,
+                "additional_context": additional_context
             }
             
         except Exception as e:
@@ -178,41 +189,191 @@ class QuestionGenerationService:
             else:
                 raise Exception(f"LLM generation error: {str(e)}")
     
+    def _get_variation_context(self, additional_context: str = None) -> str:
+        """Generate variation context to ensure diverse question outputs"""
+        import random
+        
+        variation_aspects = [
+            "Focus on practical application in real-world scenarios",
+            "Emphasize peer interaction and collaboration aspects",
+            "Consider individual reflection and self-assessment",
+            "Include scenario-based thinking and problem-solving",
+            "Focus on measurable behaviors and observable skills",
+            "Emphasize growth mindset and learning orientation",
+            "Consider workplace or academic environment contexts",
+            "Focus on communication and expression aspects"
+        ]
+        
+        selected_variation = random.choice(variation_aspects)
+        
+        if additional_context:
+            return f"{additional_context}. {selected_variation}"
+        return selected_variation
+    
+    def _validate_likert_question(self, question: str, dimension: str, subdimension: str) -> str:
+        """Validate and enhance the question to ensure it's a proper Likert scale question"""
+        
+        # Check if question starts with typical Likert patterns
+        likert_patterns = ["I am", "I can", "I feel", "I have", "I consistently", "I effectively"]
+        
+        if not any(question.strip().startswith(pattern) for pattern in likert_patterns):
+            # If it doesn't start properly, try to fix it
+            if "?" in question:
+                # Convert question format to statement format
+                question = question.replace("How confident are you", "I am confident")
+                question = question.replace("Can you", "I can")
+                question = question.replace("?", "")
+            
+            # Ensure it starts with a first-person statement
+            if not any(question.strip().startswith(pattern) for pattern in likert_patterns):
+                question = f"I am confident in my ability to {question.lower()}"
+        
+        # Ensure the question ends properly (remove any trailing punctuation and add period)
+        question = question.rstrip("?.!") + "."
+        
+        return question
+    
     def _build_generation_prompt(self, dimension: str, subdimension: str, target_year_level: int, 
                                 num_questions: int, context_questions: List[str]) -> str:
-        """Build the prompt for LLM generation"""
+        """Build the prompt for LLM generation with dimension-specific enhancements"""
         
+        # Get dimension-specific prompt elements
+        dimension_context = self._get_dimension_specific_context(dimension, subdimension)
+        question_starters = self._get_question_starters_for_dimension(dimension)
         context_text = "\n".join(f"- {q}" for q in context_questions)
         
-        prompt = f"""Generate 1 self-assessment question for "{dimension} - {subdimension}" at year level {target_year_level}.
+        prompt = f"""Create a 5-point Likert scale self-assessment question for "{dimension} - {subdimension}" (Year Level {target_year_level}).
 
-The question should be a clear self-assessment statement using 'How confident are you...' or similar phrasing.
-This is a 5-point Likert scale question where:
-1 = Strongly Disagree
-2 = Disagree  
-3 = Neutral
-4 = Agree
-5 = Strongly Agree
+CONTEXT: {dimension_context}
 
-Use these examples as context:
+REQUIREMENTS:
+- Start with one of these: {', '.join(question_starters)}
+- Must be answerable on 1-5 scale (1=Strongly Disagree, 5=Strongly Agree)
+- Target Year Level {target_year_level} complexity
+- Focus specifically on {subdimension}
+- Make it unique and varied from examples below
+
+EXAMPLES FOR REFERENCE:
 {context_text}
 
-Requirements:
-- Generate exactly 1 question
-- The question should be self-assessment focused
-- Question should be appropriate for year level {target_year_level}
-- Use clear, professional language
-- Return only the question text, no numbering or formatting
+OUTPUT: Return ONLY the question statement, nothing else. No explanations, no formatting, just the question.
 
-Generate the question now:"""
+Question:"""
 
         return prompt
+    
+    def _get_dimension_specific_context(self, dimension: str, subdimension: str) -> str:
+        """Get dimension-specific context and guidance for question generation"""
+        
+        dimension_contexts = {
+            "creativity": {
+                "innovation_problem_solving": "Focus on students' ability to generate novel solutions, think outside conventional boundaries, and approach problems with original perspectives. Questions should assess creative thinking processes, idea generation, and innovative problem-solving approaches.",
+                "original_thinking": "Assess students' capacity for independent thought, unique perspectives, and original idea development. Questions should evaluate their comfort with unconventional thinking and ability to generate fresh insights.",
+                "creative_expression": "Evaluate students' confidence in expressing ideas creatively through various mediums and their willingness to share original work. Focus on creative communication and artistic expression."
+            },
+            "soft_skills": {
+                "communication": "Assess verbal and written communication abilities, active listening skills, and clarity of expression. Questions should evaluate interpersonal communication effectiveness and presentation skills.",
+                "teamwork": "Focus on collaboration abilities, conflict resolution, group dynamics, and collective goal achievement. Assess comfort with team roles and contribution to group success.",
+                "leadership": "Evaluate leadership potential, decision-making confidence, ability to guide others, and taking initiative. Focus on both formal and informal leadership situations.",
+                "time_management": "Assess organizational skills, prioritization abilities, deadline management, and work-life balance. Focus on planning and execution of tasks efficiently.",
+                "adaptability": "Evaluate flexibility in changing situations, openness to new approaches, and resilience in face of challenges. Focus on comfort with uncertainty and change management."
+            },
+            "critical_thinking": {
+                "analysis": "Focus on ability to break down complex information, identify patterns, and examine details systematically. Assess analytical reasoning and logical thinking processes.",
+                "evaluation": "Assess judgment skills, ability to assess credibility of sources, and making informed decisions based on evidence. Focus on critical assessment abilities.",
+                "synthesis": "Evaluate ability to combine information from multiple sources, create new understanding, and integrate diverse perspectives into coherent conclusions."
+            },
+            "emotional_intelligence": {
+                "self_awareness": "Focus on understanding personal emotions, recognizing emotional triggers, and awareness of personal strengths and limitations.",
+                "empathy": "Assess ability to understand others' emotions, perspective-taking skills, and sensitivity to others' feelings and needs.",
+                "social_skills": "Evaluate interpersonal relationship management, social interaction comfort, and ability to navigate social situations effectively."
+            }
+        }
+        
+        return dimension_contexts.get(dimension, {}).get(subdimension, 
+            f"Focus on {subdimension} within the {dimension} dimension. Assess relevant skills, behaviors, and competencies.")
+    
+    def _get_question_starters_for_dimension(self, dimension: str) -> List[str]:
+        """Get varied question starters specific to each dimension"""
+        
+        starters_by_dimension = {
+            "creativity": [
+                "I am confident in my ability to",
+                "When faced with challenges, I can",
+                "I feel comfortable",
+                "I am skilled at",
+                "I consistently demonstrate",
+                "I effectively",
+                "I have strong capabilities in",
+                "I am adept at"
+            ],
+            "soft_skills": [
+                "I am effective at",
+                "I feel confident in my ability to",
+                "I consistently",
+                "I am skilled in",
+                "I can successfully",
+                "I am comfortable",
+                "I have developed strong",
+                "I demonstrate good"
+            ],
+            "critical_thinking": [
+                "I am capable of",
+                "I can effectively",
+                "I am skilled at",
+                "I consistently apply",
+                "I can successfully",
+                "I feel confident in my ability to",
+                "I demonstrate strong",
+                "I am proficient in"
+            ],
+            "emotional_intelligence": [
+                "I am aware of",
+                "I can recognize",
+                "I understand",
+                "I am sensitive to",
+                "I can effectively manage",
+                "I am in tune with",
+                "I can identify",
+                "I have good awareness of"
+            ]
+        }
+        
+        # Return dimension-specific starters or default ones
+        return starters_by_dimension.get(dimension, [
+            "I am confident in my ability to",
+            "I feel comfortable",
+            "I am skilled at",
+            "I can effectively",
+            "I consistently demonstrate",
+            "I have strong capabilities in"
+        ])
     
     def _parse_generated_questions(self, generated_text: str, expected_count: int) -> List[str]:
         """Parse and clean generated questions from LLM output"""
         
+        # Clean up the generated text first
+        text = generated_text.strip()
+        
+        # Remove common prefixes and formatting artifacts
+        lines_to_remove = [
+            "here is 1 unique self-assessment question",
+            "here is a unique self-assessment question",
+            "here's 1 unique self-assessment question",
+            "here's a unique self-assessment question",
+            "generated question:",
+            "question:",
+            "self-assessment question:"
+        ]
+        
+        for line_prefix in lines_to_remove:
+            if line_prefix in text.lower():
+                # Find the position after this prefix
+                pos = text.lower().find(line_prefix) + len(line_prefix)
+                text = text[pos:].strip()
+        
         # Split by lines and clean up
-        lines = generated_text.split('\n')
+        lines = text.split('\n')
         questions = []
         
         for line in lines:
@@ -221,14 +382,48 @@ Generate the question now:"""
             # Skip empty lines and lines that start with common prefixes
             if not cleaned_line:
                 continue
-            if cleaned_line.startswith(('*', '-', '•')):
-                cleaned_line = cleaned_line[1:].strip()
+                
+            # Remove markdown formatting, bullets, and numbering
+            if cleaned_line.startswith(('*', '-', '•', '**')):
+                cleaned_line = cleaned_line.lstrip('*-•').strip()
+            
+            # Remove numbering like "1.", "2.", etc.
             if cleaned_line.startswith(tuple(f"{i}." for i in range(1, 21))):
-                # Remove numbering like "1.", "2.", etc.
                 cleaned_line = cleaned_line.split('.', 1)[1].strip()
             
-            if cleaned_line and len(cleaned_line) > 10:  # Ensure it's a meaningful question
+            # Remove colons at the end of setup text
+            if cleaned_line.endswith(':'):
+                continue
+                
+            # Remove common metadata patterns
+            skip_patterns = [
+                "for year level", "targeting year level", "dimension:", "subdimension:",
+                "context:", "requirements:", "example:", "scale:", "students:"
+            ]
+            
+            if any(pattern in cleaned_line.lower() for pattern in skip_patterns):
+                continue
+            
+            # Only accept meaningful questions (first-person statements)
+            if (cleaned_line and 
+                len(cleaned_line) > 15 and  # Minimum meaningful length
+                any(cleaned_line.startswith(starter) for starter in ["I am", "I can", "I feel", "I have", "I consistently", "I effectively", "I demonstrate"]) and
+                not cleaned_line.endswith(':')):
+                
+                # Ensure proper punctuation
+                if not cleaned_line.endswith('.'):
+                    cleaned_line += '.'
+                    
                 questions.append(cleaned_line)
         
+        # If no proper questions found, try to extract from the whole text
+        if not questions and text:
+            # Look for sentences that start with "I am", "I can", etc.
+            import re
+            pattern = r'(I (?:am|can|feel|have|consistently|effectively|demonstrate)[^.!?]*[.!?])'
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            if matches:
+                questions = [match.strip() for match in matches]
+        
         # Take only the requested number of questions
-        return questions[:expected_count]
+        return questions[:expected_count] if questions else ["I am confident in my ability to apply innovative problem-solving approaches."]
