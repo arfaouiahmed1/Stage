@@ -1,0 +1,84 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Activate Conda Environment",
+            "type": "shell",
+            "command": "C:/Users/ahmed/miniconda3/Scripts/conda.exe",
+            "args": ["activate", "./.conda"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run FastAPI Server",
+            "type": "shell",
+            "command": "C:/Users/ahmed/miniconda3/Scripts/conda.exe",
+            "args": [
+                "run",
+                "--live-stream",
+                "--prefix",
+                "./.conda",
+                "python",
+                "src/main.py"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Test Generation",
+            "type": "shell",
+            "command": "C:/Users/ahmed/miniconda3/Scripts/conda.exe",
+            "args": [
+                "run",
+                "--live-stream",
+                "--prefix",
+                "./.conda",
+                "python",
+                "test_generation.py"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Install Requirements",
+            "type": "shell",
+            "command": "C:/Users/ahmed/miniconda3/Scripts/conda.exe",
+            "args": [
+                "run",
+                "--live-stream", 
+                "--prefix",
+                "./.conda",
+                "pip",
+                "install",
+                "-r",
+                "requirements.txt"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

@@ -2,10 +2,21 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
 from src.schemas.question import Question
+from src.schemas.generation import GenerateRequest, GenerateResponse, DimensionsResponse, SubdimensionsResponse
 from src.core.firebase import db
+from src.core.generation_service import QuestionGenerationService
 
 router = APIRouter()
 collection_name = "questions"
+
+# Initialize generation service (singleton pattern)
+generation_service = None
+
+def get_generation_service():
+    global generation_service
+    if generation_service is None:
+        generation_service = QuestionGenerationService()
+    return generation_service
 
 def doc_to_question(doc):
     data = doc.to_dict()
@@ -29,6 +40,73 @@ def create_question(question: Question):
 def get_questions():
     docs = db.collection(collection_name).stream()
     return [doc_to_question(doc) for doc in docs]
+
+# ===============================================
+# GENERATION ENDPOINTS (Must be before /{question_id})
+# ===============================================
+
+@router.get("/dimensions", response_model=DimensionsResponse)
+def get_available_dimensions():
+    """Get all available dimensions for question generation"""
+    try:
+        service = get_generation_service()
+        dimensions = service.get_available_dimensions()
+        return DimensionsResponse(dimensions=dimensions)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get dimensions: {str(e)}")
+
+
+@router.get("/subdimensions/{dimension}", response_model=SubdimensionsResponse)
+def get_available_subdimensions(dimension: str):
+    """Get all available subdimensions for a given dimension"""
+    try:
+        service = get_generation_service()
+        subdimensions = service.get_available_subdimensions(dimension)
+        if not subdimensions:
+            raise HTTPException(status_code=404, detail=f"No subdimensions found for dimension: {dimension}")
+        return SubdimensionsResponse(subdimensions=subdimensions, dimension=dimension)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get subdimensions: {str(e)}")
+
+
+@router.post("/generate", response_model=GenerateResponse)
+def generate_questions(request: GenerateRequest):
+    """Generate a single AI question and automatically save it to Firebase"""
+    try:
+        service = get_generation_service()
+        
+        # Generate question using the AI service
+        generation_result = service.generate_questions(
+            dimension=request.dimension,
+            subdimension=request.subdimension,
+            target_year_level=request.target_year_level,
+            additional_context=request.additional_context
+        )
+        
+        # Save generated question to Firebase
+        question_data = {
+            "content": generation_result["question"],
+            "idQuiz": request.idQuiz,
+            "idCategory": request.idCategory
+        }
+        
+        # Create question in Firebase
+        doc_ref = db.collection(collection_name).document()
+        doc_ref.set(question_data)
+        
+        return GenerateResponse(
+            question=generation_result["question"],
+            dimension=generation_result["dimension"],
+            subdimension=generation_result["subdimension"],
+            target_year_level=generation_result["target_year_level"],
+            response_scale="1-5",
+            saved_question_id=doc_ref.id
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate question: {str(e)}")
 
 @router.get("/{question_id}", response_model=Question)
 def get_question(question_id: str):

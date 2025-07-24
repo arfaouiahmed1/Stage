@@ -1,0 +1,14 @@
+# VS Code Python Extension Configuration
+# This file ensures automatic environment detection and Copilot integration
+
+[tool.python]
+interpreter_path = "./.conda/python.exe"
+analysis_paths = ["./src", "./.conda/lib/python3.11/site-packages"]
+
+[tool.vscode]
+default_interpreter = "./.conda/python.exe"
+auto_activate_env = true
+
+[tool.copilot]
+enabled = true
+context_paths = ["./src", "./"]
