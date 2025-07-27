@@ -93,19 +93,25 @@ class QuestionGenerationService:
         return sorted(self.df["target_year_level"].unique().tolist())
     
     def validate_generation_params(self, dimension: str, subdimension: str, target_year_level: int) -> bool:
-        """Validate if the given parameters exist in the dataset"""
-        mask = (
-            (self.df["dimension"] == dimension) & 
-            (self.df["subdimension"] == subdimension) & 
-            (self.df["target_year_level"] == target_year_level)
-        )
-        return len(self.df[mask]) > 0
+        """Validate if the given parameters can be used for generation (relaxed for custom subdimensions)"""
+        # Check if dimension exists in dataset
+        available_dimensions = self.get_available_dimensions()
+        if dimension not in available_dimensions:
+            return False
+        
+        # Check if target year level is valid (1, 2, or 3)
+        if target_year_level not in [1, 2, 3]:
+            return False
+        
+        # For custom subdimensions, we don't need exact match - just check if dimension exists
+        # This allows teachers to create custom subcategories
+        return True
     
     def _get_context_questions(self, dimension: str, subdimension: str, target_year_level: int, 
-                             additional_context: str = None, num_context: int = 5) -> List[str]:
-        """Get context questions for RAG-based generation"""
+                             num_context: int = 5) -> List[str]:
+        """Get context questions for RAG-based generation (supports custom subdimensions)"""
         
-        # Filter by metadata first
+        # First try to find exact match (existing subdimension)
         mask = (
             (self.df["dimension"] == dimension) & 
             (self.df["subdimension"] == subdimension) & 
@@ -113,29 +119,42 @@ class QuestionGenerationService:
         )
         candidates = self.df[mask]
         
-        if additional_context and len(additional_context.strip()) > 0:
-            # Use semantic similarity if additional context is provided
-            query_emb = self.embed_model.encode([additional_context], convert_to_numpy=True)
-            faiss.normalize_L2(query_emb)
-            D, I = self.index.search(query_emb, k=num_context)
-            context_questions = [self.texts[i] for i in I[0]]
-        else:
-            # Use random sampling from filtered candidates
-            sample_size = min(num_context, len(candidates))
+        # If no exact match found (custom subdimension), broaden search to dimension + year level
+        if len(candidates) == 0:
+            print(f"🔄 Custom subdimension '{subdimension}' detected. Using dimension-level context.")
+            mask = (
+                (self.df["dimension"] == dimension) & 
+                (self.df["target_year_level"] == target_year_level)
+            )
+            candidates = self.df[mask]
+            
+            # If still no candidates, use dimension only
+            if len(candidates) == 0:
+                mask = (self.df["dimension"] == dimension)
+                candidates = self.df[mask]
+        
+        # Use random sampling from filtered candidates
+        sample_size = min(num_context, len(candidates))
+        if sample_size > 0:
             context_questions = candidates["question_text"].sample(sample_size).tolist()
+        else:
+            # Fallback: use any questions from the dimension
+            dimension_questions = self.df[self.df["dimension"] == dimension]
+            sample_size = min(num_context, len(dimension_questions))
+            context_questions = dimension_questions["question_text"].sample(sample_size).tolist()
         
         return context_questions
     
     def generate_questions(self, dimension: str, subdimension: str, target_year_level: int, 
                           additional_context: str = None) -> Dict[str, Any]:
         """
-        Generate a single question using LLM with RAG context and enhanced variability
+        Generate a single question using LLM with RAG context
         
         Args:
             dimension: The dimension (e.g., 'creativity', 'teamwork')
             subdimension: The subdimension (e.g., 'innovation_problem_solving')
             target_year_level: The target year level (1, 2, or 3)
-            additional_context: Optional additional context for generation
+            additional_context: Optional additional context (deprecated)
             
         Returns:
             Dict containing generated question and metadata
@@ -143,15 +162,15 @@ class QuestionGenerationService:
         
         # Validate parameters
         if not self.validate_generation_params(dimension, subdimension, target_year_level):
-            raise ValueError(f"No questions found for dimension='{dimension}', subdimension='{subdimension}', target_year_level={target_year_level}")
+            raise ValueError(f"Invalid parameters: dimension='{dimension}', target_year_level={target_year_level}")
         
         # Get context questions with enhanced diversity
         context_questions = self._get_context_questions(
-            dimension, subdimension, target_year_level, additional_context, num_context=3
+            dimension, subdimension, target_year_level, num_context=3
         )
         
         # Add variation seed to ensure different outputs
-        variation_context = self._get_variation_context(additional_context)
+        variation_context = self._get_variation_context()
         
         # Build enhanced prompt for LLM
         prompt = self._build_generation_prompt(
@@ -179,8 +198,7 @@ class QuestionGenerationService:
                 "dimension": dimension,
                 "subdimension": subdimension,
                 "target_year_level": target_year_level,
-                "context_used": context_questions,
-                "additional_context": additional_context
+                "context_used": context_questions
             }
             
         except Exception as e:
@@ -189,7 +207,7 @@ class QuestionGenerationService:
             else:
                 raise Exception(f"LLM generation error: {str(e)}")
     
-    def _get_variation_context(self, additional_context: str = None) -> str:
+    def _get_variation_context(self) -> str:
         """Generate variation context to ensure diverse question outputs"""
         import random
         
@@ -204,11 +222,7 @@ class QuestionGenerationService:
             "Focus on communication and expression aspects"
         ]
         
-        selected_variation = random.choice(variation_aspects)
-        
-        if additional_context:
-            return f"{additional_context}. {selected_variation}"
-        return selected_variation
+        return random.choice(variation_aspects)
     
     def _validate_likert_question(self, question: str, dimension: str, subdimension: str) -> str:
         """Validate and enhance the question to ensure it's a proper Likert scale question"""

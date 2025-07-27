@@ -1,8 +1,13 @@
 # routers/question.py
 from fastapi import APIRouter, HTTPException
 from typing import List
-from src.schemas.question import Question
-from src.schemas.generation import GenerateRequest, GenerateResponse, DimensionsResponse, SubdimensionsResponse
+from src.schemas.question import (
+    Question, 
+    QuestionGenerateRequest, 
+    QuestionGenerateResponse, 
+    DimensionsResponse, 
+    SubdimensionsResponse
+)
 from src.core.firebase import db
 from src.core.generation_service import QuestionGenerationService
 
@@ -47,66 +52,174 @@ def get_questions():
 
 @router.get("/dimensions", response_model=DimensionsResponse)
 def get_available_dimensions():
-    """Get all available dimensions for question generation"""
+    """Get all available dimensions for question generation (from dataset + categories)"""
     try:
         service = get_generation_service()
-        dimensions = service.get_available_dimensions()
-        return DimensionsResponse(dimensions=dimensions)
+        dataset_dimensions = service.get_available_dimensions()
+        
+        # Also get dimensions from categories (islands)
+        try:
+            categories_docs = db.collection("categories").stream()
+            category_dimensions = [doc.to_dict().get("island", "") for doc in categories_docs]
+            category_dimensions = [d for d in category_dimensions if d]  # Remove empty strings
+        except Exception as e:
+            print(f"⚠️ Could not fetch categories: {e}")
+            category_dimensions = []
+        
+        # Combine and deduplicate
+        all_dimensions = list(set(dataset_dimensions + category_dimensions))
+        all_dimensions.sort()
+        
+        return DimensionsResponse(dimensions=all_dimensions)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get dimensions: {str(e)}")
 
 
 @router.get("/subdimensions/{dimension}", response_model=SubdimensionsResponse)
 def get_available_subdimensions(dimension: str):
-    """Get all available subdimensions for a given dimension"""
+    """Get all available subdimensions for a given dimension (from dataset + categories)"""
     try:
         service = get_generation_service()
-        subdimensions = service.get_available_subdimensions(dimension)
-        if not subdimensions:
+        
+        # Get subdimensions from dataset
+        dataset_subdimensions = service.get_available_subdimensions(dimension)
+        
+        # Get subdimensions from categories
+        try:
+            categories_docs = db.collection("categories").where("island", "==", dimension).stream()
+            category_subdimensions = []
+            for doc in categories_docs:
+                subcats = doc.to_dict().get("subcategories", [])
+                category_subdimensions.extend(subcats)
+        except Exception as e:
+            print(f"⚠️ Could not fetch category subdimensions: {e}")
+            category_subdimensions = []
+        
+        # Combine and deduplicate
+        all_subdimensions = list(set(dataset_subdimensions + category_subdimensions))
+        all_subdimensions.sort()
+        
+        if not all_subdimensions:
             raise HTTPException(status_code=404, detail=f"No subdimensions found for dimension: {dimension}")
-        return SubdimensionsResponse(subdimensions=subdimensions, dimension=dimension)
+            
+        return SubdimensionsResponse(subdimensions=all_subdimensions, dimension=dimension)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get subdimensions: {str(e)}")
 
 
-@router.post("/generate", response_model=GenerateResponse)
-def generate_questions(request: GenerateRequest):
-    """Generate a single AI question and automatically save it to Firebase"""
+@router.post("/generate", response_model=QuestionGenerateResponse)
+def generate_questions(request: QuestionGenerateRequest):
+    """Generate AI question with auto-detection of dimension and subdimension from category"""
     try:
-        service = get_generation_service()
+        # Get category to extract dimension
+        category_ref = db.collection("categories").document(request.idCategory)
+        category_doc = category_ref.get()
+        
+        if not category_doc.exists:
+            raise HTTPException(status_code=404, detail=f"Category {request.idCategory} not found")
+        
+        category_data = category_doc.to_dict()
+        dimension = category_data.get("island")
+        
+        if not dimension:
+            raise HTTPException(status_code=400, detail="Category has no dimension (island) specified")
+        
+        # Determine subdimension
+        subdimension = None
+        if request.subdimension:
+            # Teacher provided a specific subdimension
+            subdimension = request.subdimension
+        else:
+            # Auto-select subdimension from category or dataset
+            category_subdimensions = category_data.get("subcategories", [])
+            
+            if category_subdimensions:
+                # Use first subdimension from category
+                subdimension = category_subdimensions[0]
+            else:
+                # Fallback to first subdimension from dataset for this dimension
+                service = get_generation_service()
+                dataset_subdimensions = service.get_available_subdimensions(dimension)
+                if dataset_subdimensions:
+                    subdimension = dataset_subdimensions[0]
+                else:
+                    raise HTTPException(status_code=400, detail=f"No subdimensions available for dimension '{dimension}'")
+        
+        # Verify quiz exists
+        quiz_ref = db.collection("quizzes").document(request.idQuiz)
+        quiz_doc = quiz_ref.get()
+        
+        if not quiz_doc.exists:
+            raise HTTPException(status_code=404, detail=f"Quiz {request.idQuiz} not found")
+        
+        print(f"🎯 Generating question: {dimension} -> {subdimension} (Year {request.target_year_level})")
         
         # Generate question using the AI service
+        service = get_generation_service()
         generation_result = service.generate_questions(
-            dimension=request.dimension,
-            subdimension=request.subdimension,
+            dimension=dimension,
+            subdimension=subdimension,
             target_year_level=request.target_year_level,
-            additional_context=request.additional_context
+            additional_context=None  # Removed additional_context
         )
         
-        # Save generated question to Firebase
-        question_data = {
-            "content": generation_result["question"],
-            "idQuiz": request.idQuiz,
-            "idCategory": request.idCategory
-        }
-        
-        # Create question in Firebase
-        doc_ref = db.collection(collection_name).document()
-        doc_ref.set(question_data)
-        
-        return GenerateResponse(
-            question=generation_result["question"],
-            dimension=generation_result["dimension"],
-            subdimension=generation_result["subdimension"],
-            target_year_level=generation_result["target_year_level"],
-            response_scale="1-5",
-            saved_question_id=doc_ref.id
+        # Create a Question model instance with the generated content
+        new_question = Question(
+            content=generation_result["question"],
+            idQuiz=request.idQuiz,
+            idCategory=request.idCategory
         )
         
+        # Use the existing create_question function to save to Firebase
+        saved_question = create_question(new_question)
+        
+        # Update category to include the subdimension if it's not already there
+        try:
+            _update_category_with_subdimension(request.idCategory, subdimension)
+        except Exception as e:
+            print(f"⚠️ Warning: Could not update category with subdimension: {e}")
+        
+        return QuestionGenerateResponse(
+            question=saved_question,
+            generation_metadata={
+                "dimension": generation_result["dimension"],
+                "subdimension": generation_result["subdimension"],
+                "target_year_level": generation_result["target_year_level"],
+                "context_used": generation_result.get("context_used", []),
+                "response_scale": "1-5"
+            }
+        )
+        
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate question: {str(e)}")
+
+
+def _update_category_with_subdimension(category_id: str, subdimension: str):
+    """Update category to include the subdimension if it's not already present"""
+    try:
+        # Get the category document
+        category_ref = db.collection("categories").document(category_id)
+        category_doc = category_ref.get()
+        
+        if category_doc.exists:
+            category_data = category_doc.to_dict()
+            subcategories = category_data.get("subcategories", [])
+            
+            # Add the subdimension if it's not already in the list
+            if subdimension not in subcategories:
+                subcategories.append(subdimension)
+                category_ref.update({"subcategories": subcategories})
+                print(f"✅ Added '{subdimension}' to category {category_id}")
+        else:
+            print(f"⚠️ Category {category_id} not found")
+            
+    except Exception as e:
+        print(f"❌ Error updating category: {e}")
+        # Don't raise the error as this is not critical for question generation
 
 @router.get("/{question_id}", response_model=Question)
 def get_question(question_id: str):
