@@ -19,7 +19,7 @@ class QuestionGenerationService:
             raise ValueError("GEMINI_API_KEY environment variable not found")
         
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel("gemini-2.5-flash")
+        self.model = genai.GenerativeModel("gemini-2.5-flash-lite")
         
         # Initialize embedding model and FAISS index
         self.embed_model = None
