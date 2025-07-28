@@ -2,16 +2,16 @@ from shared_storage import QuizStorage
 
 storage = QuizStorage()
 
-# Create a test quiz with multiple questions
+# Create a test quiz with multiple questions (updated for new format without response_scale)
 test_quiz_data = []
 for i in range(5):
     test_quiz_data.append({
         'question_id': f'test_{i+1:03d}',
         'dimension': 'creativity',
-        'subdimension': 'innovation', 
+        'subdimension': 'innovation_problem_solving', 
         'question_text': f'Test question {i+1}: I demonstrate creative thinking in my work.',
-        'target_year_level': 12,
-        'response_scale': '1-5'
+        'target_year_level': 1  # Changed from 12 to 1 (valid range is 1-3)
+        # Removed response_scale - all questions use standard 1-5 Likert scale
     })
 
 quiz_id = storage.save_quiz(test_quiz_data, 'Test Quiz with 5 Questions')

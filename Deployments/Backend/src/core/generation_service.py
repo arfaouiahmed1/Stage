@@ -35,21 +35,21 @@ class QuestionGenerationService:
     def _load_dataset(self):
         """Load the questions CSV dataset"""
         try:
-            # Path to the questions CSV - from Backend directory to project root
+            # Path to the balanced questions CSV - from Backend directory to project root
             # Backend/src/core/generation_service.py -> go up to Backend/ then ../../Datasets
             backend_dir = Path(__file__).parent.parent.parent  # This gets us to Backend/
-            csv_path = (backend_dir / "../../Datasets/Quiz Generation/questions.csv").resolve()
+            csv_path = (backend_dir / "../../Datasets/Final Datasets/All Questions.csv").resolve()
             
             if not csv_path.exists():
                 raise FileNotFoundError(f"Questions dataset not found at: {csv_path}")
             
-            # Load CSV, skip the first row (comment)
-            self.df = pd.read_csv(csv_path, skiprows=1)
+            # Load CSV (no comment row to skip in the new format)
+            self.df = pd.read_csv(csv_path)
             
             # Strip whitespace from column names
             self.df.columns = self.df.columns.str.strip()
             
-            # Extract texts and metadata
+            # Extract texts and metadata (no response_scale column in new format)
             self.texts = self.df["question_text"].tolist()
             self.metadatas = self.df[["dimension", "subdimension", "target_year_level", "question_id"]].to_dict(orient="records")
             

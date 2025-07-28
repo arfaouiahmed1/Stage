@@ -53,6 +53,28 @@ The system uses Google Gemini AI with Retrieval-Augmented Generation (RAG) to cr
 - ✅ **Smart Context Retrieval**: Uses semantic search for relevant examples
 - ✅ **Proper Model Integration**: Generates valid Question objects with correct IDs
 - ✅ **Auto-Category Updates**: Automatically adds new subdimensions to categories
+- ✅ **Balanced Dataset**: Uses production dataset with 880 balanced questions (220 per dimension)
+
+### Dataset Integration
+The AI system uses the **balanced production dataset** located at:
+```
+../../Datasets/Final Datasets/All Questions.csv
+```
+
+**Dataset Features:**
+- 🎯 **880 Questions**: Perfectly balanced across 4 dimensions
+- 📊 **Equal Distribution**: 220 questions each (creativity, soft_skills, teamwork, hard_skills)
+- ✅ **Clean Format**: 5 columns, standardized Likert scale (1-5)
+- 🏷️ **Rich Subdimensions**: 60+ specialized subcategories
+- 🎓 **Year-Level Coverage**: Questions for Years 1-3
+
+**Columns:**
+```csv
+question_id,dimension,subdimension,question_text,target_year_level
+sa_001,creativity,innovation_problem_solving,How confident are you in innovation problem solving?,1
+```
+
+**No `response_scale` column needed** - all questions use standard 1-5 Likert scale.
 
 ### Generation Flow
 ```mermaid

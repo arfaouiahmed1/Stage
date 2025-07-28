@@ -6,45 +6,48 @@ Clean, production-ready datasets for the Gamified Student Clustering Platform. D
 ## Structure
 ```
 Datasets/
-└── Quiz Generation/          # Complete assessment and clustering dataset
-    ├── taxonomy.csv          # 4 dimensions × 21 subcategories (21 rows)
-    ├── questions.csv         # 160 realistic university scenarios (160 rows)  
-    ├── rubrics.csv           # Year-appropriate scoring standards (6 rows)
-    ├── features_template.csv # ML feature columns (32 features)
-    ├── scoring_guide.md      # Mathematical methodology
-    ├── validate_data.py      # Data integrity validation script
-    └── README.md            # Detailed data science documentation
+├── Quiz Generation/          # Legacy assessment dataset (160 questions)
+│   ├── taxonomy.csv          # 4 dimensions × 21 subcategories (21 rows)
+│   ├── questions.csv         # 160 realistic university scenarios (160 rows)  
+│   ├── rubrics.csv           # Year-appropriate scoring standards (6 rows)
+│   ├── features_template.csv # ML feature columns (32 features)
+│   ├── scoring_guide.md      # Mathematical methodology
+│   ├── validate_data.py      # Data integrity validation script
+│   └── README.md            # Detailed data science documentation
+└── Final Datasets/          # ✨ PRODUCTION DATASET (880 questions)
+    ├── All Questions.csv     # Balanced, cleaned, production-ready dataset
+    ├── balance_and_fix_dataset.py  # Dataset balancing script
+    ├── dataset_stats.py      # Analysis and statistics script
+    └── README.md            # Production dataset documentation
 ```
 
-## Key Features
-- **4 Assessment Dimensions**: Creativity, Teamwork, Soft Skills, Hard Skills
-- **21 Subcategories**: Tailored for software engineering curriculum
-- **160 Realistic Questions**: Based on actual university projects (SDL games, web apps, presentations)
-- **Year-Level Scaling**: Appropriate expectations for Years 1-5
-- **Collaboration Focus**: Designed to predict team compatibility and reduce conflicts
-- **Clean Data Structure**: Optimized for pandas, scikit-learn, and data science workflows
+## 🎯 RECOMMENDED: Final Datasets
+**Use `Final Datasets/All Questions.csv` for production and ML training.**
 
-## Quick Start (Data Scientists)
+### Key Features
+- **🎯 Perfect Balance**: 220 questions per dimension (880 total)
+- **📊 25% Distribution**: creativity, soft_skills, teamwork, hard_skills
+- **✅ High Quality**: Grammar-corrected, duplicate-free
+- **🏷️ Clean Format**: 5 columns, no response_scale needed
+- **🎓 Year Coverage**: Questions for Years 1-3
+
+### Quick Start (Production)
 ```python
 import pandas as pd
-import numpy as np
 
-# Load core datasets
-taxonomy = pd.read_csv('Quiz Generation/taxonomy.csv')
-questions = pd.read_csv('Quiz Generation/questions.csv') 
-rubrics = pd.read_csv('Quiz Generation/rubrics.csv')
-features = pd.read_csv('Quiz Generation/features_template.csv')
+# Load production dataset
+df = pd.read_csv('Final Datasets/All Questions.csv')
 
-# Verify data integrity
-assert len(taxonomy) == 21  # 21 subcategories 
-assert len(questions) == 160  # 160 questions
-assert len(rubrics) == 6  # 6 scoring levels
-assert taxonomy.groupby('dimension_id')['dimension_weight'].first().sum() == 1.0
+# Verify perfect balance
+print(f"Total questions: {len(df)}")  # 880
+distribution = df['dimension'].value_counts()
+print(f"Distribution: {distribution}")  # All 220 each
 
-# Quick analysis
-print(f"Dimensions: {taxonomy['dimension_name'].unique()}")
-print(f"Questions per dimension: {questions['dimension'].value_counts()}")
-print(f"Year levels covered: {sorted(questions['target_year_level'].unique())}")
+# Standard columns
+print(f"Columns: {list(df.columns)}")
+# ['question_id', 'dimension', 'subdimension', 'question_text', 'target_year_level']
+
+# All questions use 1-5 Likert scale (no response_scale column needed)
 ```
 
 ## Use Cases

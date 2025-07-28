@@ -59,7 +59,7 @@ def test_full_workflow():
                             questions = response.json()["questions"]
                             print(f"✅ Generated {len(questions)} questions via API")
                             
-                            # Test storage
+                            # Test storage (updated for new format without response_scale)
                             storage = QuizStorage()
                             quiz_data = []
                             for i, question in enumerate(questions):
@@ -68,8 +68,8 @@ def test_full_workflow():
                                     "dimension": test_dim,
                                     "subdimension": test_subdim,
                                     "question_text": question,
-                                    "target_year_level": 1,
-                                    "response_scale": "1-5"
+                                    "target_year_level": 1
+                                    # Removed response_scale - all questions use standard 1-5 Likert scale
                                 })
                             
                             quiz_id = storage.save_quiz(quiz_data, f"API Generated Quiz - {len(questions)} Questions")

@@ -12,15 +12,15 @@ def test_storage():
         storage = QuizStorage()
         print("✅ Storage initialized successfully")
         
-        # Test saving a quiz
+        # Test saving a quiz (updated for new format without response_scale)
         test_quiz_data = [
             {
                 "question_id": "test_001",
                 "dimension": "creativity",
-                "subdimension": "innovation",
+                "subdimension": "innovation_problem_solving",
                 "question_text": "I often come up with creative solutions to problems",
-                "target_year_level": 12,
-                "response_scale": "1-5"
+                "target_year_level": 1  # Changed from 12 to 1 (valid range is 1-3)
+                # Removed response_scale - all questions use standard 1-5 Likert scale
             }
         ]
         
