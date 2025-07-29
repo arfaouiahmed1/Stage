@@ -6,7 +6,11 @@ from src.schemas.question import (
     QuestionGenerateRequest, 
     QuestionGenerateResponse, 
     DimensionsResponse, 
-    SubdimensionsResponse
+    SubdimensionsResponse,
+    CategoryQuestionsRequest,
+    CategoryQuestionsResponse,
+    FullQuizRequest,
+    FullQuizResponse
 )
 from src.core.firebase import db
 from src.core.generation_service import QuestionGenerationService
@@ -52,25 +56,38 @@ def get_questions():
 
 @router.get("/dimensions", response_model=DimensionsResponse)
 def get_available_dimensions():
-    """Get all available dimensions for question generation (from dataset + categories)"""
+    """Get all available dimensions for question generation (limited to 4 valid categories)"""
     try:
         service = get_generation_service()
-        dataset_dimensions = service.get_available_dimensions()
         
-        # Also get dimensions from categories (islands)
+        # Only return the 4 valid dimensions, not all dataset dimensions
+        valid_dimensions = service.get_valid_dimensions()
+        
+        # Filter categories to only include valid dimensions
         try:
             categories_docs = db.collection("categories").stream()
-            category_dimensions = [doc.to_dict().get("island", "") for doc in categories_docs]
-            category_dimensions = [d for d in category_dimensions if d]  # Remove empty strings
+            existing_category_dimensions = []
+            for doc in categories_docs:
+                island = doc.to_dict().get("island", "")
+                if island:
+                    normalized = service.normalize_dimension_name(island)
+                    if normalized in valid_dimensions:
+                        existing_category_dimensions.append(normalized)
         except Exception as e:
             print(f"⚠️ Could not fetch categories: {e}")
-            category_dimensions = []
+            existing_category_dimensions = []
         
-        # Combine and deduplicate
-        all_dimensions = list(set(dataset_dimensions + category_dimensions))
-        all_dimensions.sort()
+        # Use valid dimensions, but ensure they exist in categories
+        if existing_category_dimensions:
+            # Return dimensions that actually exist in the database
+            available_dimensions = list(set(existing_category_dimensions))
+        else:
+            # Fallback to all valid dimensions if no categories found
+            available_dimensions = valid_dimensions
         
-        return DimensionsResponse(dimensions=all_dimensions)
+        available_dimensions.sort()
+        
+        return DimensionsResponse(dimensions=available_dimensions)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get dimensions: {str(e)}")
 
@@ -123,6 +140,17 @@ def generate_questions(request: QuestionGenerateRequest):
         
         if not dimension:
             raise HTTPException(status_code=400, detail="Category has no dimension (island) specified")
+        
+        # Validate that the dimension is one of the 4 allowed ones
+        service = get_generation_service()
+        valid_dimensions = service.get_valid_dimensions()
+        normalized_dimension = service.normalize_dimension_name(dimension)
+        
+        if normalized_dimension not in valid_dimensions:
+            raise HTTPException(status_code=400, detail=f"Invalid dimension '{dimension}'. Must be one of: {valid_dimensions}")
+        
+        # Use the normalized dimension for generation
+        dimension = normalized_dimension
         
         # Determine subdimension
         subdimension = None
@@ -196,6 +224,176 @@ def generate_questions(request: QuestionGenerateRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate question: {str(e)}")
+
+
+@router.post("/generate-category", response_model=CategoryQuestionsResponse)
+def generate_category_questions(request: CategoryQuestionsRequest):
+    """Generate multiple questions for a specific category"""
+    try:
+        # Get category to extract dimension
+        category_ref = db.collection("categories").document(request.idCategory)
+        category_doc = category_ref.get()
+        
+        if not category_doc.exists:
+            raise HTTPException(status_code=404, detail=f"Category {request.idCategory} not found")
+        
+        category_data = category_doc.to_dict()
+        dimension = category_data.get("island")
+        
+        if not dimension:
+            raise HTTPException(status_code=400, detail="Category has no dimension (island) specified")
+        
+        # Validate that the dimension is one of the 4 allowed ones
+        service = get_generation_service()
+        valid_dimensions = service.get_valid_dimensions()
+        normalized_dimension = service.normalize_dimension_name(dimension)
+        
+        if normalized_dimension not in valid_dimensions:
+            raise HTTPException(status_code=400, detail=f"Invalid dimension '{dimension}'. Must be one of: {valid_dimensions}")
+        
+        # Use the normalized dimension for generation
+        dimension = normalized_dimension
+        
+        # Verify quiz exists
+        quiz_ref = db.collection("quizzes").document(request.idQuiz)
+        quiz_doc = quiz_ref.get()
+        
+        if not quiz_doc.exists:
+            raise HTTPException(status_code=404, detail=f"Quiz {request.idQuiz} not found")
+        
+        print(f"🎯 Generating {request.num_questions} questions for {dimension} (Year {request.target_year_level})")
+        
+        # Generate questions using the AI service
+        service = get_generation_service()
+        generation_results = service.generate_category_questions(
+            dimension=dimension,
+            num_questions=request.num_questions,
+            target_year_level=request.target_year_level
+        )
+        
+        # Create Question instances and save them to Firebase
+        saved_questions = []
+        for result in generation_results:
+            new_question = Question(
+                content=result["question"],
+                idQuiz=request.idQuiz,
+                idCategory=request.idCategory
+            )
+            saved_question = create_question(new_question)
+            saved_questions.append(saved_question)
+            
+            # Update category with subdimension
+            try:
+                _update_category_with_subdimension(request.idCategory, result["subdimension"])
+            except Exception as e:
+                print(f"⚠️ Warning: Could not update category with subdimension: {e}")
+        
+        # Prepare metadata
+        metadata = {
+            "dimension": dimension,
+            "total_generated": len(saved_questions),
+            "target_year_level": request.target_year_level,
+            "subdimension_distribution": generation_results[0]["category_distribution"] if generation_results else {},
+            "response_scale": "1-5"
+        }
+        
+        return CategoryQuestionsResponse(
+            questions=saved_questions,
+            generation_metadata=metadata
+        )
+        
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate category questions: {str(e)}")
+
+
+@router.post("/generate-full-quiz", response_model=FullQuizResponse)
+def generate_full_quiz(request: FullQuizRequest):
+    """Generate a complete balanced quiz across all 4 major categories"""
+    try:
+        # Verify quiz exists
+        quiz_ref = db.collection("quizzes").document(request.idQuiz)
+        quiz_doc = quiz_ref.get()
+        
+        if not quiz_doc.exists:
+            raise HTTPException(status_code=404, detail=f"Quiz {request.idQuiz} not found")
+        
+        # Get quiz data to find categories
+        quiz_data = quiz_doc.to_dict()
+        quiz_categories = quiz_data.get("idCategory", [])
+        
+        if len(quiz_categories) != 4:
+            raise HTTPException(status_code=400, detail="Quiz must have exactly 4 categories for full quiz generation")
+        
+        print(f"🎯 Generating full quiz with {request.total_questions} questions (Year {request.target_year_level})")
+        
+        # Generate questions using the AI service
+        service = get_generation_service()
+        generation_result = service.generate_full_quiz(
+            total_questions=request.total_questions,
+            target_year_level=request.target_year_level
+        )
+        
+        # Map dimensions to category IDs
+        dimension_to_category = {}
+        for category_id in quiz_categories:
+            category_ref = db.collection("categories").document(category_id)
+            category_doc = category_ref.get()
+            if category_doc.exists:
+                category_data = category_doc.to_dict()
+                dimension = category_data.get("island")
+                if dimension:
+                    dimension_to_category[dimension] = category_id
+        
+        # Create Question instances and save them to Firebase
+        saved_questions = []
+        for result in generation_result["questions"]:
+            dimension = result["dimension"]
+            category_id = dimension_to_category.get(dimension)
+            
+            if not category_id:
+                print(f"⚠️ No category found for dimension {dimension}, using first available")
+                category_id = quiz_categories[0]
+            
+            new_question = Question(
+                content=result["question"],
+                idQuiz=request.idQuiz,
+                idCategory=category_id
+            )
+            saved_question = create_question(new_question)
+            saved_questions.append(saved_question)
+            
+            # Update category with subdimension
+            try:
+                _update_category_with_subdimension(category_id, result["subdimension"])
+            except Exception as e:
+                print(f"⚠️ Warning: Could not update category with subdimension: {e}")
+        
+        # Prepare comprehensive metadata
+        metadata = {
+            "total_generated": len(saved_questions),
+            "target_year_level": request.target_year_level,
+            "questions_per_category": generation_result["questions_per_category"],
+            "major_categories": generation_result["major_categories"],
+            "category_distributions": generation_result["category_distributions"],
+            "dimension_to_category_mapping": dimension_to_category,
+            "response_scale": "1-5"
+        }
+        
+        return FullQuizResponse(
+            questions=saved_questions,
+            generation_metadata=metadata
+        )
+        
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate full quiz: {str(e)}")
 
 
 def _update_category_with_subdimension(category_id: str, subdimension: str):

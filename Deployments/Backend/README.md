@@ -109,14 +109,35 @@ graph TD
 ### AI Generation
 - `GET /questions/dimensions` - Get available dimensions
 - `GET /questions/subdimensions/{dimension}` - Get subdimensions for dimension
-- `POST /questions/generate` - Generate AI question
+- `POST /questions/generate` - Generate single AI question
+- `POST /questions/generate-category` - Generate multiple questions for one category
+- `POST /questions/generate-full-quiz` - Generate balanced quiz across 4 major categories
 
-#### Generation Request Format (Simplified)
+#### Single Question Generation
 ```json
 {
   "idQuiz": "actual_quiz_id_from_database",
   "idCategory": "actual_category_id_from_database", 
   "subdimension": "optional_custom_subdimension",
+  "target_year_level": 2
+}
+```
+
+#### Category Questions Generation
+```json
+{
+  "idQuiz": "actual_quiz_id_from_database",
+  "idCategory": "actual_category_id_from_database",
+  "num_questions": 10,
+  "target_year_level": 2
+}
+```
+
+#### Full Quiz Generation
+```json
+{
+  "idQuiz": "actual_quiz_id_from_database", 
+  "total_questions": 40,
   "target_year_level": 2
 }
 ```
@@ -143,6 +164,60 @@ graph TD
   }
 }
 ```
+
+### Bulk Generation Features
+
+#### Category Questions Generation (`/questions/generate-category`)
+Generates multiple questions for a single category with automatic subdimension distribution:
+
+**Features:**
+- 🎯 **Smart Distribution**: Questions are evenly distributed across available subdimensions
+- 📊 **Balanced Allocation**: Handles any number of questions (1-50) with fair distribution
+- 🔄 **Variation**: Each question is unique using context variation
+- 📋 **Metadata Tracking**: Full distribution statistics in response
+
+**Example: Generate 10 creativity questions**
+```bash
+curl -X POST "http://localhost:8000/questions/generate-category" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idQuiz": "quiz_123",
+    "idCategory": "creativity_category_id",
+    "num_questions": 10,
+    "target_year_level": 2
+  }'
+```
+
+**Response includes:**
+- Array of 10 saved Question objects
+- Subdimension distribution (e.g., 3 innovation, 3 artistic, 4 original_thinking)
+- Generation metadata
+
+#### Full Quiz Generation (`/questions/generate-full-quiz`)
+Generates a complete balanced quiz across all 4 major categories:
+
+**Features:**
+- 🎯 **Perfect Balance**: Equal questions per category (creativity, teamwork, soft_skills, hard_skills)
+- 📊 **Auto-Distribution**: Each category's questions distributed across its subdimensions
+- ✅ **Validation**: Total questions must be divisible by 4
+- 🎓 **Year-Level Specific**: All questions target the specified year level
+
+**Example: Generate 40-question balanced quiz**
+```bash
+curl -X POST "http://localhost:8000/questions/generate-full-quiz" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "idQuiz": "quiz_123",
+    "total_questions": 40,
+    "target_year_level": 2
+  }'
+```
+
+**Response includes:**
+- Array of 40 saved Question objects (10 per category)
+- Complete category distribution mapping
+- Subdimension breakdown for each category
+- Category-to-quiz mapping information
 
 **🔗 Schema Integration:**
 - Generated questions use your existing `Question` schema exactly
