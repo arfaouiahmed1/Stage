@@ -250,9 +250,9 @@ def perform_clustering(student_scores, all_students_df):
     
     # If there are no other students in the dataset, create some sample students
     if len(all_students_df) == 0:
-        # Generate synthetic data for comparison
+        # Generate synthetic data for comparison with clear complementary patterns
         np.random.seed(42)
-        n_synthetic = 10
+        n_synthetic = 20
         
         synthetic_data = {
             'student_id': [f"SYN{i:03d}" for i in range(1, n_synthetic+1)],
@@ -261,17 +261,40 @@ def perform_clustering(student_scores, all_students_df):
             'age': np.random.randint(18, 46, n_synthetic),
             'nationality': np.random.choice(['Tunisian', 'Cameroonian', 'Senegalese', 'Moroccan', 
                                           'Algerian', 'Ivorian', 'Malian', 'Egyptian', 'Other'], n_synthetic),
-            'communication_score': np.random.uniform(1, 5, n_synthetic).round(2),
-            'leadership_score': np.random.uniform(1, 5, n_synthetic).round(2),
-            'time_management_score': np.random.uniform(1, 5, n_synthetic).round(2),
-            'analytical_score': np.random.uniform(1, 5, n_synthetic).round(2),
+            'communication_score': [],
+            'leadership_score': [],
+            'time_management_score': [],
+            'analytical_score': []
         }
         
-        # Create patterns for better clustering
-        synthetic_data['communication_score'][:3] = 5.0
-        synthetic_data['leadership_score'][3:6] = 5.0
-        synthetic_data['time_management_score'][6:9] = 5.0
-        synthetic_data['analytical_score'][9:] = 5.0
+        # Create clear complementary patterns
+        # Group 1: High Communication, Low Leadership (5 students)
+        for i in range(5):
+            synthetic_data['communication_score'].append(np.random.uniform(4.2, 5.0))
+            synthetic_data['leadership_score'].append(np.random.uniform(1.5, 2.5))
+            synthetic_data['time_management_score'].append(np.random.uniform(2.5, 3.5))
+            synthetic_data['analytical_score'].append(np.random.uniform(2.5, 3.5))
+        
+        # Group 2: Low Communication, High Leadership (5 students)
+        for i in range(5, 10):
+            synthetic_data['communication_score'].append(np.random.uniform(1.5, 2.5))
+            synthetic_data['leadership_score'].append(np.random.uniform(4.2, 5.0))
+            synthetic_data['time_management_score'].append(np.random.uniform(2.5, 3.5))
+            synthetic_data['analytical_score'].append(np.random.uniform(2.5, 3.5))
+        
+        # Group 3: High Analytical, Low Time Management (5 students)
+        for i in range(10, 15):
+            synthetic_data['communication_score'].append(np.random.uniform(2.5, 3.5))
+            synthetic_data['leadership_score'].append(np.random.uniform(2.5, 3.5))
+            synthetic_data['time_management_score'].append(np.random.uniform(1.5, 2.5))
+            synthetic_data['analytical_score'].append(np.random.uniform(4.2, 5.0))
+        
+        # Group 4: Low Analytical, High Time Management (5 students)
+        for i in range(15, 20):
+            synthetic_data['communication_score'].append(np.random.uniform(2.5, 3.5))
+            synthetic_data['leadership_score'].append(np.random.uniform(2.5, 3.5))
+            synthetic_data['time_management_score'].append(np.random.uniform(4.2, 5.0))
+            synthetic_data['analytical_score'].append(np.random.uniform(1.5, 2.5))
         
         # Create DataFrame
         synthetic_df = pd.DataFrame(synthetic_data)
@@ -281,153 +304,128 @@ def perform_clustering(student_scores, all_students_df):
         # Add the synthetic data to the combined_df
         combined_df = pd.concat([synthetic_df, student_scores], ignore_index=True)
     
-    # Get feature columns - include both scores and demographic features
+    # CUSTOM HETEROGENEOUS CLUSTERING ALGORITHM
+    # Instead of KMeans, we'll create groups that explicitly pair high and low performers
+    
     score_columns = ['communication_score', 'leadership_score', 
                    'time_management_score', 'analytical_score']
-                   
-    # Process demographic features
-    # Handle potential missing columns in the dataframe
-    if 'gender' not in combined_df.columns:
-        combined_df['gender'] = "Not specified"
-    if 'age' not in combined_df.columns:
-        combined_df['age'] = 20
-    if 'nationality' not in combined_df.columns:
-        combined_df['nationality'] = "Not specified"
     
-    # Convert categorical variables to numeric using one-hot encoding
-    # Gender encoding
-    combined_df['gender_encoded'] = combined_df['gender'].map({'Male': 0, 'Female': 1, 'Not specified': 0.5})
+    # Step 1: Calculate skill percentiles for each student
+    n_students = len(combined_df)
+    skill_percentiles = {}
     
-    # Age standardization (already numeric)
-    combined_df['age_normalized'] = (combined_df['age'] - 18) / (45 - 18)  # Normalize to 0-1 range
+    for skill in score_columns:
+        skill_values = combined_df[skill].values
+        # Calculate percentile for each student
+        percentiles = []
+        for i, value in enumerate(skill_values):
+            # Calculate what percentile this student is in for this skill
+            below_count = sum(1 for v in skill_values if v < value)
+            percentile = below_count / len(skill_values)
+            percentiles.append(percentile)
+        skill_percentiles[skill] = percentiles
     
-    # Nationality encoding (simplified using ordinal encoding for this example)
-    nationality_mapping = {
-        'Tunisian': 0, 'Cameroonian': 1, 'Senegalese': 2, 'Moroccan': 3,
-        'Algerian': 4, 'Ivorian': 5, 'Malian': 6, 'Egyptian': 7, 'Other': 8,
-        'Not specified': 4.5  # Middle value
-    }
-    combined_df['nationality_encoded'] = combined_df['nationality'].map(nationality_mapping)
-    combined_df['nationality_normalized'] = combined_df['nationality_encoded'] / 8  # Normalize to 0-1 range
+    # Step 2: Create heterogeneous groups by pairing high and low performers
+    # We'll create groups where each group has a mix of high and low performers
     
-    # Combine skill scores and demographic features
-    # Define weights to control the influence of demographics vs skills
-    # You can adjust these weights to give more or less importance to demographics
-    feature_columns = score_columns + ['gender_encoded', 'age_normalized', 'nationality_normalized']
-    feature_weights = [1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5]  # Lower weights for demographic features
+    # Determine number of groups (aim for 4-6 students per group)
+    target_group_size = 4
+    n_groups = max(2, n_students // target_group_size)
     
-    # Extract features and handle missing values
-    X = combined_df[feature_columns].values
+    # Initialize groups
+    groups = [[] for _ in range(n_groups)]
     
-    # Convert X to float type to ensure it's compatible with np.isnan
-    X = X.astype(float)
+    # Sort students by their overall skill diversity
+    student_diversity_scores = []
+    for i in range(n_students):
+        # Calculate how "extreme" this student is across all skills
+        diversity_score = 0
+        for skill in score_columns:
+            percentile = skill_percentiles[skill][i]
+            # High diversity if student is very high or very low in a skill
+            if percentile > 0.8 or percentile < 0.2:
+                diversity_score += 1
+        student_diversity_scores.append(diversity_score)
     
-    # Check for and handle NaN values before clustering
-    try:
-        has_nan = np.isnan(X).any()
-    except TypeError:
-        # If TypeError occurs, manually check for NaNs
-        st.warning("Cannot automatically detect missing values. Using manual detection.")
-        has_nan = False
-        for col_idx in range(X.shape[1]):
-            for row_idx in range(X.shape[0]):
-                if pd.isna(X[row_idx, col_idx]):
-                    has_nan = True
-                    break
-            if has_nan:
-                break
+    # Sort students by diversity (most diverse first)
+    student_indices = list(range(n_students))
+    student_indices.sort(key=lambda i: student_diversity_scores[i], reverse=True)
     
-    if has_nan:
-        # Log the information about missing values
-        st.warning("Some data contains missing values. These will be handled automatically.")
+    # Distribute students to groups ensuring heterogeneity
+    for i, student_idx in enumerate(student_indices):
+        group_idx = i % n_groups
+        groups[group_idx].append(student_idx)
+    
+    # Assign cluster labels
+    combined_df['cluster'] = 0
+    for group_idx, group_students in enumerate(groups):
+        for student_idx in group_students:
+            combined_df.iloc[student_idx, combined_df.columns.get_loc('cluster')] = group_idx
+    
+    # Step 3: Analyze each group for complementarity
+    def analyze_group_complementarity(group_students, combined_df, score_columns):
+        """Analyze how complementary a group is"""
+        group_data = combined_df.iloc[group_students]
         
-        # For each feature, replace NaN values with the mean of that feature
-        for col_idx in range(X.shape[1]):
-            feature_data = X[:, col_idx]
-            # Use pandas isna which is more flexible with data types
-            nan_mask = pd.isna(feature_data)
-            if nan_mask.any():
-                # Calculate mean of non-NaN values
-                col_mean = np.nanmean(feature_data)
-                # Replace NaN values with the mean
-                X[nan_mask, col_idx] = col_mean
-    
-    # Apply weights after handling missing values
-    for i, weight in enumerate(feature_weights):
-        X[:, i] *= weight
-    
-    # Scale all features
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    
-    # Invert the scaled scores to cluster based on differences rather than similarities
-    # This will make high scores appear as low scores and vice versa
-    X_scaled_inverted = -1 * X_scaled
-    
-    # Determine optimal number of clusters using the inverted scores
-    # Check if we have enough data for meaningful clustering
-    if len(combined_df) <= 2:
-        # For very small datasets, just use 2 clusters
-        optimal_k = 2
-    else:
-        # Maximum number of clusters based on dataset size
-        max_k = min(5, len(combined_df) - 1)
+        complementary_skills = []
+        similar_skills = []
         
-        # If max_k is less than 2, force it to 2 (minimum for clustering)
-        if max_k < 2:
-            max_k = 2
+        for skill in score_columns:
+            skill_values = group_data[skill].values
+            skill_std = np.std(skill_values)
+            skill_range = np.max(skill_values) - np.min(skill_values)
             
-        k_range = range(2, max_k + 1)
-        silhouette_scores = []
+            # Check if group has both high and low performers
+            high_performers = sum(1 for v in skill_values if v > 4.0)
+            low_performers = sum(1 for v in skill_values if v < 2.5)
+            
+            if high_performers > 0 and low_performers > 0 and skill_range > 1.5:
+                complementary_skills.append(skill.replace('_score', '').title())
+            elif skill_std < 0.5:
+                similar_skills.append(skill.replace('_score', '').title())
         
-        for k in k_range:
-            try:
-                kmeans_test = KMeans(n_clusters=k, random_state=42, n_init=10)
-                kmeans_test.fit(X_scaled_inverted)  # Use inverted scores for clustering
-                cluster_labels = kmeans_test.predict(X_scaled_inverted)
-                
-                # Check if we have enough unique labels for silhouette score
-                unique_labels = len(np.unique(cluster_labels))
-                if unique_labels > 1:  # Silhouette score needs at least 2 clusters
-                    try:
-                        silhouette_avg = silhouette_score(X_scaled_inverted, cluster_labels)
-                        silhouette_scores.append(silhouette_avg)
-                    except Exception as e:
-                        # If silhouette fails, assign a default low score
-                        silhouette_scores.append(-1)
-                        st.warning(f"Silhouette score calculation failed for k={k}: {e}")
-                else:
-                    # If only one cluster was created, give it a poor score
-                    silhouette_scores.append(-1)
-                    st.warning(f"Only one cluster was formed for k={k}, which is not valid for evaluation.")
-            except Exception as e:
-                # If KMeans fails entirely, assign a default low score
-                silhouette_scores.append(-1)
-                st.warning(f"KMeans clustering failed for k={k}: {e}")
+        return complementary_skills, similar_skills
+    
+    # Step 4: Create cluster descriptions
+    cluster_descriptions = {}
+    for group_idx, group_students in enumerate(groups):
+        if len(group_students) == 0:
+            continue
+            
+        complementary_skills, similar_skills = analyze_group_complementarity(group_students, combined_df, score_columns)
         
-        # Choose optimal k if we have valid scores, otherwise default to 2
-        if silhouette_scores and max(silhouette_scores) > -1:
-            optimal_k = k_range[silhouette_scores.index(max(silhouette_scores))]
+        # Create description
+        if complementary_skills:
+            group_desc = f"This learning group has diverse skill levels in {', '.join(complementary_skills)}. "
+            group_desc += "This creates excellent peer learning opportunities where students can help each other develop these skills."
         else:
-            optimal_k = 2
-    
-    # Perform KMeans clustering with optimal K using the inverted scores
-    try:
-        kmeans = KMeans(n_clusters=optimal_k, random_state=42, n_init=10)
-        combined_df['cluster'] = kmeans.fit_predict(X_scaled_inverted)  # Use inverted scores
+            group_desc = "This learning group has balanced skill levels across all areas, providing a supportive environment for collaborative learning."
         
-        # Get the cluster center details (we need to invert them back for proper description)
-        centers = -1 * kmeans.cluster_centers_  # Invert the centers back
-    except Exception as e:
-        st.error(f"Error during final clustering: {e}")
-        # Fallback: assign random clusters if KMeans fails
-        st.warning("Using fallback clustering method due to data issues.")
-        combined_df['cluster'] = np.random.randint(0, optimal_k, size=len(combined_df))
-        # Create dummy centers for cluster descriptions
-        centers = np.zeros((optimal_k, len(feature_columns)))
-    
-    # Get cluster descriptions using the inverted-back centers
-    cluster_descriptions = get_cluster_descriptions(centers)
+        if similar_skills:
+            group_desc += f" Students in this group have similar levels in {', '.join(similar_skills)} skills."
+        
+        # Generate group name
+        if len(complementary_skills) >= 2:
+            group_name = f"Complementary {', '.join(complementary_skills[:2])} Group"
+        elif len(complementary_skills) == 1:
+            group_name = f"Enhanced {complementary_skills[0]} Group"
+        else:
+            group_name = f"Balanced Learning Group"
+        
+        # Check demographic diversity
+        group_data = combined_df.iloc[group_students]
+        gender_diversity = group_data['gender'].nunique() if 'gender' in group_data.columns else 1
+        nationality_diversity = group_data['nationality'].nunique() if 'nationality' in group_data.columns else 1
+        
+        if gender_diversity > 1 or nationality_diversity > 1:
+            group_name = "Diverse " + group_name
+        
+        cluster_descriptions[group_idx] = {
+            'name': group_name,
+            'strengths': complementary_skills if complementary_skills else ["Balanced skill levels"],
+            'weaknesses': similar_skills if similar_skills else ["No specific common skills"],
+            'description': group_desc
+        }
     
     # Get the new student's cluster
     new_student_cluster = combined_df.iloc[-1]['cluster']
@@ -441,116 +439,85 @@ def perform_clustering(student_scores, all_students_df):
         'weaknesses': cluster_descriptions[new_student_cluster]['weaknesses'],
     }
     
-    # Visualize with PCA using the original (non-inverted) scores for visualization
-    # This keeps the plot visualization consistent with the actual scores
+    # Create visualization
     try:
-        # Use PCA if we have enough data points (at least 2)
+        # Use PCA for visualization
+        X_skills = combined_df[score_columns].values
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X_skills)
+        
         if X_scaled.shape[0] >= 2:
             pca = PCA(n_components=min(2, X_scaled.shape[1]))
-            X_pca = pca.fit_transform(X_scaled)  # Use original scores for visualization
+            X_pca = pca.fit_transform(X_scaled)
         else:
-            # For very small datasets, just use the first two features
             X_pca = X_scaled[:, :2]
         
         # Create PCA plot
         fig, ax = plt.subplots(figsize=(10, 6))
         
         # Plot all students
-        for i in range(optimal_k):
-            mask = combined_df['cluster'] == i
-            
-            # Check if we have any students in this cluster other than the new student
-            if sum(mask) > 0:
-                # If this is the cluster with the new student, exclude it from this scatter
-                if i == new_student_cluster:
-                    if sum(mask) > 1:  # Only try to plot if there are other students in this cluster
-                        other_students_mask = mask.copy()
-                        other_students_mask.iloc[-1] = False  # Exclude the new student
-                        
-                        if sum(other_students_mask) > 0:  # Double check we have points to plot
-                            ax.scatter(
-                                X_pca[other_students_mask, 0],
-                                X_pca[other_students_mask, 1],
-                                alpha=0.6, 
-                                label=f"{cluster_descriptions[i]['name']}"
-                            )
-                    else:
-                        # If new student is the only one in this cluster, label will be added when plotting that point
-                        pass
+        colors = ['red', 'blue', 'green', 'orange', 'purple']
+        for group_idx in range(len(groups)):
+            if len(groups[group_idx]) > 0:
+                group_students = groups[group_idx]
+                group_pca = X_pca[group_students]
+                
+                if group_idx == new_student_cluster:
+                    # Highlight the new student's group
+                    other_students = [i for i in group_students if i != len(combined_df) - 1]
+                    if other_students:
+                        ax.scatter(X_pca[other_students, 0], X_pca[other_students, 1],
+                                 alpha=0.6, c=colors[group_idx % len(colors)],
+                                 label=f"{cluster_descriptions[group_idx]['name']}")
                 else:
-                    ax.scatter(
-                        X_pca[mask, 0],
-                        X_pca[mask, 1],
-                        alpha=0.6, 
-                        label=f"{cluster_descriptions[i]['name']}"
-                    )
+                    ax.scatter(group_pca[:, 0], group_pca[:, 1],
+                             alpha=0.6, c=colors[group_idx % len(colors)],
+                             label=f"{cluster_descriptions[group_idx]['name']}")
         
-        # Highlight the new student with a star marker
-        ax.scatter(
-            X_pca[-1, 0], 
-            X_pca[-1, 1], 
-            marker='*', 
-            s=200, 
-            color='red',
-            edgecolor='black',
-            label="You"
-        )
+        # Highlight the new student
+        ax.scatter(X_pca[-1, 0], X_pca[-1, 1],
+                  marker='*', s=200, color='red', edgecolor='black', label="You")
+        
+        ax.set_title('Heterogeneous Student Clusters - Complementary Skills')
+        ax.set_xlabel('Principal Component 1')
+        ax.set_ylabel('Principal Component 2')
+        ax.legend()
+        
     except Exception as e:
-        # If PCA fails, create an empty plot with an error message
         fig, ax = plt.subplots(figsize=(10, 6))
-        ax.text(0.5, 0.5, "Could not create visualization: not enough data", 
+        ax.text(0.5, 0.5, "Could not create visualization", 
                 ha='center', va='center', fontsize=14)
         ax.set_xticks([])
         ax.set_yticks([])
     
-    # Add labels and legend
-    ax.set_title('Student Clusters Visualization (PCA)')
-    ax.set_xlabel('Principal Component 1')
-    ax.set_ylabel('Principal Component 2')
-    ax.legend()
-    
     # Generate skill-specific recommendations
     skill_recommendations = {}
-    student_scores_normalized = (X_scaled[-1] - X_scaled[:-1].mean(axis=0)) / X_scaled[:-1].std(axis=0)
-    
-    skill_map = {
-        0: 'communication',
-        1: 'leadership',
-        2: 'time_management',
-        3: 'analytical'
-    }
     
     # Get raw scores for more tailored recommendations
     raw_scores = {}
-    for i, skill in skill_map.items():
-        raw_scores[skill] = student_scores['%s_score' % skill].values[0]
+    for skill in ['communication', 'leadership', 'time_management', 'analytical']:
+        raw_scores[skill] = student_scores[f'{skill}_score'].values[0]
     
-    # Only process the first 4 features which are skills (indices 0-3)
-    # The remaining features are demographic features (indices 4-6)
-    for i in range(4):  # Only loop through skill features
-        if i in skill_map:  # Extra safety check
-            skill = skill_map[i]
-            score = student_scores_normalized[i]  # Get normalized score for this skill
-            raw_score = raw_scores[skill]
-        
-        if raw_score < 2.5:  # Low score (below middle of 1-5 scale)
+    # Enhanced recommendations based on complementarity
+    for skill, raw_score in raw_scores.items():
+        if raw_score < 2.5:  # Low score
             if skill == 'communication':
-                skill_recommendations[skill] = "Your communication score suggests room for growth. Work on public speaking, active listening, and group discussions. In your learning group, you can learn from peers with stronger communication skills."
+                skill_recommendations[skill] = "Your communication score suggests room for growth. In your heterogeneous group, you'll find peers with strong communication skills who can mentor you. Focus on active listening, public speaking practice, and group discussions."
             elif skill == 'leadership':
-                skill_recommendations[skill] = "Your leadership score indicates an opportunity to grow. Develop leadership abilities by taking initiative in group projects and observing successful leadership techniques from your peers."
+                skill_recommendations[skill] = "Your leadership score indicates an opportunity to grow. Your group includes students with strong leadership abilities who can guide you. Take initiative in smaller group tasks and observe successful leadership techniques."
             elif skill == 'time_management':
-                skill_recommendations[skill] = "Your time management score suggests this is an area for development. Learn planning techniques from peers in your group who excel at time management."
+                skill_recommendations[skill] = "Your time management score suggests this is an area for development. Learn planning techniques from peers in your group who excel at time management. Use their strategies to improve your own organization."
             elif skill == 'analytical':
-                skill_recommendations[skill] = "Your analytical thinking score indicates room for improvement. Engage in problem-solving activities with peers who have stronger analytical skills to develop this area."
+                skill_recommendations[skill] = "Your analytical thinking score indicates room for improvement. Engage in problem-solving activities with peers who have stronger analytical skills. Ask them to explain their reasoning process."
         elif raw_score > 3.5:  # High score
             if skill == 'communication':
-                skill_recommendations[skill] = "Your strong communication skills will be valuable in your learning group. Consider helping peers who may struggle with communication while further refining your own skills."
+                skill_recommendations[skill] = "Your strong communication skills will be valuable in your heterogeneous group. Consider mentoring peers who may struggle with communication while further refining your own skills through teaching others."
             elif skill == 'leadership':
-                skill_recommendations[skill] = "With your strong leadership abilities, you can take initiative in group activities while helping others develop their leadership potential."
+                skill_recommendations[skill] = "With your strong leadership abilities, you can take initiative in group activities while helping others develop their leadership potential. Guide your peers without dominating discussions."
             elif skill == 'time_management':
-                skill_recommendations[skill] = "Your excellent time management skills position you well to help peers who struggle in this area. Consider sharing your organizational techniques with your group."
+                skill_recommendations[skill] = "Your excellent time management skills position you well to help peers who struggle in this area. Share your organizational techniques and help create project timelines for your group."
             elif skill == 'analytical':
-                skill_recommendations[skill] = "Your analytical thinking is a strength you can leverage to help peers while tackling more complex problems to further enhance your abilities."
+                skill_recommendations[skill] = "Your analytical thinking is a strength you can leverage to help peers while tackling more complex problems to further enhance your abilities. Guide group problem-solving sessions."
     
     recommendations['skill_specific'] = skill_recommendations
     
@@ -888,182 +855,163 @@ def show_all_students_and_clusters():
         ax3.set_title('Nationality Distribution')
         ax3.set_ylabel('Number of Students')
         plt.xticks(rotation=45, ha='right')
-        st.pyplot(fig3)    # Perform clustering on all students
+        st.pyplot(fig3)    # CUSTOM HETEROGENEOUS CLUSTERING FOR ALL STUDENTS
     if len(all_students_df) < 5:
         st.warning("Not enough students to form meaningful clusters. Please add more students.")
         return
     
-    # Get and prepare the feature data
+    # CUSTOM HETEROGENEOUS CLUSTERING FOR ALL STUDENTS
+    # Use the same approach as perform_clustering but for all students
+    
     score_columns = ['communication_score', 'leadership_score', 
                    'time_management_score', 'analytical_score']
-                   
-    # Process demographic features if they exist
-    if 'gender' not in all_students_df.columns:
-        all_students_df['gender'] = "Not specified"
-    if 'age' not in all_students_df.columns:
-        all_students_df['age'] = 20
-    if 'nationality' not in all_students_df.columns:
-        all_students_df['nationality'] = "Not specified"
     
-    # Convert categorical variables to numeric
-    # Gender encoding
-    all_students_df['gender_encoded'] = all_students_df['gender'].map({'Male': 0, 'Female': 1, 'Not specified': 0.5})
+    # Step 1: Calculate skill percentiles for each student
+    n_students = len(all_students_df)
+    skill_percentiles = {}
     
-    # Age standardization (already numeric)
-    all_students_df['age_normalized'] = (all_students_df['age'] - 18) / (45 - 18)  # Normalize to 0-1 range
+    for skill in score_columns:
+        skill_values = all_students_df[skill].values
+        # Calculate percentile for each student
+        percentiles = []
+        for i, value in enumerate(skill_values):
+            # Calculate what percentile this student is in for this skill
+            below_count = sum(1 for v in skill_values if v < value)
+            percentile = below_count / len(skill_values)
+            percentiles.append(percentile)
+        skill_percentiles[skill] = percentiles
     
-    # Nationality encoding (simplified using ordinal encoding)
-    nationality_mapping = {
-        'Tunisian': 0, 'Cameroonian': 1, 'Senegalese': 2, 'Moroccan': 3,
-        'Algerian': 4, 'Ivorian': 5, 'Malian': 6, 'Egyptian': 7, 'Other': 8,
-        'Not specified': 4.5  # Middle value
-    }
-    all_students_df['nationality_encoded'] = all_students_df['nationality'].map(nationality_mapping)
-    all_students_df['nationality_normalized'] = all_students_df['nationality_encoded'] / 8  # Normalize to 0-1 range
+    # Step 2: Create heterogeneous groups by pairing high and low performers
+    # Determine number of groups (aim for 4-6 students per group)
+    target_group_size = 4
+    n_groups = max(2, n_students // target_group_size)
     
-    # Combine skill scores and demographic features with weights
-    feature_columns = score_columns + ['gender_encoded', 'age_normalized', 'nationality_normalized']
-    feature_weights = [1.0, 1.0, 1.0, 1.0, 0.5, 0.5, 0.5]  # Lower weights for demographic features
+    # Initialize groups
+    groups = [[] for _ in range(n_groups)]
     
-    # Extract features and check for missing values
-    X = all_students_df[feature_columns].values
+    # Sort students by their overall skill diversity
+    student_diversity_scores = []
+    for i in range(n_students):
+        # Calculate how "extreme" this student is across all skills
+        diversity_score = 0
+        for skill in score_columns:
+            percentile = skill_percentiles[skill][i]
+            # High diversity if student is very high or very low in a skill
+            if percentile > 0.8 or percentile < 0.2:
+                diversity_score += 1
+        student_diversity_scores.append(diversity_score)
     
-    # Convert X to float type to ensure it's compatible with np.isnan
-    X = X.astype(float)
+    # Sort students by diversity (most diverse first)
+    student_indices = list(range(n_students))
+    student_indices.sort(key=lambda i: student_diversity_scores[i], reverse=True)
     
-    # Check for and handle NaN values before clustering
-    try:
-        has_nan = np.isnan(X).any()
-    except TypeError:
-        # If TypeError occurs, manually check for NaNs
-        st.warning("Cannot automatically detect missing values. Using manual detection.")
-        has_nan = False
-        for col_idx in range(X.shape[1]):
-            for row_idx in range(X.shape[0]):
-                if pd.isna(X[row_idx, col_idx]):
-                    has_nan = True
-                    break
-            if has_nan:
-                break
+    # Distribute students to groups ensuring heterogeneity
+    for i, student_idx in enumerate(student_indices):
+        group_idx = i % n_groups
+        groups[group_idx].append(student_idx)
     
-    if has_nan:
-        st.warning("Some data contains missing values. These will be handled automatically.")
+    # Assign cluster labels
+    all_students_df['cluster'] = 0
+    for group_idx, group_students in enumerate(groups):
+        for student_idx in group_students:
+            all_students_df.iloc[student_idx, all_students_df.columns.get_loc('cluster')] = group_idx
+    
+    # Step 3: Analyze each group for complementarity
+    def analyze_group_complementarity_all(group_students, all_students_df, score_columns):
+        """Analyze how complementary a group is"""
+        group_data = all_students_df.iloc[group_students]
         
-        # For each feature, replace NaN values with the mean of that feature
-        for col_idx in range(X.shape[1]):
-            feature_data = X[:, col_idx]
-            # Use pandas isna which is more flexible with data types
-            nan_mask = pd.isna(feature_data)
-            if nan_mask.any():
-                # Calculate mean of non-NaN values
-                col_mean = np.nanmean(feature_data)
-                # Replace NaN values with the mean
-                X[nan_mask, col_idx] = col_mean
-    
-    # Apply weights
-    for i, weight in enumerate(feature_weights):
-        X[:, i] *= weight
-    
-    # Scale all features
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    
-    # Invert the scaled scores to cluster based on differences rather than similarities
-    X_scaled_inverted = -1 * X_scaled
-    
-    # Determine optimal number of clusters
-    # Check if we have enough data for meaningful clustering
-    if len(all_students_df) <= 2:
-        # For very small datasets, just use 2 clusters
-        optimal_k = 2
-    else:
-        # Maximum number of clusters based on dataset size
-        max_k = min(5, len(all_students_df) - 1)
+        complementary_skills = []
+        similar_skills = []
         
-        # Make sure k_range has at least one value
-        if max_k < 2:
-            max_k = 2
+        for skill in score_columns:
+            skill_values = group_data[skill].values
+            skill_std = np.std(skill_values)
+            skill_range = np.max(skill_values) - np.min(skill_values)
             
-        k_range = range(2, max_k + 1)
-        silhouette_scores = []
+            # Check if group has both high and low performers
+            high_performers = sum(1 for v in skill_values if v > 4.0)
+            low_performers = sum(1 for v in skill_values if v < 2.5)
+            
+            if high_performers > 0 and low_performers > 0 and skill_range > 1.5:
+                complementary_skills.append(skill.replace('_score', '').title())
+            elif skill_std < 0.5:
+                similar_skills.append(skill.replace('_score', '').title())
         
-        for k in k_range:
-            try:
-                kmeans_test = KMeans(n_clusters=k, random_state=42, n_init=10)
-                kmeans_test.fit(X_scaled_inverted)
-                cluster_labels = kmeans_test.predict(X_scaled_inverted)
-                
-                # Check if we have enough unique labels for silhouette score
-                unique_labels = len(np.unique(cluster_labels))
-                if unique_labels > 1:  # Silhouette score needs at least 2 clusters
-                    try:
-                        silhouette_avg = silhouette_score(X_scaled_inverted, cluster_labels)
-                        silhouette_scores.append(silhouette_avg)
-                    except Exception as e:
-                        # If silhouette fails, assign a default low score
-                        silhouette_scores.append(-1)
-                        st.warning(f"Silhouette score calculation failed for k={k}: {e}")
-                else:
-                    # If only one cluster was created, give it a poor score
-                    silhouette_scores.append(-1)
-            except Exception as e:
-                # If KMeans fails, assign a default low score
-                silhouette_scores.append(-1)
-                st.warning(f"KMeans clustering failed for k={k}: {e}")
-        
-        # Choose optimal k if we have valid scores, otherwise default to 2
-        if silhouette_scores and max(silhouette_scores) > -1:
-            optimal_k = k_range[silhouette_scores.index(max(silhouette_scores))]
-        else:
-            optimal_k = 2
+        return complementary_skills, similar_skills
     
-    # Perform KMeans clustering with optimal K
-    try:
-        kmeans = KMeans(n_clusters=optimal_k, random_state=42, n_init=10)
-        all_students_df['cluster'] = kmeans.fit_predict(X_scaled_inverted)
+    # Step 4: Create cluster descriptions
+    cluster_descriptions = {}
+    for group_idx, group_students in enumerate(groups):
+        if len(group_students) == 0:
+            continue
+            
+        complementary_skills, similar_skills = analyze_group_complementarity_all(group_students, all_students_df, score_columns)
         
-        # Get cluster centers and descriptions
-        centers = -1 * kmeans.cluster_centers_
-        cluster_descriptions = get_cluster_descriptions(centers)
-    except Exception as e:
-        st.error(f"Error during final clustering: {e}")
-        # Fallback: assign random clusters if KMeans fails
-        st.warning("Using fallback clustering method due to data issues.")
-        all_students_df['cluster'] = np.random.randint(0, optimal_k, size=len(all_students_df))
-        # Create dummy centers for cluster descriptions with the right number of features
-        # (4 skill features + 3 demographic features)
-        centers = np.zeros((optimal_k, len(feature_columns)))
-        cluster_descriptions = get_cluster_descriptions(centers)
+        # Create description
+        if complementary_skills:
+            group_desc = f"This learning group has diverse skill levels in {', '.join(complementary_skills)}. "
+            group_desc += "This creates excellent peer learning opportunities where students can help each other develop these skills."
+        else:
+            group_desc = "This learning group has balanced skill levels across all areas, providing a supportive environment for collaborative learning."
+        
+        if similar_skills:
+            group_desc += f" Students in this group have similar levels in {', '.join(similar_skills)} skills."
+        
+        # Generate group name
+        if len(complementary_skills) >= 2:
+            group_name = f"Complementary {', '.join(complementary_skills[:2])} Group"
+        elif len(complementary_skills) == 1:
+            group_name = f"Enhanced {complementary_skills[0]} Group"
+        else:
+            group_name = f"Balanced Learning Group"
+        
+        # Check demographic diversity
+        group_data = all_students_df.iloc[group_students]
+        gender_diversity = group_data['gender'].nunique() if 'gender' in group_data.columns else 1
+        nationality_diversity = group_data['nationality'].nunique() if 'nationality' in group_data.columns else 1
+        
+        if gender_diversity > 1 or nationality_diversity > 1:
+            group_name = "Diverse " + group_name
+        
+        cluster_descriptions[group_idx] = {
+            'name': group_name,
+            'strengths': complementary_skills if complementary_skills else ["Balanced skill levels"],
+            'weaknesses': similar_skills if similar_skills else ["No specific common skills"],
+            'description': group_desc
+        }
     
     # Add cluster name to students dataframe
     all_students_df['cluster_name'] = all_students_df['cluster'].apply(lambda x: cluster_descriptions[x]['name'])
     
     # Visualize with PCA
     try:
-        # Use PCA if we have enough data points
+        # Use PCA for visualization
+        X_skills = all_students_df[score_columns].values
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X_skills)
+        
         if X_scaled.shape[0] >= 2:
             pca = PCA(n_components=min(2, X_scaled.shape[1]))
             X_pca = pca.fit_transform(X_scaled)
         else:
-            # For very small datasets, just use the first two features
             X_pca = X_scaled[:, :2]
         
         # Create PCA plot
         fig, ax = plt.subplots(figsize=(10, 6))
         
         # Plot all students colored by cluster
-        for i in range(optimal_k):
-            mask = all_students_df['cluster'] == i
-            if sum(mask) > 0:  # Only plot if there are students in this cluster
-                ax.scatter(
-                    X_pca[mask, 0],
-                    X_pca[mask, 1],
-                    alpha=0.6, 
-                    label=f"{cluster_descriptions[i]['name']}"
-                )
+        colors = ['red', 'blue', 'green', 'orange', 'purple']
+        for group_idx in range(len(groups)):
+            if len(groups[group_idx]) > 0:
+                group_students = groups[group_idx]
+                group_pca = X_pca[group_students]
+                
+                ax.scatter(group_pca[:, 0], group_pca[:, 1],
+                         alpha=0.6, c=colors[group_idx % len(colors)],
+                         label=f"{cluster_descriptions[group_idx]['name']}")
         
-        # Add labels and legend
-        ax.set_title('Student Clusters Visualization (PCA)')
+        ax.set_title('Heterogeneous Student Clusters - Complementary Skills')
         ax.set_xlabel('Principal Component 1')
         ax.set_ylabel('Principal Component 2')
         ax.legend()
@@ -1080,34 +1028,42 @@ def show_all_students_and_clusters():
     st.pyplot(fig)
     
     # Show number of groups formed
-    st.subheader(f"📊 {optimal_k} Heterogeneous Learning Groups Formed")
+    st.subheader(f"📊 {len(groups)} Heterogeneous Learning Groups Formed")
     st.write("""
     These groups are designed to maximize diversity of skills within each group.
     Students with complementary skills are grouped together to encourage peer learning and collaboration.
     """)
     
     # Display each cluster and its members
-    for i in range(optimal_k):
-        cluster_students = all_students_df[all_students_df['cluster'] == i]
+    for group_idx in range(len(groups)):
+        if len(groups[group_idx]) == 0:
+            continue
+            
+        group_students = groups[group_idx]
+        cluster_students = all_students_df.iloc[group_students]
         
-        with st.expander(f"Group {i+1}: {cluster_descriptions[i]['name']} ({len(cluster_students)} students)"):
-            st.write(cluster_descriptions[i]['description'])
+        with st.expander(f"Group {group_idx+1}: {cluster_descriptions[group_idx]['name']} ({len(cluster_students)} students)"):
+            st.write(cluster_descriptions[group_idx]['description'])
             
             # Show complementary and common skills
             st.write("**Skills With High Diversity:**")
-            for skill in cluster_descriptions[i]['strengths']:
-                if skill != "No specific complementary skills":
-                    st.write(f"- {skill}")
+            for skill in cluster_descriptions[group_idx]['strengths']:
+                if skill != "Balanced skill levels":
+                    st.write(f"- {skill} (students have varying levels in this skill)")
+                else:
+                    st.write("- Group members have balanced skill levels across all areas")
             
             st.write("**Skills With Similar Levels:**")
-            for skill in cluster_descriptions[i]['weaknesses']:
+            for skill in cluster_descriptions[group_idx]['weaknesses']:
                 if skill != "No specific common skills":
-                    st.write(f"- {skill}")
+                    st.write(f"- {skill} (most group members have similar levels in this skill)")
+                else:
+                    st.write("- No skills where all group members have similar levels")
             
             # Show demographic diversity if available
-            if 'demographic_diversity' in cluster_descriptions[i] and cluster_descriptions[i]['demographic_diversity']:
+            if 'demographic_diversity' in cluster_descriptions[group_idx] and cluster_descriptions[group_idx]['demographic_diversity']:
                 st.write("**Demographic Diversity:**")
-                for demo in cluster_descriptions[i]['demographic_diversity']:
+                for demo in cluster_descriptions[group_idx]['demographic_diversity']:
                     st.write(f"- {demo}")
                 
                 # Show demographic breakdown for this cluster
@@ -1190,6 +1146,36 @@ def main():
         "through a quiz and then uses machine learning to cluster them "
         "based on their skills profile, forming heterogeneous learning groups."
     )
+    
+    # Add Clear Data button
+    st.sidebar.subheader("Data Management")
+    if st.sidebar.button("🗑️ Clear All Student Data", help="Delete all existing student data and start fresh"):
+        # Clear session state
+        if 'students_who_took_quiz' in st.session_state:
+            st.session_state.students_who_took_quiz = pd.DataFrame(columns=[
+                'student_id', 'student_name', 'gender', 'age', 'nationality',
+                'communication_score', 'leadership_score', 'time_management_score', 
+                'analytical_score', 'overall_score', 'quiz_timestamp'
+            ])
+        
+        # Clear quiz-related session state
+        quiz_keys = ['current_category', 'question_idx', 'answers', 'scores', 'quiz_complete', 'student_name']
+        for key in quiz_keys:
+            if key in st.session_state:
+                del st.session_state[key]
+        
+        # Delete the CSV file
+        try:
+            import os
+            if os.path.exists("students_quiz_results.csv"):
+                os.remove("students_quiz_results.csv")
+                st.sidebar.success("✅ All student data cleared successfully!")
+            else:
+                st.sidebar.success("✅ Session data cleared successfully!")
+        except Exception as e:
+            st.sidebar.error(f"Error clearing data: {e}")
+        
+        st.rerun()
     
     # If app_mode is in session state, use that instead of the radio button
     if 'app_mode' in st.session_state:

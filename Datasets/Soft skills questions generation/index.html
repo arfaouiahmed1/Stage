@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soft Skills Assessment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4e73df;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .quiz-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        .question-card {
+            border-left: 5px solid #4e73df;
+            padding-left: 15px;
+            margin-bottom: 25px;
+        }
+        .results-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        .category-header {
+            border-bottom: 2px solid #4e73df;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .feedback-card {
+            background-color: #e8f4fd;
+            border-left: 5px solid #36b9cc;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        .radar-chart {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .btn-primary {
+            background-color: #4e73df;
+            border-color: #4e73df;
+        }
+        .btn-primary:hover {
+            background-color: #2e59d9;
+            border-color: #2e59d9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Soft Skills Assessment</h1>
+            <p>Rate yourself on each statement from 1 (Strongly Disagree) to 5 (Strongly Agree).</p>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="studentId" class="form-label">Student ID</label>
+                    <input type="text" class="form-control" id="studentId" required>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="studentName" class="form-label">Student Name</label>
+                    <input type="text" class="form-control" id="studentName" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="categorySelect" class="form-label">Select Skills Category</label>
+                    <select class="form-select" id="categorySelect">
+                        <option value="">All Categories (Mixed)</option>
+                        <option value="communication">Communication</option>
+                        <option value="leadership">Leadership</option>
+                        <option value="time_management">Time Management</option>
+                        <option value="analytical">Analytical Thinking</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="questionCount" class="form-label">Number of Questions</label>
+                    <input type="number" class="form-control" id="questionCount" min="5" max="20" value="10">
+                </div>
+            </div>
+            <div class="col-12">
+                <button id="generateQuiz" class="btn btn-primary">Generate Quiz</button>
+            </div>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quizContainer" class="quiz-container" style="display: none;">
+            <h2 class="mb-4">Your Assessment</h2>
+            <div id="questionsContainer">
+                <!-- Questions will be loaded here -->
+            </div>
+            <button id="submitQuiz" class="btn btn-primary mt-4">Submit Assessment</button>
+        </div>
+
+        <!-- Results Container -->
+        <div id="resultsContainer" class="results-container">
+            <h2 class="text-center mb-4">Your Assessment Results</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="radar-chart">
+                        <canvas id="skillsChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <h4>Overall Score: <span id="overallScore"></span>/5</h4>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div id="feedbackContainer">
+                        <!-- Feedback will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <button id="newAssessment" class="btn btn-primary">Take Another Assessment</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // API URL - replace with your FastAPI server URL
+        const API_URL = 'http://localhost:8000';
+        let currentQuestions = [];
+        let skillsChart = null;
+
+        document.getElementById('generateQuiz').addEventListener('click', generateQuiz);
+        document.getElementById('submitQuiz').addEventListener('click', submitQuiz);
+        document.getElementById('newAssessment').addEventListener('click', resetAssessment);
+
+        async function generateQuiz() {
+            const studentId = document.getElementById('studentId').value.trim();
+            const studentName = document.getElementById('studentName').value.trim();
+            
+            if (!studentId || !studentName) {
+                alert('Please enter both Student ID and Name');
+                return;
+            }
+
+            const category = document.getElementById('categorySelect').value;
+            const count = document.getElementById('questionCount').value;
+
+            try {
+                const response = await fetch(`${API_URL}/quiz`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        category: category || null,
+                        count: parseInt(count)
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+
+                const questions = await response.json();
+                currentQuestions = questions;
+                displayQuestions(questions);
+                
+                document.getElementById('quizContainer').style.display = 'block';
+                
+                // Scroll to quiz
+                document.getElementById('quizContainer').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('Error generating quiz:', error);
+                alert('Failed to generate quiz. Please try again.');
+            }
+        }
+
+        function displayQuestions(questions) {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+
+            questions.forEach((q, index) => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+                questionCard.innerHTML = `
+                    <h5 class="mb-3">Question ${index + 1}</h5>
+                    <p>${q.question}</p>
+                    <div class="rating-container d-flex justify-content-between mt-3">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="question_${q.id}" id="q${q.id}_1" value="1" required>
+                            <label class="form-check-label" for="q${q.id}_1">1<br><small>Strongly Disagree</small></label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="question_${q.id}" id="q${q.id}_2" value="2">
+                            <label class="form-check-label" for="q${q.id}_2">2<br><small>Disagree</small></label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="question_${q.id}" id="q${q.id}_3" value="3">
+                            <label class="form-check-label" for="q${q.id}_3">3<br><small>Neutral</small></label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="question_${q.id}" id="q${q.id}_4" value="4">
+                            <label class="form-check-label" for="q${q.id}_4">4<br><small>Agree</small></label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="question_${q.id}" id="q${q.id}_5" value="5">
+                            <label class="form-check-label" for="q${q.id}_5">5<br><small>Strongly Agree</small></label>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(questionCard);
+            });
+        }
+
+        async function submitQuiz() {
+            const studentId = document.getElementById('studentId').value.trim();
+            const studentName = document.getElementById('studentName').value.trim();
+            
+            if (!currentQuestions.length) {
+                alert('No questions to submit!');
+                return;
+            }
+
+            const answers = [];
+            let allAnswered = true;
+
+            currentQuestions.forEach(q => {
+                const questionName = `question_${q.id}`;
+                const selectedOption = document.querySelector(`input[name="${questionName}"]:checked`);
+                
+                if (!selectedOption) {
+                    allAnswered = false;
+                    return;
+                }
+                
+                answers.push({
+                    question_id: q.id,
+                    answer_value: parseInt(selectedOption.value)
+                });
+            });
+
+            if (!allAnswered) {
+                alert('Please answer all questions before submitting.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        student_id: studentId,
+                        student_name: studentName,
+                        answers: answers
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+
+                const result = await response.json();
+                displayResults(result);
+                
+                document.getElementById('quizContainer').style.display = 'none';
+                document.getElementById('resultsContainer').style.display = 'block';
+                
+                // Scroll to results
+                document.getElementById('resultsContainer').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('Error submitting quiz:', error);
+                alert('Failed to submit quiz. Please try again.');
+            }
+        }
+
+        function displayResults(result) {
+            // Display overall score
+            document.getElementById('overallScore').textContent = result.overall_score;
+            
+            // Display category feedback
+            const feedbackContainer = document.getElementById('feedbackContainer');
+            feedbackContainer.innerHTML = '<h4 class="category-header">Detailed Feedback</h4>';
+            
+            Object.entries(result.feedback).forEach(([category, feedback]) => {
+                const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+                const score = result.scores[category];
+                
+                const feedbackCard = document.createElement('div');
+                feedbackCard.className = 'feedback-card';
+                feedbackCard.innerHTML = `
+                    <h5>${categoryName} <span class="badge bg-primary">${score}/5</span></h5>
+                    <p>${feedback}</p>
+                `;
+                feedbackContainer.appendChild(feedbackCard);
+            });
+            
+            // Create radar chart
+            createRadarChart(result.scores);
+        }
+
+        function createRadarChart(scores) {
+            // Prepare data for radar chart
+            const labels = Object.keys(scores).map(key => 
+                key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ')
+            );
+            const data = Object.values(scores);
+            
+            // If a chart already exists, destroy it
+            if (skillsChart) {
+                skillsChart.destroy();
+            }
+            
+            const ctx = document.getElementById('skillsChart').getContext('2d');
+            skillsChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Your Skills',
+                        data: data,
+                        backgroundColor: 'rgba(78, 115, 223, 0.2)',
+                        borderColor: 'rgba(78, 115, 223, 1)',
+                        pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(78, 115, 223, 1)',
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 5
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+
+        function resetAssessment() {
+            // Clear questions and results
+            currentQuestions = [];
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('resultsContainer').style.display = 'none';
+            
+            // Reset form inputs
+            document.getElementById('categorySelect').selectedIndex = 0;
+            document.getElementById('questionCount').value = 10;
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

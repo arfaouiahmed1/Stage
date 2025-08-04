@@ -1,0 +1,4 @@
+student_id,student_name,gender,age,nationality,communication_score,leadership_score,time_management_score,analytical_score,overall_score,quiz_timestamp
+NEW_20250804120720,Siwar,Female,22,Tunisian,5.0,2.6,2.6,3.4,3.4,20250804120720
+NEW_20250804121115,Siwar,Female,22,Tunisian,5.0,2.6,2.6,3.4,3.4,20250804121115
+NEW_20250804121147,moez,Male,40,Tunisian,5.0,2.6,2.6,3.4,3.4,20250804121147

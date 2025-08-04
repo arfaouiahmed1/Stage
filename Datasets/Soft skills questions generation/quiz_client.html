@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soft Skills Assessment Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .question {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+        
+        .options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .option {
+            text-align: center;
+            width: 18%;
+        }
+        
+        .radio-label {
+            display: block;
+            cursor: pointer;
+            font-weight: normal;
+            margin-top: 5px;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .score-chart {
+            margin-top: 20px;
+            height: 300px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .category-label {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            text-transform: uppercase;
+            background-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Soft Skills Assessment Quiz</h1>
+        <div id="connection-status" style="text-align: center; margin-bottom: 15px; padding: 5px; border-radius: 4px;">
+            Checking connection to API...
+        </div>
+        
+        <div id="quiz-setup">
+            <div class="form-group">
+                <label for="student-name">Your Name:</label>
+                <input type="text" id="student-name" placeholder="Enter your name">
+            </div>
+            
+            <div class="form-group">
+                <label for="student-id">Student ID:</label>
+                <input type="text" id="student-id" placeholder="Enter your student ID">
+            </div>
+            
+            <div class="form-group">
+                <label for="category">Skill Category:</label>
+                <select id="category">
+                    <option value="">All Categories</option>
+                    <option value="communication">Communication</option>
+                    <option value="leadership">Leadership</option>
+                    <option value="time_management">Time Management</option>
+                    <option value="analytical">Analytical Thinking</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="question-count">Number of Questions:</label>
+                <input type="number" id="question-count" min="1" max="20" value="10">
+            </div>
+            
+            <button id="start-quiz" class="btn">Start Quiz</button>
+        </div>
+        
+        <div id="quiz-questions" class="hidden">
+            <div id="questions-container"></div>
+            
+            <button id="submit-answers" class="btn" style="margin-top: 20px;">Submit Answers</button>
+        </div>
+        
+        <div id="quiz-results" class="hidden">
+            <h2>Your Assessment Results</h2>
+            <div id="results-content"></div>
+            
+            <div class="score-chart">
+                <canvas id="score-chart"></canvas>
+            </div>
+            
+            <button id="new-quiz" class="btn" style="margin-top: 20px;">Take Another Quiz</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // API URL - change this to your actual API URL
+        let API_URL = 'http://localhost:8000';
+        const ALTERNATIVE_URLS = [
+            'http://127.0.0.1:8000',
+            'http://localhost:8080',
+            'http://127.0.0.1:8080'
+        ];
+        
+        // DOM elements
+        const quizSetupDiv = document.getElementById('quiz-setup');
+        const quizQuestionsDiv = document.getElementById('quiz-questions');
+        const quizResultsDiv = document.getElementById('quiz-results');
+        const questionsContainer = document.getElementById('questions-container');
+        const resultsContent = document.getElementById('results-content');
+        
+        // Buttons
+        const startQuizBtn = document.getElementById('start-quiz');
+        const submitAnswersBtn = document.getElementById('submit-answers');
+        const newQuizBtn = document.getElementById('new-quiz');
+        
+        // Form inputs
+        const studentNameInput = document.getElementById('student-name');
+        const studentIdInput = document.getElementById('student-id');
+        const categorySelect = document.getElementById('category');
+        const questionCountInput = document.getElementById('question-count');
+        
+        // Current quiz data
+        let currentQuestions = [];
+        let studentAnswers = {};
+        
+        // Start quiz
+        startQuizBtn.addEventListener('click', async () => {
+            console.log("Start quiz button clicked");
+            const studentName = studentNameInput.value.trim();
+            const studentId = studentIdInput.value.trim();
+            const category = categorySelect.value;
+            const count = parseInt(questionCountInput.value);
+            
+            console.log("Form values:", { studentName, studentId, category, count });
+            
+            // Validate inputs
+            if (!studentName) {
+                alert('Please enter your name');
+                return;
+            }
+            
+            if (!studentId) {
+                alert('Please enter your student ID');
+                return;
+            }
+            
+            if (count < 1 || count > 20) {
+                alert('Please enter a valid number of questions (1-20)');
+                return;
+            }
+            
+            try {
+                console.log("Fetching questions from API...");
+                // Fetch questions from API
+                const response = await fetch(`${API_URL}/quiz`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        category: category || null,
+                        count: count,
+                        randomize: true
+                    })
+                });
+                
+                console.log("API response status:", response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const questions = await response.json();
+                console.log("Received questions:", questions);
+                currentQuestions = questions;
+                
+                // Display questions
+                displayQuestions(questions);
+                
+                // Hide setup, show questions
+                quizSetupDiv.classList.add('hidden');
+                quizQuestionsDiv.classList.remove('hidden');
+                quizResultsDiv.classList.add('hidden');
+                
+            } catch (error) {
+                console.error('Error fetching quiz questions:', error);
+                alert('Failed to load quiz questions. Please try again.');
+            }
+        });
+        
+        // Display questions
+        function displayQuestions(questions) {
+            questionsContainer.innerHTML = '';
+            studentAnswers = {};
+            
+            questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                
+                // Create category label
+                const categoryLabel = document.createElement('span');
+                categoryLabel.className = 'category-label';
+                categoryLabel.textContent = q.category;
+                
+                // Create question text
+                const questionText = document.createElement('h3');
+                questionText.innerHTML = `${index + 1}. ${q.question}`;
+                
+                // Create options
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'options';
+                
+                for (let i = 1; i <= 5; i++) {
+                    const option = document.createElement('div');
+                    option.className = 'option';
+                    
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = `question-${q.question_id}`;
+                    radio.value = i;
+                    radio.id = `q${q.question_id}-option${i}`;
+                    radio.addEventListener('change', () => {
+                        studentAnswers[q.question_id] = i;
+                    });
+                    
+                    const label = document.createElement('label');
+                    label.htmlFor = `q${q.question_id}-option${i}`;
+                    label.className = 'radio-label';
+                    label.textContent = i;
+                    
+                    const description = document.createElement('small');
+                    description.style.display = 'block';
+                    description.textContent = i === 1 ? 'Strongly Disagree' : 
+                                             i === 2 ? 'Disagree' : 
+                                             i === 3 ? 'Neutral' : 
+                                             i === 4 ? 'Agree' : 'Strongly Agree';
+                    
+                    option.appendChild(radio);
+                    option.appendChild(label);
+                    option.appendChild(description);
+                    optionsDiv.appendChild(option);
+                }
+                
+                questionDiv.appendChild(categoryLabel);
+                questionDiv.appendChild(questionText);
+                questionDiv.appendChild(optionsDiv);
+                
+                questionsContainer.appendChild(questionDiv);
+            });
+        }
+        
+        // Submit answers
+        submitAnswersBtn.addEventListener('click', async () => {
+            // Check if all questions answered
+            const unansweredCount = currentQuestions.length - Object.keys(studentAnswers).length;
+            
+            if (unansweredCount > 0) {
+                alert(`Please answer all questions. You have ${unansweredCount} unanswered questions.`);
+                return;
+            }
+            
+            // Calculate scores by category
+            const scoresByCategory = {};
+            const questionsByCategory = {};
+            
+            currentQuestions.forEach(q => {
+                const category = q.category;
+                const answer = studentAnswers[q.question_id] || 0;
+                
+                if (!scoresByCategory[category]) {
+                    scoresByCategory[category] = 0;
+                    questionsByCategory[category] = 0;
+                }
+                
+                scoresByCategory[category] += answer;
+                questionsByCategory[category] += 1;
+            });
+            
+            // Calculate average scores
+            const averageScores = {};
+            Object.keys(scoresByCategory).forEach(category => {
+                averageScores[category] = scoresByCategory[category] / questionsByCategory[category];
+            });
+            
+            try {
+                // Submit results to API
+                const response = await fetch(`${API_URL}/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        student_id: studentIdInput.value.trim(),
+                        student_name: studentNameInput.value.trim(),
+                        scores: averageScores
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                displayResults(result);
+                
+                // Hide questions, show results
+                quizSetupDiv.classList.add('hidden');
+                quizQuestionsDiv.classList.add('hidden');
+                quizResultsDiv.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error submitting assessment results:', error);
+                alert('Failed to submit assessment results. Please try again.');
+            }
+        });
+        
+        // Display results
+        function displayResults(result) {
+            resultsContent.innerHTML = '';
+            
+            // Create results HTML
+            const nameP = document.createElement('p');
+            nameP.innerHTML = `<strong>Name:</strong> ${result.student_name}`;
+            
+            const idP = document.createElement('p');
+            idP.innerHTML = `<strong>Student ID:</strong> ${result.student_id}`;
+            
+            const overallP = document.createElement('p');
+            overallP.innerHTML = `<strong>Overall Score:</strong> ${result.overall_score.toFixed(1)} / 5.0`;
+            
+            resultsContent.appendChild(nameP);
+            resultsContent.appendChild(idP);
+            resultsContent.appendChild(overallP);
+            
+            // Create scores breakdown
+            const scoresDiv = document.createElement('div');
+            scoresDiv.innerHTML = '<h3>Scores by Category:</h3>';
+            
+            const scoresList = document.createElement('ul');
+            
+            Object.entries(result.scores).forEach(([category, score]) => {
+                const scoreItem = document.createElement('li');
+                scoreItem.innerHTML = `<strong>${category.charAt(0).toUpperCase() + category.slice(1)}:</strong> ${score.toFixed(1)} / 5.0`;
+                scoresList.appendChild(scoreItem);
+            });
+            
+            scoresDiv.appendChild(scoresList);
+            resultsContent.appendChild(scoresDiv);
+            
+            // Create feedback based on overall score
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.innerHTML = '<h3>Feedback:</h3>';
+            
+            const overallScore = result.overall_score;
+            let feedback = '';
+            
+            if (overallScore >= 4.5) {
+                feedback = 'Outstanding! You demonstrate excellent soft skills across categories.';
+            } else if (overallScore >= 3.5) {
+                feedback = 'Good job! You have solid soft skills with some room for improvement.';
+            } else if (overallScore >= 2.5) {
+                feedback = 'You have moderate soft skills. Consider focusing on development in weaker areas.';
+            } else {
+                feedback = 'This appears to be an area for growth. Consider seeking resources to develop your soft skills.';
+            }
+            
+            const feedbackP = document.createElement('p');
+            feedbackP.textContent = feedback;
+            feedbackDiv.appendChild(feedbackP);
+            resultsContent.appendChild(feedbackDiv);
+            
+            // Create chart
+            createRadarChart(result.scores);
+        }
+        
+        // Create radar chart for skills visualization
+        function createRadarChart(scores) {
+            const canvas = document.getElementById('score-chart');
+            
+            // Format data for Chart.js
+            const labels = Object.keys(scores).map(category => 
+                category.charAt(0).toUpperCase() + category.slice(1)
+            );
+            
+            const data = Object.values(scores);
+            
+            // Create chart
+            new Chart(canvas, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Your Skills',
+                        data: data,
+                        backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(52, 152, 219, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 5
+                        }
+                    }
+                }
+            });
+        }
+        
+        // New quiz button
+        newQuizBtn.addEventListener('click', () => {
+            // Reset form
+            studentNameInput.value = '';
+            studentIdInput.value = '';
+            categorySelect.value = '';
+            questionCountInput.value = '10';
+            
+            // Show setup form again
+            quizSetupDiv.classList.remove('hidden');
+            quizQuestionsDiv.classList.add('hidden');
+            quizResultsDiv.classList.add('hidden');
+            
+            // Clear questions and answers
+            currentQuestions = [];
+            studentAnswers = {};
+        });
+        
+        // Try alternative URLs if the main one fails
+        async function tryAlternativeUrls() {
+            const connectionStatus = document.getElementById('connection-status');
+            
+            for (const url of ALTERNATIVE_URLS) {
+                try {
+                    connectionStatus.textContent = `Trying alternative URL: ${url}...`;
+                    const response = await fetch(`${url}/`);
+                    if (response.ok) {
+                        API_URL = url;
+                        connectionStatus.textContent = `✅ Connected to alternative API at ${url}`;
+                        connectionStatus.style.backgroundColor = "#d4edda";
+                        connectionStatus.style.color = "#155724";
+                        console.log(`Successfully connected to alternative URL: ${url}`);
+                        return true;
+                    }
+                } catch (error) {
+                    console.log(`Failed to connect to alternative URL: ${url}`);
+                }
+            }
+            return false;
+        }
+        
+        // Initialize the page
+        async function init() {
+            try {
+                console.log("Initializing the quiz app...");
+                console.log("API URL:", API_URL);
+                
+                const connectionStatus = document.getElementById('connection-status');
+                connectionStatus.textContent = "Checking connection to API...";
+                connectionStatus.style.backgroundColor = "#f8f9fa";
+                
+                // Test API connection
+                try {
+                    const rootResponse = await fetch(`${API_URL}/`);
+                    if (rootResponse.ok) {
+                        console.log("API connection successful!");
+                        const rootData = await rootResponse.json();
+                        console.log("API root response:", rootData);
+                        connectionStatus.textContent = "✅ Connected to API";
+                        connectionStatus.style.backgroundColor = "#d4edda";
+                        connectionStatus.style.color = "#155724";
+                    } else {
+                        console.error("API connection failed with status:", rootResponse.status);
+                        connectionStatus.textContent = "⚠️ API responded with error: " + rootResponse.status;
+                        connectionStatus.style.backgroundColor = "#fff3cd";
+                        connectionStatus.style.color = "#856404";
+                    }
+                } catch (connectionError) {
+                    console.error("API connection error:", connectionError);
+                    connectionStatus.textContent = "❌ Cannot connect to the API at " + API_URL + ". Trying alternative URLs...";
+                    connectionStatus.style.backgroundColor = "#fff3cd";
+                    connectionStatus.style.color = "#856404";
+                    
+                    // Try alternative URLs
+                    const success = await tryAlternativeUrls();
+                    
+                    if (success) {
+                        // If we connected to an alternative URL, restart initialization
+                        init();
+                        return;
+                    }
+                    
+                    // If all connections failed, show detailed instructions
+                    connectionStatus.textContent = "❌ Cannot connect to the API. Server may not be running.";
+                    connectionStatus.style.backgroundColor = "#f8d7da";
+                    connectionStatus.style.color = "#721c24";
+                    
+                    const instructions = document.createElement('div');
+                    instructions.innerHTML = `
+                        <div style="margin-top: 10px; padding: 15px; background-color: #f8f9fa; border-radius: 4px; border-left: 5px solid #6c757d;">
+                            <h3>Connection Troubleshooting:</h3>
+                            <ol>
+                                <li>Make sure the FastAPI server is running</li>
+                                <li>Double-click on <strong>start_server.bat</strong> in the same folder as this HTML file</li>
+                                <li>Or run this command in your terminal: <code>cd "${API_URL.replace('http://localhost:8000', 'c:\\Users\\MSI\\OneDrive - ESPRIT\\Bureau\\4DS ESPRIT\\StageESPRIT\\Stage\\Datasets\\Soft skills questions generation')}" && python -m uvicorn soft_skills_api:app --reload</code></li>
+                                <li>Check if there are any errors in the terminal</li>
+                                <li>Ensure no firewall is blocking the connection</li>
+                                <li>Try refreshing this page after starting the server</li>
+                            </ol>
+                        </div>
+                    `;
+                    connectionStatus.appendChild(instructions);
+                    
+                    // Add retry button
+                    const retryBtn = document.createElement('button');
+                    retryBtn.className = 'btn';
+                    retryBtn.style.marginTop = '10px';
+                    retryBtn.textContent = 'Retry Connection';
+                    retryBtn.addEventListener('click', () => {
+                        // Clear previous content and reinitialize
+                        connectionStatus.innerHTML = 'Retrying connection...';
+                        connectionStatus.style.backgroundColor = "#f8f9fa";
+                        connectionStatus.style.color = "#000";
+                        setTimeout(init, 500); // Small delay for better UX
+                    });
+                    connectionStatus.appendChild(retryBtn);
+                    return;
+                }
+                
+                // Fetch categories to populate dropdown
+                const response = await fetch(`${API_URL}/categories`);
+                
+                console.log("Categories API response status:", response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("Categories data:", data);
+                    
+                    if (data.categories && Array.isArray(data.categories)) {
+                        // Populate category dropdown
+                        categorySelect.innerHTML = '<option value="">All Categories</option>';
+                        
+                        data.categories.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category;
+                            option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+                            categorySelect.appendChild(option);
+                        });
+                        console.log("Category dropdown populated successfully");
+                    }
+                }
+            } catch (error) {
+                console.error('Error initializing quiz:', error);
+                alert("Error initializing quiz: " + error.message);
+            }
+        }
+        
+        // Initialize the page
+        init();
+    </script>
+</body>
+</html>
