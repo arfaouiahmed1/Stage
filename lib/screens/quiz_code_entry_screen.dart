@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import '../services/api_service.dart'; // Make sure to import your ApiService
 
 class QuizCodeEntryScreen extends StatefulWidget {
   const QuizCodeEntryScreen({Key? key}) : super(key: key);
@@ -71,7 +72,7 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
 
     if (enteredCode.isEmpty) {
       setState(() => _errorText = "Please enter a code");
-      _controller.animateTo(0.1, duration: const Duration(milliseconds: 300));
+      _showErrorAnimation();
       return;
     }
 
@@ -80,16 +81,46 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
       _isLoading = true;
     });
 
-    // Simulate code validation (accept any code for frontend demo)
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Call the API to verify the quiz code
+      final quizData = await ApiService.verifyQuizCode(enteredCode);
 
-    if (mounted) {
-      // Show success animation first
-      await _showSuccessAnimation();
-      
-      // Navigate back to quiz list with success result
-      Navigator.pop(context, true);
+      if (mounted) {
+        setState(() => _isLoading = false);
+
+        if (quizData != null) {
+          // Code is valid, show success animation and return quiz data
+          await _showSuccessAnimation();
+          
+          // Navigate back with the quiz data
+          Navigator.pop(context, quizData);
+        } else {
+          // Code is invalid
+          setState(() => _errorText = "Invalid quiz code. Please try again.");
+          _showErrorAnimation();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorText = "Network error. Please check your connection and try again.";
+        });
+        _showErrorAnimation();
+      }
     }
+  }
+
+  void _showErrorAnimation() {
+    _controller.stop();
+    _controller.animateTo(0.1, duration: const Duration(milliseconds: 300));
+    
+    // Vibrate the input field
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
   }
 
   Future<void> _showSuccessAnimation() async {
@@ -223,7 +254,7 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
                       _buildSubmitButton(),
                       const SizedBox(height: 20),
                       TextButton(
-                        onPressed: () => Navigator.pop(context, false),
+                        onPressed: () => Navigator.pop(context, null),
                         child: Text(
                           'Cancel',
                           style: TextStyle(
@@ -284,21 +315,25 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
               borderSide: BorderSide(
-                color: Colors.white.withOpacity(0.4),
+                color: _errorText != null 
+                    ? Colors.red.withOpacity(0.7)
+                    : Colors.white.withOpacity(0.4),
                 width: 2,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
-              borderSide: const BorderSide(
-                color: Colors.white,
+              borderSide: BorderSide(
+                color: _errorText != null 
+                    ? Colors.red
+                    : Colors.white,
                 width: 3,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
               borderSide: const BorderSide(
-                color: Colors.amber,
+                color: Colors.red,
                 width: 3,
               ),
             ),
@@ -308,7 +343,7 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
             ),
             errorText: _errorText,
             errorStyle: const TextStyle(
-              color: Colors.amber,
+              color: Colors.red,
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),
@@ -321,13 +356,20 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
                     ),
                     onPressed: () {
                       _codeController.clear();
-                      setState(() {});
+                      setState(() {
+                        _errorText = null;
+                      });
                     },
                   )
                 : null,
           ),
-          onChanged: (value) => setState(() {}),
+          onChanged: (value) => setState(() {
+            if (_errorText != null) {
+              _errorText = null;
+            }
+          }),
           textCapitalization: TextCapitalization.characters,
+          enabled: !_isLoading,
         ),
       ),
     );
@@ -343,13 +385,17 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
             width: double.infinity,
             height: 60,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFD32F2F), Color(0xFFB71C1C)],
+              gradient: LinearGradient(
+                colors: _isLoading 
+                    ? [Colors.grey, Colors.grey.shade700]
+                    : [const Color(0xFFD32F2F), const Color(0xFFB71C1C)],
               ),
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFD32F2F).withOpacity(0.4),
+                  color: _isLoading 
+                      ? Colors.grey.withOpacity(0.4)
+                      : const Color(0xFFD32F2F).withOpacity(0.4),
                   blurRadius: 15,
                   spreadRadius: 2,
                   offset: const Offset(0, 8),
@@ -379,7 +425,7 @@ class _QuizCodeEntryScreenState extends State<QuizCodeEntryScreen>
                         ),
                         SizedBox(width: 15),
                         Text(
-                          'VALIDATING...',
+                          'VERIFYING...',
                           style: TextStyle(
                             fontSize: 18,
                             color: Colors.white,

@@ -29,6 +29,9 @@ dependencies:
   intl: ^0.20.2
   shared_preferences: ^2.0.0
   
+  # Network & API
+  http: ^1.1.0
+  
   # 3D Model Rendering (Cross-platform)
   model_viewer_plus: ^1.7.2
   flutter_staggered_animations: ^1.1.1
@@ -57,3 +60,5 @@ flutter:
     - assets/models/
     # 3D Models (OBJ format)
     - assets/models/
+    # JSON Data Files
+    - assets/data/

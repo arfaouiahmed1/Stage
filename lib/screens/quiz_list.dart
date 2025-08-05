@@ -5,7 +5,9 @@ import 'package:fluttermoji/fluttermoji.dart';
 import 'package:get/get.dart';
 
 import '../models/quiz.dart';
+import '../services/api_service.dart'; // Import your ApiService
 import 'profile_screen.dart';
+import 'quiz_code_entry_screen.dart'; // Import your quiz code entry screen
 
 class QuizListScreen extends StatefulWidget {
   @override
@@ -16,31 +18,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
   List<Quiz> quizList = []; // Start with empty list
   String _userName = '';
   String _userEmail = '';
-
-  // Available quizzes that can be unlocked
-  final List<Quiz> availableQuizzes = [
-    Quiz(
-      id: "1",
-      title: "Technical Skills Assessment",
-      expiryDate: DateTime.now().add(const Duration(days: 2)),
-      duration: 10,
-      status: QuizStatus.pending,
-    ),
-    Quiz(
-      id: "2",
-      title: "Team Dynamics Navigator",
-      expiryDate: DateTime.now().add(const Duration(days: 5)),
-      duration: 15,
-      status: QuizStatus.pending,
-    ),
-    Quiz(
-      id: "3",
-      title: "UX Design Mastery Test",
-      expiryDate: DateTime.now().add(const Duration(days: 3)),
-      duration: 12,
-      status: QuizStatus.pending,
-    ),
-  ];
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -59,61 +37,128 @@ class _QuizListScreenState extends State<QuizListScreen> {
 
   Future<void> _loadQuizzes() async {
     final prefs = await SharedPreferences.getInstance();
-    final unlockedQuizIds = prefs.getStringList('unlocked_quizzes') ?? [];
+    final storedQuizzes = prefs.getStringList('user_quizzes') ?? [];
     
     setState(() {
-      quizList = availableQuizzes.where((quiz) => unlockedQuizIds.contains(quiz.id)).toList();
+      quizList = storedQuizzes.map((quizJson) {
+        // Parse stored quiz data and convert to Quiz objects
+        final parts = quizJson.split('|');
+        if (parts.length >= 4) {
+          return Quiz(
+            id: parts[0],
+            title: parts[1],
+            expiryDate: DateTime.parse(parts[2]),
+            duration: int.parse(parts[3]),
+            status: QuizStatus.pending,
+          );
+        }
+        return null;
+      }).where((quiz) => quiz != null).cast<Quiz>().toList();
     });
+  }
+
+  Future<void> _saveQuizzes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final quizStrings = quizList.map((quiz) {
+      return '${quiz.id}|${quiz.title}|${quiz.expiryDate.toIso8601String()}|${quiz.duration}';
+    }).toList();
+    await prefs.setStringList('user_quizzes', quizStrings);
   }
 
   Future<void> _addQuizFromCode() async {
     // Navigate to code entry screen and wait for result
-    final result = await Navigator.pushNamed(context, '/code');
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const QuizCodeEntryScreen(),
+      ),
+    );
     
-    if (result == true) {
-      // Code was entered successfully, unlock a random quiz
-      await _unlockRandomQuiz();
+    if (result != null && result is Map<String, dynamic>) {
+      // Code was verified successfully, add the quiz
+      await _addVerifiedQuiz(result);
     }
   }
 
-  Future<void> _unlockRandomQuiz() async {
-    final prefs = await SharedPreferences.getInstance();
-    final unlockedQuizIds = prefs.getStringList('unlocked_quizzes') ?? [];
-    
-    // Find quizzes that haven't been unlocked yet
-    final lockedQuizzes = availableQuizzes.where((quiz) => !unlockedQuizIds.contains(quiz.id)).toList();
-    
-    if (lockedQuizzes.isNotEmpty) {
-      // Pick a random quiz to unlock
-      final randomQuiz = lockedQuizzes[DateTime.now().millisecondsSinceEpoch % lockedQuizzes.length];
-      unlockedQuizIds.add(randomQuiz.id);
-      
-      // Save to preferences
-      await prefs.setStringList('unlocked_quizzes', unlockedQuizIds);
-      
-      // Update the UI
-      setState(() {
-        quizList.add(randomQuiz);
-      });
-      
-      // Show success message
+  Future<void> _addVerifiedQuiz(Map<String, dynamic> quizData) async {
+    try {
+      // Check if quiz already exists
+      bool alreadyExists = quizList.any(
+        (quiz) => quiz.id == quizData['idQuiz'],
+      );
+
+      if (!alreadyExists) {
+        // Create new Quiz object from API data
+        final newQuiz = Quiz(
+          id: quizData['idQuiz'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          title: quizData['nameQuiz'] ?? 'Unknown Quiz',
+          expiryDate: _parseDate(quizData['dateCreation']) ?? DateTime.now().add(const Duration(days: 30)),
+          duration: 15, // Default duration, you can get this from API if available
+          status: (quizData['isAccessible'] ?? true) ? QuizStatus.pending : QuizStatus.expired,
+        );
+
+        setState(() {
+          quizList.add(newQuiz);
+        });
+
+        // Save to local storage
+        await _saveQuizzes();
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(child: Text('🎉 New quiz unlocked: ${newQuiz.title}')),
+              ],
+            ),
+            backgroundColor: const Color(0xFF4CAF50),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        // Quiz already exists
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.info, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(child: Text('Quiz "${quizData['nameQuiz']}" is already in your list.')),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error adding quiz: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 10),
-              Expanded(child: Text('🎉 New quiz unlocked: ${randomQuiz.title}')),
-            ],
-          ),
-          backgroundColor: const Color(0xFF4CAF50),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          duration: const Duration(seconds: 3),
+        const SnackBar(
+          content: Text('Error adding quiz. Please try again.'),
+          backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  DateTime? _parseDate(dynamic dateStr) {
+    if (dateStr == null) return null;
+    try {
+      return DateTime.parse(dateStr.toString());
+    } catch (e) {
+      return null;
     }
   }
 
@@ -261,7 +306,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
                               final quiz = quizList[index];
                               return Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 8),
-                                child: _buildQuizCard(context, quiz),
+                                child: _buildQuizCard(context, quiz, index),
                               );
                             },
                           ),
@@ -667,7 +712,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
     );
   }
 
-  Widget _buildQuizCard(BuildContext context, Quiz quiz) {
+  Widget _buildQuizCard(BuildContext context, Quiz quiz, int index) {
     final statusColor = {
       QuizStatus.pending: const Color(0xFFFFA000), // Amber
       QuizStatus.done: const Color(0xFF4CAF50),   // Green
@@ -712,27 +757,52 @@ class _QuizListScreenState extends State<QuizListScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 4,
-                      horizontal: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor[quiz.status]!.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: statusColor[quiz.status]!,
-                        width: 1,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 4,
+                          horizontal: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor[quiz.status]!.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: statusColor[quiz.status]!,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          statusText[quiz.status]!,
+                          style: TextStyle(
+                            color: statusColor[quiz.status],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      statusText[quiz.status]!,
-                      style: TextStyle(
-                        color: statusColor[quiz.status],
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                      const SizedBox(width: 8),
+                      PopupMenuButton<String>(
+                        icon: Icon(Icons.more_vert, color: Colors.grey[600]),
+                        onSelected: (value) {
+                          if (value == 'delete') {
+                            _deleteQuiz(index, quiz);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text('Remove Quiz'),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -792,6 +862,55 @@ class _QuizListScreenState extends State<QuizListScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _deleteQuiz(int index, Quiz quiz) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.delete, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Remove Quiz'),
+          ],
+        ),
+        content: Text('Are you sure you want to remove "${quiz.title}" from your list?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              setState(() {
+                quizList.removeAt(index);
+              });
+              await _saveQuizzes();
+              Navigator.pop(context);
+              
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${quiz.title} removed from your list'),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text(
+              'Remove',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
       ),
     );
   }
