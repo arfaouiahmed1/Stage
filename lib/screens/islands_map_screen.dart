@@ -5,6 +5,7 @@ import 'dart:math';
 
 // Import the shared model
 import 'quiz_island.dart';
+import '../services/api_service.dart'; // Import your API service
 
 // Import the category quiz screens
 import 'category1_quiz_screen.dart';
@@ -27,7 +28,9 @@ import 'category4_quiz_screen.dart';
  */
 
 class IslandsMapScreen extends StatefulWidget {
-  const IslandsMapScreen({Key? key}) : super(key: key);
+  final Map<String, dynamic>? quizData; // Add quiz data parameter
+  
+  const IslandsMapScreen({Key? key, this.quizData}) : super(key: key);
 
   @override
   State<IslandsMapScreen> createState() => _IslandsMapScreenState();
@@ -55,6 +58,7 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
   // State
   int? _selectedIsland;
   bool _showQuiz = false;
+  bool _isLoadingCategories = true;
   
   // GlobalKeys for precise positioning (optional for pixel-perfect zoom)
   final Map<int, GlobalKey> _islandKeys = {};
@@ -77,71 +81,189 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
   // Set this to true to enable manual zoom positioning
   final bool _useManualZoomCenters = true;
 
-  // Island Data for Quiz Game with PNG Images
-  final List<QuizIsland> _islands = [
-    QuizIsland(
-      id: 1,
-      name: "category1",
-      position: Offset(0.2, 0.3),
-      size: 130, // Reduced for small Android screen
-      color: Colors.red.shade600,
-      icon: Icons.quiz,
-      quizTopic: "category1",
-      description: "Test your knowledge with challenging questions!",
-      difficulty: "Medium",
-      imagePath: "assets/images/islandN1.png", // PNG island image
-      rotationSpeed: 0.5,
-      floatAmplitude: 8.0,
-    ),
-    QuizIsland(
-      id: 2,
-      name: "category2",
-      position: Offset(0.7, 0.25),
-      size: 135, // Reduced for small Android screen
-      color: Colors.green.shade600,
-      icon: Icons.quiz,
-      quizTopic: "category2",
-      description: "Explore and test your understanding!",
-      difficulty: "Hard",
-      imagePath: "assets/images/islandN2.png", // PNG island image
-      rotationSpeed: 0.3,
-      floatAmplitude: 10.0,
-    ),
-    QuizIsland(
-      id: 3,
-      name: "category3",
-      position: Offset(0.3, 0.65),
-      size: 125, // Reduced for small Android screen
-      color: Colors.orange.shade600,
-      icon: Icons.quiz,
-      quizTopic: "category3",
-      description: "Journey through knowledge and test your skills!",
-      difficulty: "Easy",
-      imagePath: "assets/images/islandN3.png", // PNG island image
-      rotationSpeed: 0.7,
-      floatAmplitude: 6.0,
-    ),
-    QuizIsland(
-      id: 4,
-      name: "category4",
-      position: Offset(0.75, 0.7),
-      size: 128, // Reduced for small Android screen
-      color: Colors.purple.shade600,
-      icon: Icons.quiz,
-      quizTopic: "category4",
-      description: "Dive into the world of knowledge and discovery!",
-      difficulty: "Medium",
-      imagePath: "assets/images/islandN4.png", // PNG island image
-      rotationSpeed: 0.4,
-      floatAmplitude: 7.0,
-    ),
-  ];
+  // Island Data for Quiz Game with PNG Images - will be updated with real category names
+  List<QuizIsland> _islands = [];
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _initializeIslandKeys();
+    _loadCategoryNames();
+  }
+
+  Future<void> _loadCategoryNames() async {
+    try {
+      // Default island configuration
+      final defaultIslands = [
+        QuizIsland(
+          id: 1,
+          name: "Category 1",
+          position: Offset(0.2, 0.3),
+          size: 130,
+          color: Colors.red.shade600,
+          icon: Icons.quiz,
+          quizTopic: "category1",
+          description: "Test your knowledge with challenging questions!",
+          difficulty: "Medium",
+          imagePath: "assets/images/islandN1.png",
+          rotationSpeed: 0.5,
+          floatAmplitude: 8.0,
+        ),
+        QuizIsland(
+          id: 2,
+          name: "Category 2",
+          position: Offset(0.7, 0.25),
+          size: 135,
+          color: Colors.green.shade600,
+          icon: Icons.quiz,
+          quizTopic: "category2",
+          description: "Explore and test your understanding!",
+          difficulty: "Hard",
+          imagePath: "assets/images/islandN2.png",
+          rotationSpeed: 0.3,
+          floatAmplitude: 10.0,
+        ),
+        QuizIsland(
+          id: 3,
+          name: "Category 3",
+          position: Offset(0.3, 0.65),
+          size: 125,
+          color: Colors.orange.shade600,
+          icon: Icons.quiz,
+          quizTopic: "category3",
+          description: "Journey through knowledge and test your skills!",
+          difficulty: "Easy",
+          imagePath: "assets/images/islandN3.png",
+          rotationSpeed: 0.7,
+          floatAmplitude: 6.0,
+        ),
+        QuizIsland(
+          id: 4,
+          name: "Category 4",
+          position: Offset(0.75, 0.7),
+          size: 128,
+          color: Colors.purple.shade600,
+          icon: Icons.quiz,
+          quizTopic: "category4",
+          description: "Dive into the world of knowledge and discovery!",
+          difficulty: "Medium",
+          imagePath: "assets/images/islandN4.png",
+          rotationSpeed: 0.4,
+          floatAmplitude: 7.0,
+        ),
+      ];
+
+      // If we have quiz data with categories, fetch the real category names
+      if (widget.quizData != null && widget.quizData!['idCategory'] != null) {
+        final categoryIds = List<String>.from(widget.quizData!['idCategory']);
+        
+        // Fetch category details from API
+        List<Map<String, dynamic>> categories = [];
+        
+        for (String categoryId in categoryIds) {
+          try {
+            final response = await ApiService.getCategoryById(categoryId);
+            if (response != null) {
+              categories.add(response);
+            }
+          } catch (e) {
+            print('Error fetching category $categoryId: $e');
+          }
+        }
+
+        // Update islands with real category names
+        for (int i = 0; i < defaultIslands.length && i < categories.length; i++) {
+          final category = categories[i];
+          final currentCategoryId = categoryIds[i]; // Get the category ID for this iteration
+          defaultIslands[i] = QuizIsland(
+            id: defaultIslands[i].id,
+            name: category['island'] ?? defaultIslands[i].name, // Use 'island' field as category name
+            position: defaultIslands[i].position,
+            size: defaultIslands[i].size,
+            color: defaultIslands[i].color,
+            icon: defaultIslands[i].icon,
+            quizTopic: category['island'] ?? defaultIslands[i].quizTopic,
+            description: category['description'] ?? defaultIslands[i].description,
+            difficulty: defaultIslands[i].difficulty,
+            imagePath: defaultIslands[i].imagePath,
+            rotationSpeed: defaultIslands[i].rotationSpeed,
+            floatAmplitude: defaultIslands[i].floatAmplitude,
+            categoryId: currentCategoryId, // Store the category ID for later use
+          );
+        }
+      }
+
+      setState(() {
+        _islands = defaultIslands;
+        _isLoadingCategories = false;
+      });
+
+    } catch (e) {
+      print('Error loading category names: $e');
+      // Fallback to default islands if API fails
+      setState(() {
+        _islands = [
+          QuizIsland(
+            id: 1,
+            name: "Category 1",
+            position: Offset(0.2, 0.3),
+            size: 130,
+            color: Colors.red.shade600,
+            icon: Icons.quiz,
+            quizTopic: "category1",
+            description: "Test your knowledge with challenging questions!",
+            difficulty: "Medium",
+            imagePath: "assets/images/islandN1.png",
+            rotationSpeed: 0.5,
+            floatAmplitude: 8.0,
+          ),
+          QuizIsland(
+            id: 2,
+            name: "Category 2",
+            position: Offset(0.7, 0.25),
+            size: 135,
+            color: Colors.green.shade600,
+            icon: Icons.quiz,
+            quizTopic: "category2",
+            description: "Explore and test your understanding!",
+            difficulty: "Hard",
+            imagePath: "assets/images/islandN2.png",
+            rotationSpeed: 0.3,
+            floatAmplitude: 10.0,
+          ),
+          QuizIsland(
+            id: 3,
+            name: "Category 3",
+            position: Offset(0.3, 0.65),
+            size: 125,
+            color: Colors.orange.shade600,
+            icon: Icons.quiz,
+            quizTopic: "category3",
+            description: "Journey through knowledge and test your skills!",
+            difficulty: "Easy",
+            imagePath: "assets/images/islandN3.png",
+            rotationSpeed: 0.7,
+            floatAmplitude: 6.0,
+          ),
+          QuizIsland(
+            id: 4,
+            name: "Category 4",
+            position: Offset(0.75, 0.7),
+            size: 128,
+            color: Colors.purple.shade600,
+            icon: Icons.quiz,
+            quizTopic: "category4",
+            description: "Dive into the world of knowledge and discovery!",
+            difficulty: "Medium",
+            imagePath: "assets/images/islandN4.png",
+            rotationSpeed: 0.4,
+            floatAmplitude: 7.0,
+          ),
+        ];
+        _isLoadingCategories = false;
+      });
+    }
   }
 
   void _initializeAnimations() {
@@ -231,8 +353,8 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
   }
 
   void _initializeIslandKeys() {
-    for (final island in _islands) {
-      _islandKeys[island.id] = GlobalKey();
+    for (int i = 1; i <= 4; i++) {
+      _islandKeys[i] = GlobalKey();
     }
   }
 
@@ -593,8 +715,37 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
             },
           ),
           
-          // Islands
-          ..._islands.map((island) => _buildIsland(island, screenSize)),
+          // Loading indicator while fetching categories
+          if (_isLoadingCategories)
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(
+                      color: Colors.blue.shade600,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Loading Categories...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          
+          // Islands - only show when not loading
+          if (!_isLoadingCategories)
+            ..._islands.map((island) => _buildIsland(island, screenSize)),
           
           // UI Controls
           _buildUI(),
@@ -719,13 +870,13 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
                           ),
                         ),
                       
-                      // Simple Category Name (clean text only)
+                      // Category Name (clean text only) - now shows real category names
                       Positioned(
                         bottom: -30,
                         left: -20,
                         right: -20,
                         child: Text(
-                          island.name,
+                          island.name, // This now contains the real category name from API
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.white,
@@ -785,9 +936,11 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
                     icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
                   ),
                   const Spacer(),
-                  const Text(
-                    '🏝️ Quiz Islands',
-                    style: TextStyle(
+                  Text(
+                    widget.quizData != null 
+                        ? '🏝️ ${widget.quizData!['nameQuiz'] ?? 'Quiz Islands'}'
+                        : '🏝️ Quiz Islands',
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,

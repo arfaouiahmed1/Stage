@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttermoji/fluttermoji.dart';
 import 'package:get/get.dart';
+import 'dart:convert';
 
 import '../models/quiz.dart';
-import '../services/api_service.dart'; // Import your ApiService
+import '../services/api_service.dart';
 import 'profile_screen.dart';
-import 'quiz_code_entry_screen.dart'; // Import your quiz code entry screen
+import 'quiz_code_entry_screen.dart';
+import 'islands_map_screen.dart';
 
 class QuizListScreen extends StatefulWidget {
   @override
@@ -65,6 +67,39 @@ class _QuizListScreenState extends State<QuizListScreen> {
     await prefs.setStringList('user_quizzes', quizStrings);
   }
 
+  Future<void> _saveCompleteQuizData(Map<String, dynamic> quizData) async {
+    final prefs = await SharedPreferences.getInstance();
+    final existingData = prefs.getStringList('complete_quiz_data') ?? [];
+    
+    // Store as JSON string
+    final quizJson = json.encode(quizData);
+    
+    // Check if already exists
+    bool exists = existingData.any((data) {
+      final stored = json.decode(data);
+      return stored['idQuiz'] == quizData['idQuiz'];
+    });
+    
+    if (!exists) {
+      existingData.add(quizJson);
+      await prefs.setStringList('complete_quiz_data', existingData);
+    }
+  }
+
+  Future<Map<String, dynamic>?> _getCompleteQuizData(String quizId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final existingData = prefs.getStringList('complete_quiz_data') ?? [];
+    
+    for (String dataString in existingData) {
+      final quizData = json.decode(dataString);
+      if (quizData['idQuiz'] == quizId) {
+        return Map<String, dynamic>.from(quizData);
+      }
+    }
+    
+    return null;
+  }
+
   Future<void> _addQuizFromCode() async {
     // Navigate to code entry screen and wait for result
     final result = await Navigator.push(
@@ -101,8 +136,9 @@ class _QuizListScreenState extends State<QuizListScreen> {
           quizList.add(newQuiz);
         });
 
-        // Save to local storage
+        // Save both quiz list and complete quiz data
         await _saveQuizzes();
+        await _saveCompleteQuizData(quizData);
 
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -915,7 +951,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
     );
   }
 
-  void _startQuiz(BuildContext context, Quiz quiz) {
+  void _startQuiz(BuildContext context, Quiz quiz) async {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -934,9 +970,17 @@ class _QuizListScreenState extends State<QuizListScreen> {
       ),
     );
 
+    // Get complete quiz data
+    final completeQuizData = await _getCompleteQuizData(quiz.id);
+
     Future.delayed(const Duration(milliseconds: 1500), () {
-      // Navigate directly to islands map
-      Navigator.pushNamed(context, '/islands');
+      // Navigate to islands map with complete quiz data
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => IslandsMapScreen(quizData: completeQuizData),
+        ),
+      );
     });
   }
 }

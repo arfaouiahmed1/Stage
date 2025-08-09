@@ -38,6 +38,32 @@ class ApiService {
     }
   }
 
+  // Get category by ID
+  static Future<Map<String, dynamic>?> getCategoryById(String categoryId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/categories/$categoryId'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> categoryData = json.decode(response.body);
+        print('Category loaded: ${categoryData['island']}');
+        return categoryData;
+      } else if (response.statusCode == 404) {
+        print('Category not found: $categoryId');
+        return null;
+      } else {
+        throw Exception('Failed to load category: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error loading category $categoryId: $e');
+      throw Exception('Failed to connect to backend: $e');
+    }
+  }
+
   // Get all questions from FastAPI backend
   static Future<List<Map<String, dynamic>>> getQuestions() async {
     try {

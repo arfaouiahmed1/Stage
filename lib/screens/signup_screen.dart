@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -18,13 +17,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _classeController = TextEditingController();
+  final _dateOfBirthController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   String _selectedGender = '';
+  String _selectedNationality = '';
+  DateTime? _selectedDate;
   
-  // Replace with your actual Symfony server URL
-  static const String _baseUrl = 'http://127.0.0.1:8000'; // Change this to your server URL (Student Registration)
+  static const String _baseUrl = 'http://127.0.0.1:8000';
+
+  static const List<String> _nationalities = [
+    'Afghan', 'Albanian', 'Algerian', 'American', 'Andorran', 'Angolan', 'Antiguan', 'Argentine', 'Armenian', 'Australian',
+    'Austrian', 'Azerbaijani', 'Bahamian', 'Bahraini', 'Bangladeshi', 'Barbadian', 'Belarusian', 'Belgian', 'Belizean', 'Beninese',
+    'Bhutanese', 'Bolivian', 'Bosnian', 'Botswanan', 'Brazilian', 'British', 'Bruneian', 'Bulgarian', 'Burkinabe', 'Burmese',
+    'Burundian', 'Cambodian', 'Cameroonian', 'Canadian', 'Cape Verdean', 'Central African', 'Chadian', 'Chilean', 'Chinese', 'Colombian',
+    'Comoran', 'Congolese', 'Costa Rican', 'Croatian', 'Cuban', 'Cypriot', 'Czech', 'Danish', 'Djiboutian', 'Dominican',
+    'Dutch', 'East Timorese', 'Ecuadorean', 'Egyptian', 'Emirian', 'Equatorial Guinean', 'Eritrean', 'Estonian', 'Ethiopian', 'Fijian',
+    'Filipino', 'Finnish', 'French', 'Gabonese', 'Gambian', 'Georgian', 'German', 'Ghanaian', 'Greek', 'Grenadian',
+    'Guatemalan', 'Guinea-Bissauan', 'Guinean', 'Guyanese', 'Haitian', 'Herzegovinian', 'Honduran', 'Hungarian', 'Icelander', 'Indian',
+    'Indonesian', 'Iranian', 'Iraqi', 'Irish', 'Israeli', 'Italian', 'Ivorian', 'Jamaican', 'Japanese', 'Jordanian',
+    'Kazakhstani', 'Kenyan', 'Kiribati', 'Kuwaiti', 'Kyrgyz', 'Laotian', 'Latvian', 'Lebanese', 'Liberian', 'Libyan',
+    'Liechtensteiner', 'Lithuanian', 'Luxembourgish', 'Macedonian', 'Malagasy', 'Malawian', 'Malaysian', 'Maldivan', 'Malian', 'Maltese',
+    'Marshallese', 'Mauritanian', 'Mauritian', 'Mexican', 'Micronesian', 'Moldovan', 'Monacan', 'Mongolian', 'Montenegrin', 'Moroccan',
+    'Mosotho', 'Motswana', 'Mozambican', 'Namibian', 'Nauruan', 'Nepalese', 'New Zealander', 'Nicaraguan', 'Nigerian', 'Nigerien',
+    'North Korean', 'Norwegian', 'Omani', 'Pakistani', 'Palauan', 'Palestinian', 'Panamanian', 'Papua New Guinean', 'Paraguayan', 'Peruvian',
+    'Polish', 'Portuguese', 'Qatari', 'Romanian', 'Russian', 'Rwandan', 'Saint Lucian', 'Salvadoran', 'Samoan', 'San Marinese',
+    'Sao Tomean', 'Saudi', 'Scottish', 'Senegalese', 'Serbian', 'Seychellois', 'Sierra Leonean', 'Singaporean', 'Slovakian', 'Slovenian',
+    'Solomon Islander', 'Somali', 'South African', 'South Korean', 'South Sudanese', 'Spanish', 'Sri Lankan', 'Sudanese', 'Surinamer', 'Swazi',
+    'Swedish', 'Swiss', 'Syrian', 'Taiwanese', 'Tajik', 'Tanzanian', 'Thai', 'Togolese', 'Tongan', 'Trinidadian',
+    'Tunisian', 'Turkish', 'Tuvaluan', 'Ugandan', 'Ukrainian', 'Uruguayan', 'Uzbekistani', 'Vanuatuan', 'Venezuelan', 'Vietnamese',
+    'Welsh', 'Yemenite', 'Zambian', 'Zimbabwean'
+  ];
 
   @override
   void dispose() {
@@ -34,7 +58,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _classeController.dispose();
+    _dateOfBirthController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now().subtract(const Duration(days: 365 * 18)),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.red.shade600,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _dateOfBirthController.text = "${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}";
+      });
+      
+      print('Selected date for display: ${_dateOfBirthController.text}');
+      print('Selected date for API: ${picked.toIso8601String().split('T')[0]}');
+    }
   }
 
   Future<void> _handleSignUp() async {
@@ -42,13 +98,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    // Additional validation for gender selection
     if (_selectedGender.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select your gender'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('Please select your gender'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (_selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your date of birth'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (_selectedNationality.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your nationality'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -58,32 +124,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
 
     try {
-      // Prepare data for Student API
-      final userData = {
+      final String formattedDate = _selectedDate!.toIso8601String().split('T')[0];
+      
+      final studentData = {
         'email': _emailController.text.trim(),
         'password': _passwordController.text,
         'firstname': _firstNameController.text.trim(),
         'lastname': _lastNameController.text.trim(),
         'sexe': _selectedGender,
         'classe': _classeController.text.trim(),
-        // Note: userRole will be set to 'etudiant' (student) by the backend
+        'dateOfBirth': formattedDate,
+        'nationality': _selectedNationality,
       };
 
-      // Make API call to Symfony backend (Student Registration)
+      print('=== SENDING STUDENT REGISTRATION ===');
+      print('URL: $_baseUrl/api/students/register');
+      print('Data: $studentData');
+
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/student/register'),
+        Uri.parse('$_baseUrl/api/students/register'), // NEW ENDPOINT
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: json.encode(userData),
+        body: json.encode(studentData),
       );
 
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (response.statusCode == 201) {
-        // Success response
         final responseData = json.decode(response.body);
+        print('Registration successful: $responseData');
         
-        // Show success message with instructions
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -93,64 +166,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Account created successfully! Please login with your credentials.',
-                      style: const TextStyle(fontSize: 16),
+                      'Student account created successfully! Fields saved: ${responseData['data_saved']?.join(', ') ?? 'N/A'}',
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ),
                 ],
               ),
               backgroundColor: Colors.green,
-              duration: const Duration(seconds: 4),
+              duration: const Duration(seconds: 5),
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
             ),
           );
           
-          // Show success dialog with option to go to login
           await _showSuccessDialog();
         }
       } else {
-        // Handle error responses
         final errorData = json.decode(response.body);
-        String errorMessage = 'Registration failed';
-        
-        if (response.statusCode == 409) {
-          errorMessage = 'Email already in use';
-        } else if (response.statusCode == 400) {
-          errorMessage = errorData['error'] ?? 'Invalid data provided';
-        } else {
-          errorMessage = errorData['error'] ?? 'Server error occurred';
-        }
+        String errorMessage = errorData['error'] ?? 'Registration failed';
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
           );
         }
       }
-    } on http.ClientException catch (e) {
-      // Network error
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Network error. Please check your internet connection.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     } catch (e) {
-      // Other errors
+      print('Error during registration: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Unexpected error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -165,103 +209,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _showSuccessDialog() async {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false, // User must tap button to dismiss
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(
             children: [
-              Icon(
-                Icons.check_circle,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
+              Icon(Icons.check_circle, color: Colors.green.shade600, size: 28),
               const SizedBox(width: 10),
-              const Text(
-                'Success!',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
+              const Text('Success!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Your student account has been created successfully!',
-                style: const TextStyle(fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade600),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'You can now login with your email and password.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.blue.shade800,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          content: const Text(
+            'Your student account has been created successfully with all the required information!',
+            style: TextStyle(fontSize: 16),
+            textAlign: TextAlign.center,
           ),
           actions: [
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                _navigateToLogin();
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacementNamed('/login');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade600,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.login, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text(
-                    'Go to Login',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
+              child: const Text('Go to Login', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         );
       },
     );
-  }
-
-  void _navigateToLogin() {
-    // Navigate back to login screen and remove signup screen from stack
-    Navigator.of(context).pushReplacementNamed('/login');
   }
 
   @override
@@ -272,12 +251,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              Color(0xFFFFE5E5),
-              Color.fromARGB(255, 134, 24, 24),
-              Color(0xFF1A1A1A),
-            ],
+            colors: [Colors.white, Color(0xFFFFE5E5), Color.fromARGB(255, 134, 24, 24), Color(0xFF1A1A1A)],
             stops: [0.0, 0.3, 0.7, 1.0],
           ),
         ),
@@ -286,7 +260,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.person_add, size: 80, color: Colors.redAccent),
                   const SizedBox(height: 24),
@@ -298,105 +271,77 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: Form(
                         key: _formKey,
                         child: Column(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Header
-                            Container(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              child: Column(
-                                children: [
-                                  const Text(
-                                    'Create Student Account',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1A1A1A),
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Join the QuizMaster community',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
+                            const Text('Create Student Account', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 24),
+                            
+                            TextFormField(
+                              controller: _firstNameController,
+                              decoration: const InputDecoration(labelText: 'First Name', prefixIcon: Icon(Icons.person)),
+                              validator: (value) => value?.trim().isEmpty ?? true ? 'Enter your first name' : null,
                             ),
                             const SizedBox(height: 16),
                             
                             TextFormField(
-                              controller: _firstNameController,
-                              decoration: const InputDecoration(
-                                labelText: 'First Name',
-                                prefixIcon: Icon(Icons.person),
-                              ),
-                              validator: (value) => value == null || value.trim().isEmpty 
-                                  ? 'Enter your first name' : null,
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
                               controller: _lastNameController,
-                              decoration: const InputDecoration(
-                                labelText: 'Last Name',
-                                prefixIcon: Icon(Icons.person_outline),
-                              ),
-                              validator: (value) => value == null || value.trim().isEmpty 
-                                  ? 'Enter your last name' : null,
+                              decoration: const InputDecoration(labelText: 'Last Name', prefixIcon: Icon(Icons.person_outline)),
+                              validator: (value) => value?.trim().isEmpty ?? true ? 'Enter your last name' : null,
                             ),
                             const SizedBox(height: 16),
+                            
                             DropdownButtonFormField<String>(
                               value: _selectedGender.isEmpty ? null : _selectedGender,
-                              decoration: const InputDecoration(
-                                labelText: 'Gender',
-                                prefixIcon: Icon(Icons.wc),
-                              ),
+                              decoration: const InputDecoration(labelText: 'Gender', prefixIcon: Icon(Icons.wc)),
                               items: const [
                                 DropdownMenuItem(value: 'Male', child: Text('Male')),
                                 DropdownMenuItem(value: 'Female', child: Text('Female')),
                                 DropdownMenuItem(value: 'Other', child: Text('Other')),
                               ],
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedGender = value ?? '';
-                                });
-                              },
-                              validator: (value) => value == null || value.isEmpty 
-                                  ? 'Please select your gender' : null,
+                              onChanged: (value) => setState(() => _selectedGender = value ?? ''),
                             ),
                             const SizedBox(height: 16),
+                            
+                            TextFormField(
+                              controller: _dateOfBirthController,
+                              decoration: const InputDecoration(labelText: 'Date of Birth', prefixIcon: Icon(Icons.calendar_today)),
+                              readOnly: true,
+                              onTap: () => _selectDate(context),
+                              validator: (value) => value?.trim().isEmpty ?? true ? 'Please select your date of birth' : null,
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            DropdownButtonFormField<String>(
+                              value: _selectedNationality.isEmpty ? null : _selectedNationality,
+                              decoration: const InputDecoration(labelText: 'Nationality', prefixIcon: Icon(Icons.flag)),
+                              isExpanded: true,
+                              items: _nationalities.map((String nationality) {
+                                return DropdownMenuItem<String>(value: nationality, child: Text(nationality));
+                              }).toList(),
+                              onChanged: (value) => setState(() => _selectedNationality = value ?? ''),
+                            ),
+                            const SizedBox(height: 16),
+                            
                             TextFormField(
                               controller: _classeController,
-                              decoration: const InputDecoration(
-                                labelText: 'Class',
-                                prefixIcon: Icon(Icons.school),
-                                hintText: 'e.g., 6th Grade, Class A, etc.',
-                              ),
-                              validator: (value) => value == null || value.trim().isEmpty 
-                                  ? 'Enter your class' : null,
+                              decoration: const InputDecoration(labelText: 'Class', prefixIcon: Icon(Icons.school)),
+                              validator: (value) => value?.trim().isEmpty ?? true ? 'Enter your class' : null,
                             ),
                             const SizedBox(height: 16),
+                            
                             TextFormField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                prefixIcon: Icon(Icons.email),
-                              ),
+                              decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email)),
                               validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Enter your email';
-                                }
-                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                                if (value?.trim().isEmpty ?? true) return 'Enter your email';
+                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!.trim())) {
                                   return 'Enter a valid email';
                                 }
                                 return null;
                               },
                             ),
                             const SizedBox(height: 16),
+                            
                             TextFormField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
@@ -405,17 +350,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 prefixIcon: const Icon(Icons.lock),
                                 suffixIcon: IconButton(
                                   icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscurePassword = !_obscurePassword;
-                                    });
-                                  },
+                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                 ),
                               ),
-                              validator: (value) => value == null || value.length < 6 
-                                  ? 'Password must be at least 6 characters' : null,
+                              validator: (value) => (value?.length ?? 0) < 6 ? 'Password must be at least 6 characters' : null,
                             ),
                             const SizedBox(height: 16),
+                            
                             TextFormField(
                               controller: _confirmPasswordController,
                               obscureText: _obscureConfirmPassword,
@@ -424,17 +365,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 suffixIcon: IconButton(
                                   icon: Icon(_obscureConfirmPassword ? Icons.visibility : Icons.visibility_off),
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscureConfirmPassword = !_obscureConfirmPassword;
-                                    });
-                                  },
+                                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                                 ),
                               ),
-                              validator: (value) => value != _passwordController.text 
-                                  ? 'Passwords do not match' : null,
+                              validator: (value) => value != _passwordController.text ? 'Passwords do not match' : null,
                             ),
                             const SizedBox(height: 24),
+                            
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
@@ -446,19 +383,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 ),
                                 child: _isLoading
                                     ? const CircularProgressIndicator(color: Colors.white)
-                                    : const Text(
-                                        'Create Account', 
-                                        style: TextStyle(fontSize: 18, color: Colors.white),
-                                      ),
+                                    : const Text('Create Account', style: TextStyle(fontSize: 18, color: Colors.white)),
                               ),
                             ),
                             const SizedBox(height: 12),
+                            
                             TextButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : () {
-                                      Navigator.pop(context);
-                                    },
+                              onPressed: _isLoading ? null : () => Navigator.pop(context),
                               child: const Text('Already have an account? Login'),
                             ),
                           ],
