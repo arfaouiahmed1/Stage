@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Body
 from typing import List
-from src.schemas.category import Category
-from src.core.firebase import db
+from ..schemas.category import Category
+from ..core.firebase import db
 
 router = APIRouter()
 collection_name = "categories"

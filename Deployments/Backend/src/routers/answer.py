@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
-from src.schemas.answer import Answer
-from src.core.firebase import db
+from ..schemas.answer import Answer
+from ..core.firebase import db
 
 router = APIRouter()
 collection_name = "answers"

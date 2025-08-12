@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from src.core.firebase import db
-from src.schemas.score import Score
+from ..core.firebase import db
+from ..schemas.score import Score
 import uuid
 from typing import List
 

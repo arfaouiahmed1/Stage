@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import List
-from src.schemas.quiz import Quiz
-from src.core.firebase import db
+from ..schemas.quiz import Quiz
+from ..core.firebase import db
 
 router = APIRouter()
 collection_name = "quizzes"

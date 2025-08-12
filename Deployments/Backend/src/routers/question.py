@@ -1,7 +1,7 @@
 # routers/question.py
 from fastapi import APIRouter, HTTPException
 from typing import List
-from src.schemas.question import (
+from ..schemas.question import (
     Question, 
     QuestionGenerateRequest, 
     QuestionGenerateResponse, 
@@ -12,8 +12,8 @@ from src.schemas.question import (
     FullQuizRequest,
     FullQuizResponse
 )
-from src.core.firebase import db
-from src.core.generation_service import QuestionGenerationService
+from ..core.firebase import db
+from ..core.generation_service import QuestionGenerationService
 
 router = APIRouter()
 collection_name = "questions"
