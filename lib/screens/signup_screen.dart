@@ -166,7 +166,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Student account created successfully! Fields saved: ${responseData['data_saved']?.join(', ') ?? 'N/A'}',
+                      'Student account created successfully!',
                       style: const TextStyle(fontSize: 14),
                     ),
                   ),
@@ -295,7 +295,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               items: const [
                                 DropdownMenuItem(value: 'Male', child: Text('Male')),
                                 DropdownMenuItem(value: 'Female', child: Text('Female')),
-                                DropdownMenuItem(value: 'Other', child: Text('Other')),
                               ],
                               onChanged: (value) => setState(() => _selectedGender = value ?? ''),
                             ),

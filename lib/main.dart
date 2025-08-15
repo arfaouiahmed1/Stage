@@ -17,7 +17,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint('✅ Firebase initialized successfully for project: quizapp-be230');
+    debugPrint('✅ Firebase initialized successfully for project: quizmaster-2e381');
   } catch (e) {
     debugPrint('❌ Firebase initialization failed: $e');
     // App can still run, but Firebase features won't work

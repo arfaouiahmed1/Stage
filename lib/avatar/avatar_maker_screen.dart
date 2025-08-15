@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttermoji/fluttermoji.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'avatar_maker_controller.dart';
 import '../services/firebase_avatar_service.dart';
 import 'shared/background_shape.dart';
@@ -14,11 +15,43 @@ class AvatarMakerScreen extends StatefulWidget {
   State<AvatarMakerScreen> createState() => _AvatarMakerScreenState();
 }
 
-
 class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
   // GlobalKey for capturing the avatar as an image
   final GlobalKey _avatarKey = GlobalKey();
   bool _isSaving = false;
+  String? _currentUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUserId();
+  }
+
+  // Load the current user ID from SharedPreferences
+  Future<void> _loadCurrentUserId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _currentUserId = prefs.getString('user_document_id');
+      });
+      
+      print('🔍 Loaded current user ID: $_currentUserId');
+      
+      if (_currentUserId == null || _currentUserId!.isEmpty) {
+        print('⚠️ Warning: No user ID found in SharedPreferences');
+        // Show warning to user
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Warning: User ID not found. Avatar may not be linked to your account.'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error loading user ID: $e');
+    }
+  }
 
   // Convert BackgroundShape enum to string
   String _backgroundShapeToString(BackgroundShape shape) {
@@ -29,6 +62,25 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
         return "square";
       case BackgroundShape.roundedSquare:
         return "roundedSquare";
+    }
+  }
+
+  // Mark avatar customization as complete
+  Future<void> _completeAvatarCustomization() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Set multiple flags to indicate user has completed setup
+      await prefs.setBool('has_customized_avatar', true);
+      await prefs.setBool('completed_onboarding', true);
+      
+      // Set completion timestamp
+      await prefs.setInt('avatar_completed_timestamp', DateTime.now().millisecondsSinceEpoch);
+      
+      print('✅ Avatar customization marked as complete');
+      
+    } catch (e) {
+      print('❌ Error marking avatar customization as complete: $e');
     }
   }
 
@@ -68,6 +120,13 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
                     : 'Saving to Firebase cloud database...',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
+                if (_currentUserId != null) ...[
+                  SizedBox(height: 10),
+                  Text(
+                    'User ID: ${_currentUserId!.substring(0, 8)}...',
+                    style: TextStyle(fontSize: 10, color: Colors.green),
+                  ),
+                ],
               ],
             ),
           ),
@@ -76,42 +135,42 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
       );
 
       // Get your existing controller
-     // Get your existing controller
-final avatarController = Get.find<AvatarMakerController>();
-final firebaseService = Get.find<FirebaseAvatarService>();
+      final avatarController = Get.find<AvatarMakerController>();
+      final firebaseService = Get.find<FirebaseAvatarService>();
 
-// Randomize avatar
-avatarController.randomize();
+      // Randomize avatar
+      avatarController.randomize();
 
-// Attend que les valeurs soient bien mises à jour (200 ms)
-await Future.delayed(Duration(milliseconds: 200));
+      // Wait for values to be updated (200 ms)
+      await Future.delayed(Duration(milliseconds: 200));
 
-// Crée ensuite l'objet AvatarData
-final avatarData = AvatarData(
-  createdAt: DateTime.now(),
-  updatedAt: DateTime.now(),
-  avatarName: "My Custom Avatar",
-  userId: null,
-  selectedCategory: avatarController.selectedCategory,
-  selectedColor: avatarController.selectedColor,
-  selectedBody: avatarController.selectedBody,
-  selectedEyes: avatarController.selectedEyes,
-  selectedNose: avatarController.selectedNose,
-  selectedMouth: avatarController.selectedMouth,
-  selectedHairType: avatarController.selectedHairType == HairType.short ? "short" : "long",
-  selectedShortHair: avatarController.selectedShortHair,
-  selectedLongHair: avatarController.selectedLongHair,
-  selectedFacialHair: avatarController.selectedFacialHair,
-  selectedFacialHairColor: avatarController.selectedFacialHairColor,
-  selectedClothing: avatarController.selectedClothing,
-  selectedClothingColor: avatarController.selectedClothingColor,
-  selectedAccessory: avatarController.selectedAccessory,
-  selectedAccessoryColor: avatarController.selectedAccessoryColor,
-  selectedHat: avatarController.selectedHat,
-  selectedBackgroundColor: avatarController.selectedBackgroundColor,
-  selectedBackgroundShape: _backgroundShapeToString(avatarController.selectedBackgroundShape),
-);
+      // Create AvatarData object with user ID
+      final avatarData = AvatarData(
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        avatarName: "My Custom Avatar",
+        userId: _currentUserId, // Use the loaded user ID
+        selectedCategory: avatarController.selectedCategory,
+        selectedColor: avatarController.selectedColor,
+        selectedBody: avatarController.selectedBody,
+        selectedEyes: avatarController.selectedEyes,
+        selectedNose: avatarController.selectedNose,
+        selectedMouth: avatarController.selectedMouth,
+        selectedHairType: avatarController.selectedHairType == HairType.short ? "short" : "long",
+        selectedShortHair: avatarController.selectedShortHair,
+        selectedLongHair: avatarController.selectedLongHair,
+        selectedFacialHair: avatarController.selectedFacialHair,
+        selectedFacialHairColor: avatarController.selectedFacialHairColor,
+        selectedClothing: avatarController.selectedClothing,
+        selectedClothingColor: avatarController.selectedClothingColor,
+        selectedAccessory: avatarController.selectedAccessory,
+        selectedAccessoryColor: avatarController.selectedAccessoryColor,
+        selectedHat: avatarController.selectedHat,
+        selectedBackgroundColor: avatarController.selectedBackgroundColor,
+        selectedBackgroundShape: _backgroundShapeToString(avatarController.selectedBackgroundShape),
+      );
 
+      print('💾 Saving avatar with User ID: ${avatarData.userId}');
 
       // Save to Firebase with optional download
       String? avatarId = await firebaseService.saveAvatarWithImage(avatarData, _avatarKey, downloadToPC: downloadToPC);
@@ -123,6 +182,9 @@ final avatarData = AvatarData(
         // Also save using Fluttermoji for local display
         final fluttermojiController = Get.find<FluttermojiController>();
         await fluttermojiController.setFluttermoji();
+        
+        // IMPORTANT: Mark avatar customization as complete
+        await _completeAvatarCustomization();
         
         // Show success dialog with the avatar ID
         _showSuccessDialog(context, avatarId, downloadToPC);
@@ -172,6 +234,18 @@ final avatarData = AvatarData(
     }
   }
 
+  // Navigate to quiz list after successful avatar completion
+  Future<void> _navigateToQuizList() async {
+    try {
+      // Navigate to quiz list and remove all previous routes
+      Navigator.of(context).pushNamedAndRemoveUntil('/listquiz', (route) => false); // Changed to /listquiz
+    } catch (e) {
+      print('Navigation error: $e');
+      // Fallback navigation
+      Navigator.of(context).pop();
+    }
+  }
+
   // Success dialog with avatar ID
   void _showSuccessDialog(BuildContext context, String avatarId, bool downloadedToPC) {
     showDialog(
@@ -208,6 +282,35 @@ final avatarData = AvatarData(
                 style: TextStyle(fontSize: 16),
               ),
               SizedBox(height: 15),
+              
+              // User ID Info
+              if (_currentUserId != null) ...[
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.person, color: Colors.blue.shade600, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "👤 Linked to User ID: ${_currentUserId!.substring(0, 12)}...",
+                          style: TextStyle(
+                            color: Colors.blue.shade700,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 15),
+              ],
               
               if (downloadedToPC) ...[
                 Container(
@@ -275,16 +378,39 @@ final avatarData = AvatarData(
                   fontStyle: FontStyle.italic,
                 ),
               ),
+              SizedBox(height: 15),
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue.shade600, size: 16),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Ready to start your quiz adventure!",
+                        style: TextStyle(
+                          color: Colors.blue.shade700,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () {
-
-             Navigator.of(context).pop(); // Ferme la boîte de dialogue
-             Navigator.pushReplacementNamed(context, '/listquiz'); // Redirige vers la page des quiz
-},
-
+                Navigator.of(context).pop(); // Close dialog
+                _navigateToQuizList(); // Navigate to quiz list
+              },
               style: TextButton.styleFrom(
                 backgroundColor: Colors.red.shade700,
                 shape: RoundedRectangleBorder(
@@ -293,12 +419,19 @@ final avatarData = AvatarData(
               ),
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Text(
-                  "OK",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.quiz, color: Colors.white, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      "Start Quizzes!",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -373,6 +506,58 @@ final avatarData = AvatarData(
     );
   }
 
+  // Add a "Skip Avatar" option for users who want to proceed without customizing
+  void _showSkipAvatarDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.skip_next, color: Colors.orange),
+              SizedBox(width: 10),
+              Text("Skip Avatar Creation?"),
+            ],
+          ),
+          content: Text(
+            "You can skip avatar creation for now and proceed to your quizzes. You can always create your avatar later from the profile section.",
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Cancel", style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Mark as completed even if skipped
+                await _completeAvatarCustomization();
+                Navigator.pop(context); // Close dialog
+                _navigateToQuizList(); // Navigate to quiz list
+              },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.orange,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Text(
+                  "Skip for Now",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Initialize all controllers
@@ -395,6 +580,12 @@ final avatarData = AvatarData(
         elevation: 0,
         iconTheme: IconThemeData(color: Colors.white),
         actions: [
+          // Skip avatar button
+          IconButton(
+            onPressed: _showSkipAvatarDialog,
+            icon: Icon(Icons.skip_next),
+            tooltip: 'Skip Avatar Creation',
+          ),
           // Test Firebase connection button
           IconButton(
             onPressed: () async {
@@ -434,6 +625,80 @@ final avatarData = AvatarData(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Column(
               children: [
+                // Welcome message for first-time users with user info
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(16),
+                  margin: EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.blue.shade50, Colors.blue.shade100],
+                    ),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.waving_hand, color: Colors.blue.shade600, size: 24),
+                      SizedBox(height: 8),
+                      Text(
+                        "Welcome to QuizMaster!",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade700,
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        "Create your personalized avatar to represent you in quizzes",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue.shade600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      if (_currentUserId != null) ...[
+                        SizedBox(height: 8),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.green.shade300),
+                          ),
+                          child: Text(
+                            "👤 User ID: ${_currentUserId!.substring(0, 8)}...",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green.shade700,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        SizedBox(height: 8),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.orange.shade300),
+                          ),
+                          child: Text(
+                            "⚠️ No User ID Found",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.orange.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
                 // Avatar Display Container with RepaintBoundary for image capture
                 Container(
                   padding: EdgeInsets.all(20),
@@ -635,7 +900,7 @@ final avatarData = AvatarData(
                           SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              "Download Location",
+                              "Avatar Information",
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.blue.shade700,
@@ -647,7 +912,7 @@ final avatarData = AvatarData(
                       ),
                       SizedBox(height: 8),
                       Text(
-                        "📂 Downloaded images save to: C:\\Users\\louay\\Downloads\\avatar_[timestamp].png\n☁️ Firebase saves Base64 image data in Firestore",
+                        "📂 Downloaded images save to: Downloads folder\n☁️ Firebase saves Base64 image data with your User ID\n👤 User ID: ${_currentUserId ?? 'Not Found'}",
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.blue.shade600,

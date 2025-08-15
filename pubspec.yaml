@@ -11,6 +11,10 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # CSV and File operations
+  csv: ^5.0.2
+  path: ^1.8.3
+  
   # UI & State Management
   flutter_svg: ^2.0.10+1
   get: ^4.6.6
@@ -19,6 +23,7 @@ dependencies:
   # File & Storage
   image_gallery_saver: ^2.0.3
   path_provider: ^2.1.3
+  shared_preferences: ^2.0.0
   
   # Avatar & Customization
   fluttermoji: ^1.0.2
@@ -27,7 +32,6 @@ dependencies:
   firebase_core: ^2.24.2
   cloud_firestore: ^4.13.6
   intl: ^0.20.2
-  shared_preferences: ^2.0.0
   
   # Network & API
   http: ^1.1.0
@@ -57,8 +61,6 @@ flutter:
     - assets/avatar/head/hair/long/
     - assets/avatar/head/hair/short/
     # 3D Models (GLB/FBX/OBJ formats supported)
-    - assets/models/
-    # 3D Models (OBJ format)
     - assets/models/
     # JSON Data Files
     - assets/data/

@@ -68,7 +68,7 @@ class AvatarData {
   // Convert to Map for Firebase
   Map<String, dynamic> toMap() {
     return {
-      'user_id': userId,
+      'user_id': userId, // This will now have the actual user ID
       'created_at': Timestamp.fromDate(createdAt),
       'updated_at': Timestamp.fromDate(updatedAt),
       'avatar_name': avatarName,
@@ -126,8 +126,15 @@ class AvatarData {
 }
 
 class FirebaseAvatarService extends GetxService {
+  // UPDATED: Now using QuizMaster project
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  // Collection name - you can change this if you want a fresh collection
   final String _collection = 'avatars';
+  
+  // Add project info for debugging
+  static const String PROJECT_NAME = 'QuizMaster';
+  static const String PROJECT_ID = 'quizmaster-2e381';
 
   // Capture widget as image and return base64 string
   Future<String?> captureWidgetAsBase64(GlobalKey repaintBoundaryKey) async {
@@ -208,7 +215,21 @@ class FirebaseAvatarService extends GetxService {
   // Save avatar with image (Base64 method - Web Compatible)
   Future<String?> saveAvatarWithImage(AvatarData avatarData, GlobalKey repaintBoundaryKey, {bool downloadToPC = false}) async {
     try {
-      debugPrint('💾 Saving avatar with image (Base64)...');
+      debugPrint('💾 Saving avatar with image to QuizMaster database...');
+      debugPrint('🔍 Avatar User ID: ${avatarData.userId}');
+      
+      // Validate that we have a user ID
+      if (avatarData.userId == null || avatarData.userId!.isEmpty) {
+        debugPrint('⚠️ Warning: Avatar being saved without User ID!');
+        Get.snackbar(
+          'Warning',
+          'Avatar will be saved without User ID. It may not be linked to your account.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+        );
+      }
       
       // Capture avatar image
       String? base64Image = await captureWidgetAsBase64(repaintBoundaryKey);
@@ -219,7 +240,7 @@ class FirebaseAvatarService extends GetxService {
       
       // Create avatar data with image
       final avatarWithImage = AvatarData(
-        userId: avatarData.userId,
+        userId: avatarData.userId, // Keep the user ID from input
         createdAt: avatarData.createdAt,
         updatedAt: avatarData.updatedAt,
         avatarName: avatarData.avatarName,
@@ -244,10 +265,18 @@ class FirebaseAvatarService extends GetxService {
         selectedBackgroundShape: avatarData.selectedBackgroundShape,
       );
       
+      // Debug: Show what data we're saving
+      final mapData = avatarWithImage.toMap();
+      debugPrint('📋 Saving avatar data:');
+      debugPrint('   - User ID: ${mapData['user_id']}');
+      debugPrint('   - Avatar Name: ${mapData['avatar_name']}');
+      debugPrint('   - Has Image: ${mapData['image_avatar'] != null}');
+      debugPrint('   - Created At: ${mapData['created_at']}');
+      
       // Save to Firestore
       DocumentReference docRef = await _firestore
           .collection(_collection)
-          .add(avatarWithImage.toMap());
+          .add(mapData);
       
       String avatarId = docRef.id;
       
@@ -257,13 +286,14 @@ class FirebaseAvatarService extends GetxService {
         await downloadImageToPC(base64Image, filename);
       }
       
-      debugPrint('✅ Avatar with image saved successfully with ID: $avatarId');
+      debugPrint('✅ Avatar with image saved successfully to QuizMaster with ID: $avatarId');
+      debugPrint('🔗 Avatar linked to User ID: ${avatarData.userId}');
       
       Get.snackbar(
         'Success!',
         downloadToPC 
-          ? 'Avatar saved to Firebase and downloaded to your PC!'
-          : 'Avatar saved to Firebase!',
+          ? 'Avatar saved to QuizMaster and downloaded to your PC!'
+          : 'Avatar saved to QuizMaster database!',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
@@ -272,11 +302,11 @@ class FirebaseAvatarService extends GetxService {
       
       return avatarId;
     } catch (e) {
-      debugPrint('❌ Error saving avatar with image: $e');
+      debugPrint('❌ Error saving avatar to QuizMaster: $e');
       
       Get.snackbar(
         'Error',
-        'Failed to save avatar: ${e.toString()}',
+        'Failed to save avatar to QuizMaster: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -287,10 +317,35 @@ class FirebaseAvatarService extends GetxService {
     }
   }
 
+  // Get avatars by user ID
+  Future<List<AvatarData>> getAvatarsByUserId(String userId) async {
+    try {
+      debugPrint('📥 Fetching avatars for user: $userId from QuizMaster');
+      
+      QuerySnapshot querySnapshot = await _firestore
+          .collection(_collection)
+          .where('user_id', isEqualTo: userId)
+          .orderBy('created_at', descending: true)
+          .get();
+      
+      List<AvatarData> avatars = querySnapshot.docs
+          .map((doc) => AvatarData.fromMap(
+              doc.data() as Map<String, dynamic>, 
+              doc.id))
+          .toList();
+      
+      debugPrint('✅ Found ${avatars.length} avatars for user $userId in QuizMaster');
+      return avatars;
+    } catch (e) {
+      debugPrint('❌ Error getting avatars for user $userId from QuizMaster: $e');
+      return [];
+    }
+  }
+
   // Update existing avatar with new image
   Future<bool> updateAvatarWithImage(String avatarId, AvatarData avatarData, GlobalKey repaintBoundaryKey) async {
     try {
-      debugPrint('🔄 Updating avatar with new image...');
+      debugPrint('🔄 Updating avatar with new image in QuizMaster...');
       
       // Capture new image
       String? base64Image = await captureWidgetAsBase64(repaintBoundaryKey);
@@ -309,11 +364,11 @@ class FirebaseAvatarService extends GetxService {
           .doc(avatarId)
           .update(updatedData);
       
-      debugPrint('✅ Avatar updated with new image successfully');
+      debugPrint('✅ Avatar updated with new image successfully in QuizMaster');
       
       Get.snackbar(
         'Updated!',
-        'Avatar image updated successfully',
+        'Avatar image updated successfully in QuizMaster',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.blue,
         colorText: Colors.white,
@@ -322,7 +377,7 @@ class FirebaseAvatarService extends GetxService {
       
       return true;
     } catch (e) {
-      debugPrint('❌ Error updating avatar with image: $e');
+      debugPrint('❌ Error updating avatar in QuizMaster: $e');
       return false;
     }
   }
@@ -330,7 +385,7 @@ class FirebaseAvatarService extends GetxService {
   // Get avatar by ID
   Future<AvatarData?> getAvatar(String avatarId) async {
     try {
-      debugPrint('📥 Fetching avatar with ID: $avatarId');
+      debugPrint('📥 Fetching avatar with ID: $avatarId from QuizMaster');
       
       DocumentSnapshot doc = await _firestore
           .collection(_collection)
@@ -338,17 +393,17 @@ class FirebaseAvatarService extends GetxService {
           .get();
       
       if (doc.exists && doc.data() != null) {
-        debugPrint('✅ Avatar found and loaded');
+        debugPrint('✅ Avatar found and loaded from QuizMaster');
         return AvatarData.fromMap(
           doc.data() as Map<String, dynamic>, 
           doc.id
         );
       } else {
-        debugPrint('❌ Avatar not found');
+        debugPrint('❌ Avatar not found in QuizMaster');
         return null;
       }
     } catch (e) {
-      debugPrint('❌ Error getting avatar: $e');
+      debugPrint('❌ Error getting avatar from QuizMaster: $e');
       return null;
     }
   }
@@ -356,7 +411,7 @@ class FirebaseAvatarService extends GetxService {
   // Get all avatars (for testing or avatar gallery)
   Future<List<AvatarData>> getAllAvatars() async {
     try {
-      debugPrint('📥 Fetching all avatars...');
+      debugPrint('📥 Fetching all avatars from QuizMaster...');
       
       QuerySnapshot querySnapshot = await _firestore
           .collection(_collection)
@@ -369,10 +424,10 @@ class FirebaseAvatarService extends GetxService {
               doc.id))
           .toList();
       
-      debugPrint('✅ Found ${avatars.length} avatars');
+      debugPrint('✅ Found ${avatars.length} avatars in QuizMaster');
       return avatars;
     } catch (e) {
-      debugPrint('❌ Error getting avatars: $e');
+      debugPrint('❌ Error getting avatars from QuizMaster: $e');
       return [];
     }
   }
@@ -385,11 +440,11 @@ class FirebaseAvatarService extends GetxService {
           .doc(avatarId)
           .delete();
       
-      debugPrint('✅ Avatar deleted with ID: $avatarId');
+      debugPrint('✅ Avatar deleted with ID: $avatarId from QuizMaster');
       
       Get.snackbar(
         'Deleted!',
-        'Avatar deleted successfully',
+        'Avatar deleted successfully from QuizMaster',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.orange,
         colorText: Colors.white,
@@ -398,7 +453,7 @@ class FirebaseAvatarService extends GetxService {
       
       return true;
     } catch (e) {
-      debugPrint('❌ Error deleting avatar: $e');
+      debugPrint('❌ Error deleting avatar from QuizMaster: $e');
       return false;
     }
   }
@@ -406,21 +461,22 @@ class FirebaseAvatarService extends GetxService {
   // Test Firebase connection
   Future<bool> testConnection() async {
     try {
-      debugPrint('🧪 Testing Firebase connection...');
+      debugPrint('🧪 Testing Firebase connection to $PROJECT_NAME ($PROJECT_ID)...');
       
       await _firestore
           .collection('test')
           .doc('connection_test')
           .set({
-        'message': 'Firebase connected successfully!',
+        'message': 'Firebase connected successfully to $PROJECT_NAME!',
+        'project_id': PROJECT_ID,
         'timestamp': FieldValue.serverTimestamp(),
       });
       
-      debugPrint('✅ Firebase connection successful!');
+      debugPrint('✅ Firebase connection successful to $PROJECT_NAME!');
       
       Get.snackbar(
-        'Connected!',
-        'Firebase is working perfectly',
+        'Connected to $PROJECT_NAME!',
+        'Firebase is working perfectly with $PROJECT_ID',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
@@ -429,11 +485,11 @@ class FirebaseAvatarService extends GetxService {
       
       return true;
     } catch (e) {
-      debugPrint('❌ Firebase connection failed: $e');
+      debugPrint('❌ Firebase connection failed to $PROJECT_NAME: $e');
       
       Get.snackbar(
         'Connection Failed',
-        'Firebase connection error: ${e.toString()}',
+        'Firebase connection error for $PROJECT_NAME: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,

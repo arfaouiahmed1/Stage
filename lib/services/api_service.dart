@@ -12,6 +12,12 @@ class ApiService {
   
   // Note: Symfony backend for user management runs on port 8000
 
+  // Headers for requests
+  static Map<String, String> get _headers => {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
   // Verify quiz access code
   static Future<Map<String, dynamic>?> verifyQuizCode(String accessCode) async {
     try {
@@ -173,27 +179,32 @@ class ApiService {
   }
 
   // Submit an answer to the backend
+  // NOTE: userId should now be the Firebase document ID, not email
   static Future<bool> submitAnswer({
-    required String userId,
+    required String userId, // This should be the Firebase document ID
     required String quizId,
     required String questionId,
     required int value, // 1-5 scale value
   }) async {
     try {
+      final requestBody = {
+        'idUser': userId, // Now expects Firebase document ID
+        'idQuiz': quizId,  
+        'idQuestion': questionId,
+        'value': value,
+      };
+
+      print('Submitting answer with body: ${json.encode(requestBody)}');
+
       final response = await http.post(
         Uri.parse('$baseUrl/answers/'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'idUser': userId,
-          'idQuiz': quizId,  
-          'idQuestion': questionId,
-          'value': value,
-        }),
+        headers: _headers,
+        body: json.encode(requestBody),
       );
 
-      if (response.statusCode == 200) {
+      print('Answer submission response: ${response.statusCode} - ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         print('Answer submitted successfully: Question $questionId, Value: $value');
         return true;
       } else {
@@ -206,53 +217,183 @@ class ApiService {
     }
   }
 
-  // Calculate final score for a quiz
-  static Future<Map<String, dynamic>?> calculateScore({
+  // NEW: Update island position after submitting answers
+  static Future<Map<String, dynamic>?> updateIslandPosition({
     required String userId,
     required String quizId,
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/scores/calculate_score/$quizId/user/$userId'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        Uri.parse('$baseUrl/scores/update_island_position/$quizId/user/$userId'),
+        headers: _headers,
       );
 
+      print('Update island position response: ${response.statusCode} - ${response.body}');
+
       if (response.statusCode == 200) {
-        final scoreData = json.decode(response.body);
-        print('Score calculated successfully: $scoreData');
-        return scoreData;
+        final data = json.decode(response.body);
+        print('Island position updated: ${data['island_position']}');
+        return data;
       } else {
-        throw Exception('Failed to calculate score: ${response.statusCode} - ${response.body}');
+        print('Failed to update island position: ${response.statusCode} - ${response.body}');
+        return null;
       }
     } catch (e) {
-      print('Error calculating score: $e');
-      throw Exception('Failed to calculate score: $e');
+      print('Error updating island position: $e');
+      return null;
     }
   }
 
-  // Get user's score for a specific quiz
+  // Calculate final score for a quiz
+  static Future<Map<String, dynamic>?> calculateScore({
+    required String userId, // This should be the Firebase document ID
+    required String quizId,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/scores/calculate_score/$quizId/user/$userId'),
+        headers: _headers,
+      );
+
+      print('Calculate score response: ${response.statusCode} - ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final scoreData = json.decode(response.body);
+        print('Score calculated successfully: $scoreData');
+        print('Island position: ${scoreData['island_position']}');
+        return scoreData;
+      } else {
+        print('Failed to calculate score: ${response.statusCode} - ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Error calculating score: $e');
+      return null;
+    }
+  }
+
+  // Get user's score for a specific quiz (original method)
   static Future<Map<String, dynamic>?> getUserScore({
-    required String userId,
+    required String userId, // This should be the Firebase document ID
     required String quizId,
   }) async {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/scores/get_score/$quizId/user/$userId'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: _headers,
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final data = json.decode(response.body);
+        print('Retrieved user score with island position: ${data['island_position']}');
+        return data;
       } else {
         return null; // No score found
       }
     } catch (e) {
       print('Error getting user score: $e');
       return null;
+    }
+  }
+
+  // Get score for a quiz and user (for progression system)
+  static Future<Map<String, dynamic>?> getScore({
+    required String quizId,
+    required String userId,
+  }) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/scores/get_score/$quizId/user/$userId'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('Retrieved score with island position: ${data['island_position']}');
+        return data;
+      } else if (response.statusCode == 404) {
+        // Score not found, which is expected if not calculated yet
+        return null;
+      } else {
+        print('Failed to get score: ${response.statusCode} - ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Error getting score: $e');
+      return null;
+    }
+  }
+
+  // Get all scores for a user
+  static Future<List<Map<String, dynamic>>> getUserScores(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/scores/scores/user/$userId'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final scores = List<Map<String, dynamic>>.from(data);
+        for (var score in scores) {
+          print('Score island position: ${score['island_position']}');
+        }
+        return scores;
+      } else {
+        print('Failed to get user scores: ${response.statusCode} - ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      print('Error getting user scores: $e');
+      return [];
+    }
+  }
+
+  // Check if user has answered all questions for a category
+  static Future<bool> isCategoryCompleted({
+    required String quizId,
+    required String userId,
+    required String categoryId,
+  }) async {
+    try {
+      // Get all questions for this category
+      final allQuestions = await getQuizQuestions(quizId);
+      final categoryQuestions = allQuestions.where((q) => q['idCategory'] == categoryId).toList();
+      
+      if (categoryQuestions.isEmpty) {
+        return false;
+      }
+
+      // Check if user has answers for all questions in this category
+      final response = await http.get(
+        Uri.parse('$baseUrl/answers/by_quiz/$quizId/user/$userId'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        final answers = json.decode(response.body);
+        final categoryAnswers = (answers as List).where((answer) => 
+          categoryQuestions.any((q) => q['idQuestion'] == answer['idQuestion'])
+        ).toList();
+
+        final isCompleted = categoryAnswers.length == categoryQuestions.length;
+        
+        // If category is completed, update island position
+        if (isCompleted) {
+          await updateIslandPosition(userId: userId, quizId: quizId);
+        }
+        
+        return isCompleted;
+      } else if (response.statusCode == 404) {
+        // No answers found
+        return false;
+      } else {
+        print('Failed to check completion: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error checking category completion: $e');
+      return false;
     }
   }
 }

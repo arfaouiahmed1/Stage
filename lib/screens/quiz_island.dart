@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+enum IslandStatus {
+  locked,
+  available,
+  completed,
+}
+
 class QuizIsland {
   final int id;
   final String name;
@@ -11,9 +17,13 @@ class QuizIsland {
   final String description;
   final String difficulty;
   final String? imagePath;
+  final String? blackWhiteImagePath; // Added for black and white version
   final double rotationSpeed;
   final double floatAmplitude;
-  final String? categoryId; // Add this field for storing the real category ID
+  final IslandStatus status;
+  final bool isUnlocked;
+  final double? categoryScore;
+  final String? categoryId;
 
   QuizIsland({
     required this.id,
@@ -26,12 +36,49 @@ class QuizIsland {
     required this.description,
     required this.difficulty,
     this.imagePath,
+    this.blackWhiteImagePath, // Added to constructor
     this.rotationSpeed = 1.0,
     this.floatAmplitude = 10.0,
-    this.categoryId, // Add this parameter
+    this.status = IslandStatus.locked,
+    this.isUnlocked = false,
+    this.categoryScore,
+    this.categoryId,
   });
 
-  // Add a copyWith method for easy updates
+  // Helper method to check if island can be tapped
+  bool get canBeTapped => status == IslandStatus.available;
+
+  // Get icon based on status
+  IconData getStatusIcon() {
+    switch (status) {
+      case IslandStatus.locked:
+        return Icons.lock;
+      case IslandStatus.available:
+        return icon;
+      case IslandStatus.completed:
+        return Icons.check_circle;
+    }
+  }
+
+  // Get color based on status
+  Color getStatusColor() {
+    switch (status) {
+      case IslandStatus.locked:
+        return Colors.grey.shade600;
+      case IslandStatus.available:
+        return color;
+      case IslandStatus.completed:
+        return Colors.green.shade600;
+    }
+  }
+
+  // Get score display text
+  String get scoreDisplayText {
+    if (categoryScore == null) return '';
+    return '${categoryScore!.toStringAsFixed(1)}/5';
+  }
+
+  // CopyWith method for creating modified copies
   QuizIsland copyWith({
     int? id,
     String? name,
@@ -43,8 +90,12 @@ class QuizIsland {
     String? description,
     String? difficulty,
     String? imagePath,
+    String? blackWhiteImagePath, // Added to copyWith
     double? rotationSpeed,
     double? floatAmplitude,
+    IslandStatus? status,
+    bool? isUnlocked,
+    double? categoryScore,
     String? categoryId,
   }) {
     return QuizIsland(
@@ -58,66 +109,13 @@ class QuizIsland {
       description: description ?? this.description,
       difficulty: difficulty ?? this.difficulty,
       imagePath: imagePath ?? this.imagePath,
+      blackWhiteImagePath: blackWhiteImagePath ?? this.blackWhiteImagePath, // Added to copyWith
       rotationSpeed: rotationSpeed ?? this.rotationSpeed,
       floatAmplitude: floatAmplitude ?? this.floatAmplitude,
+      status: status ?? this.status,
+      isUnlocked: isUnlocked ?? this.isUnlocked,
+      categoryScore: categoryScore ?? this.categoryScore,
       categoryId: categoryId ?? this.categoryId,
     );
-  }
-
-  // Convert to JSON for storage (if needed)
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'position': {'dx': position.dx, 'dy': position.dy},
-      'size': size,
-      'color': color.value,
-      'icon': icon.codePoint,
-      'quizTopic': quizTopic,
-      'description': description,
-      'difficulty': difficulty,
-      'imagePath': imagePath,
-      'rotationSpeed': rotationSpeed,
-      'floatAmplitude': floatAmplitude,
-      'categoryId': categoryId,
-    };
-  }
-
-  // Create from JSON (if needed)
-  factory QuizIsland.fromJson(Map<String, dynamic> json) {
-    return QuizIsland(
-      id: json['id'],
-      name: json['name'],
-      position: Offset(json['position']['dx'], json['position']['dy']),
-      size: json['size'],
-      color: Color(json['color']),
-      icon: IconData(json['icon'], fontFamily: 'MaterialIcons'),
-      quizTopic: json['quizTopic'],
-      description: json['description'],
-      difficulty: json['difficulty'],
-      imagePath: json['imagePath'],
-      rotationSpeed: json['rotationSpeed'] ?? 1.0,
-      floatAmplitude: json['floatAmplitude'] ?? 10.0,
-      categoryId: json['categoryId'],
-    );
-  }
-
-  @override
-  String toString() {
-    return 'QuizIsland(id: $id, name: $name, categoryId: $categoryId, difficulty: $difficulty)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is QuizIsland &&
-        other.id == id &&
-        other.name == name &&
-        other.categoryId == categoryId;
-  }
-
-  @override
-  int get hashCode {
-    return Object.hash(id, name, categoryId);
   }
 }

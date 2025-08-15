@@ -144,6 +144,12 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  // Helper method to get user-specific keys for SharedPreferences
+  String _getUserSpecificKey(String baseKey, String userId) {
+    return '${baseKey}_$userId';
+  }
+
+  // Updated Flutter login method to work with the new StudentLoginController and load saved data
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -160,9 +166,11 @@ class _LoginScreenState extends State<LoginScreen>
         'password': _passwordController.text,
       };
 
-      // Make API call to Symfony backend
+      print('🔐 Starting login process for: ${_emailController.text.trim()}');
+
+      // Step 1: Authenticate user credentials with new controller
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/login'),
+        Uri.parse('$_baseUrl/api/auth/student-login'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -170,86 +178,125 @@ class _LoginScreenState extends State<LoginScreen>
         body: json.encode(loginData),
       );
 
+      print('📡 Login response status: ${response.statusCode}');
+
       if (response.statusCode == 200) {
         // Success response
         final responseData = json.decode(response.body);
         final userData = responseData['user'];
         
-        // Save user data locally
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('profile_email', userData['email'] ?? '');
-        await prefs.setString('profile_firstname', userData['firstname'] ?? '');
-        await prefs.setString('profile_lastname', userData['lastname'] ?? '');
-        await prefs.setString('profile_name', '${userData['firstname'] ?? ''} ${userData['lastname'] ?? ''}');
-        await prefs.setString('profile_gender', userData['sexe'] ?? '');
-        await prefs.setString('profile_role', userData['userRole'] ?? '');
-        await prefs.setString('profile_classe', userData['classe'] ?? '');
-        
-        // Save photo if available
-        if (userData['photoBase64'] != null && userData['photoBase64'].isNotEmpty) {
-          await prefs.setString('profile_photo', userData['photoBase64']);
+        // Get user document ID
+        final userId = userData['id'];
+        if (userId == null || userId.isEmpty) {
+          throw Exception('User ID not found in response');
         }
         
-        // Check if this is the first time login (avatar not customized yet)
-        bool isFirstLogin = !prefs.containsKey('has_customized_avatar');
+        print('✅ User authenticated successfully. User ID: $userId');
         
-        // Show success message
+        // Step 2: Save user data locally first
+        await _saveUserDataLocally(userData, userId);
+        
+        // Step 3: Check real-time login status from Firebase with retry logic
+        print('🔍 Checking real-time login status...');
+        bool isCurrentlyLoggedIn = false;
+        bool statusCheckSuccessful = false;
+        
+        // Try to get status with retry logic
+        for (int attempt = 1; attempt <= 3; attempt++) {
+          print('📡 Status check attempt $attempt/3');
+          
+          final statusResponse = await http.get(
+            Uri.parse('$_baseUrl/api/auth/check-login-status/$userId'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          );
+          
+          if (statusResponse.statusCode == 200) {
+            final statusData = json.decode(statusResponse.body);
+            isCurrentlyLoggedIn = statusData['isloggedin'] ?? false;
+            statusCheckSuccessful = true;
+            print('✅ Real-time login status retrieved (attempt $attempt): $isCurrentlyLoggedIn');
+            break;
+          } else {
+            print('⚠️ Status check failed (attempt $attempt): ${statusResponse.statusCode}');
+            if (attempt < 3) {
+              // Wait before retry
+              await Future.delayed(Duration(milliseconds: 500 * attempt));
+            }
+          }
+        }
+        
+        // Fallback to response data if status check failed
+        if (!statusCheckSuccessful) {
+          print('⚠️ Using fallback login status from response data');
+          isCurrentlyLoggedIn = userData['isloggedin'] ?? false;
+        }
+        
+        // Determine if this is first login based on real-time status
+        // isloggedin = false: User has NEVER logged in before → First time → Avatar Maker
+        // isloggedin = true:  User has logged in before → Returning user → Quiz List
+        bool isFirstLogin = !isCurrentlyLoggedIn;
+        
+        print('📊 Login status analysis:');
+        print('  - Real-time isloggedin: $isCurrentlyLoggedIn');
+        print('  - Is first login: $isFirstLogin');
+        print('  - User will go to: ${isFirstLogin ? 'Avatar Maker' : 'Quiz List'}');
+        print('  - Note: isloggedin tracks "has ever logged in" not current session');
+        
+        // Step 4: Handle login status update and data loading
+        if (isFirstLogin) {
+          print('🔄 First login detected, updating isloggedin to true (PERMANENT)...');
+          bool updateSuccess = await _updateIsLoggedInStatusWithRetry(userId);
+          if (updateSuccess) {
+            print('✅ Login status updated successfully (will NEVER go back to false)');
+          } else {
+            print('⚠️ Warning: Could not update login status, but continuing...');
+          }
+        } else {
+          // Load saved quiz data and progress (only for returning users)
+          print('📥 Loading saved user data for returning user...');
+          await _loadSavedUserDataWithUserSpecificKeys(userId);
+        }
+        
+        // Step 5: Show success message and navigate
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Welcome back, ${userData['firstname'] ?? 'User'}!'),
+              content: Text('Welcome ${isFirstLogin ? '' : 'back'}, ${userData['firstname'] ?? 'User'}!'),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 2),
             ),
           );
           
+          // Small delay to let the snackbar show
+          await Future.delayed(const Duration(milliseconds: 500));
+          
           if (isFirstLogin) {
             // First time login - go to Avatar Designer
+            print('🎯 Navigating to Avatar Maker (First login - real-time isloggedin was false)');
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const AvatarMakerScreen()),
             );
           } else {
             // Subsequent logins - go directly to Quiz List
-            Navigator.pushReplacementNamed(context, '/quiz-list');
+            print('🎯 Navigating to Quiz List (Returning user - real-time isloggedin was true)');
+            Navigator.pushReplacementNamed(context, '/listquiz');
           }
         }
       } else {
         // Handle error responses
-        final errorData = json.decode(response.body);
-        String errorMessage = 'Login failed';
-        
-        switch (response.statusCode) {
-          case 400:
-            errorMessage = 'Please enter both email and password';
-            break;
-          case 401:
-            errorMessage = 'Wrong email or password';
-            break;
-          case 403:
-            errorMessage = 'Account access denied. Please contact your administrator.';
-            break;
-          case 404:
-            errorMessage = 'User not found. Please check your email or sign up first.';
-            break;
-          case 500:
-            errorMessage = 'Server error. Please try again later.';
-            break;
-          default:
-            errorMessage = errorData['error'] ?? 'An unexpected error occurred';
-        }
-        
-        if (mounted) {
-          _showErrorDialog(errorMessage);
-        }
+        await _handleLoginError(response);
       }
     } on http.ClientException catch (e) {
-      // Network error
+      print('🌐 Network error: $e');
       if (mounted) {
         _showErrorDialog('Network error. Please check your internet connection.');
       }
     } catch (e) {
-      // Other errors
+      print('❌ Login error: $e');
       if (mounted) {
         _showErrorDialog('An unexpected error occurred. Please try again.');
       }
@@ -259,6 +306,259 @@ class _LoginScreenState extends State<LoginScreen>
           _isLoading = false;
         });
       }
+    }
+  }
+
+  // Method to permanently set isloggedin to true (never goes back to false)
+  Future<bool> _updateIsLoggedInStatusWithRetry(String userId) async {
+    for (int attempt = 1; attempt <= 3; attempt++) {
+      try {
+        print('🔄 PERMANENTLY updating isloggedin to true for user: $userId (attempt $attempt/3)');
+        print('📌 Note: Once true, this will NEVER be set back to false, even on logout');
+        
+        final updateData = {
+          'isloggedin': true,
+        };
+
+        final response = await http.patch(
+          Uri.parse('$_baseUrl/api/auth/update-login-status/$userId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: json.encode(updateData),
+        );
+
+        print('📡 Update response status (attempt $attempt): ${response.statusCode}');
+
+        if (response.statusCode == 200) {
+          final responseData = json.decode(response.body);
+          print('✅ Login status PERMANENTLY updated to true on attempt $attempt');
+          print('📅 Update timestamp: ${responseData['timestamp']}');
+          return true;
+        } else {
+          print('⚠️ Failed to update login status on attempt $attempt: ${response.statusCode}');
+          print('⚠️ Response: ${response.body}');
+          
+          if (attempt < 3) {
+            // Wait before retry
+            await Future.delayed(Duration(milliseconds: 1000 * attempt));
+          }
+        }
+      } catch (e) {
+        print('❌ Error updating login status (attempt $attempt): $e');
+        if (attempt < 3) {
+          await Future.delayed(Duration(milliseconds: 1000 * attempt));
+        }
+      }
+    }
+    
+    return false;
+  }
+
+  // Updated method to load saved user data with user-specific keys
+  Future<void> _loadSavedUserDataWithUserSpecificKeys(String userId) async {
+    try {
+      print('📥 Loading saved user data for returning user: $userId');
+      
+      // Load quiz list from backend
+      await _loadQuizListFromBackendWithUserSpecificKeys(userId);
+      
+      // Load quiz progress from backend
+      await _loadQuizProgressFromBackendWithUserSpecificKeys(userId);
+      
+      print('✅ All saved data loaded successfully with user-specific keys');
+      
+    } catch (e) {
+      print('⚠️ Error loading saved data: $e');
+      // Don't block login if data loading fails
+    }
+  }
+
+  // Load quiz list from backend with user-specific local storage
+  Future<void> _loadQuizListFromBackendWithUserSpecificKeys(String userId) async {
+    try {
+      print('📋 Loading quiz list from backend...');
+      
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/auth/load-quiz-list/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        final List<String> backendQuizzes = List<String>.from(responseData['quizList'] ?? []);
+        
+        print('✅ Loaded ${backendQuizzes.length} quizzes from backend');
+        
+        // Save to user-specific local storage for immediate access
+        final prefs = await SharedPreferences.getInstance();
+        final userSpecificKey = _getUserSpecificKey('user_quizzes', userId);
+        await prefs.setStringList(userSpecificKey, backendQuizzes);
+        print('💾 Saved quiz list to user-specific local storage: $userSpecificKey');
+        
+      } else {
+        print('⚠️ Failed to load quiz list from backend: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error loading quiz list from backend: $e');
+    }
+  }
+
+  // Load quiz progress from backend with user-specific local storage
+  Future<void> _loadQuizProgressFromBackendWithUserSpecificKeys(String userId) async {
+    try {
+      print('📈 Loading quiz progress from backend...');
+      
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/auth/load-quiz-progress/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        final List<String> completedCategories = List<String>.from(responseData['completedCategories'] ?? []);
+        final List<String> completeQuizData = List<String>.from(responseData['completeQuizData'] ?? []);
+        
+        print('✅ Loaded ${completedCategories.length} completed categories from backend');
+        print('✅ Loaded ${completeQuizData.length} complete quiz data entries from backend');
+        
+        // Save to user-specific local storage for immediate access
+        final prefs = await SharedPreferences.getInstance();
+        final completedCategoriesKey = _getUserSpecificKey('completed_categories', userId);
+        final completeQuizDataKey = _getUserSpecificKey('complete_quiz_data', userId);
+        
+        await prefs.setStringList(completedCategoriesKey, completedCategories);
+        await prefs.setStringList(completeQuizDataKey, completeQuizData);
+        
+        print('💾 Saved progress to user-specific local storage:');
+        print('  - $completedCategoriesKey');
+        print('  - $completeQuizDataKey');
+        
+      } else {
+        print('⚠️ Failed to load quiz progress from backend: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error loading quiz progress from backend: $e');
+    }
+  }
+
+  // Helper method to save user data locally
+  Future<void> _saveUserDataLocally(Map<String, dynamic> userData, String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    print('💾 Saving user data locally for user: $userId');
+    
+    // Save the Firebase document ID
+    await prefs.setString('user_document_id', userId);
+    
+    // Save user data
+    await prefs.setString('profile_email', userData['email'] ?? '');
+    await prefs.setString('profile_firstname', userData['firstname'] ?? '');
+    await prefs.setString('profile_lastname', userData['lastname'] ?? '');
+    await prefs.setString('profile_name', '${userData['firstname'] ?? ''} ${userData['lastname'] ?? ''}');
+    await prefs.setString('profile_gender', userData['sexe'] ?? '');
+    await prefs.setString('profile_role', userData['userRole'] ?? '');
+    await prefs.setString('profile_classe', userData['classe'] ?? '');
+    
+    // Save optional fields
+    if (userData['age'] != null) {
+      await prefs.setInt('profile_age', userData['age']);
+    }
+    if (userData['dateOfBirth'] != null && userData['dateOfBirth'].isNotEmpty) {
+      await prefs.setString('profile_date_of_birth', userData['dateOfBirth']);
+    }
+    if (userData['nationality'] != null && userData['nationality'].isNotEmpty) {
+      await prefs.setString('profile_nationality', userData['nationality']);
+    }
+    
+    // Save photo if available
+    if (userData['photoBase64'] != null && userData['photoBase64'].isNotEmpty) {
+      await prefs.setString('profile_photo', userData['photoBase64']);
+    }
+    
+    print('✅ User data saved locally');
+  }
+
+  // Helper method to handle login errors
+  Future<void> _handleLoginError(http.Response response) async {
+    final errorData = json.decode(response.body);
+    String errorMessage = 'Login failed';
+    
+    switch (response.statusCode) {
+      case 400:
+        errorMessage = errorData['error'] ?? 'Please enter both email and password';
+        break;
+      case 401:
+        errorMessage = 'Wrong email or password';
+        break;
+      case 403:
+        errorMessage = 'Account access denied. Please contact your administrator.';
+        break;
+      case 404:
+        errorMessage = 'User not found. Please check your email or sign up first.';
+        break;
+      case 500:
+        errorMessage = 'Server error. Please try again later.';
+        break;
+      default:
+        errorMessage = errorData['error'] ?? 'An unexpected error occurred';
+    }
+    
+    print('❌ Login failed: $errorMessage');
+    
+    if (mounted) {
+      _showErrorDialog(errorMessage);
+    }
+  }
+
+  // Optional: Method to verify session (useful for app startup)
+  Future<bool> _verifyUserSession(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/auth/verify-session/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['valid'] ?? false;
+      }
+      return false;
+    } catch (e) {
+      print('❌ Error verifying session: $e');
+      return false;
+    }
+  }
+
+  // Optional: Method to logout user
+  Future<bool> _logoutUser(String userId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/auth/logout/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ User logged out successfully');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('❌ Error logging out user: $e');
+      return false;
     }
   }
 
@@ -328,10 +628,10 @@ class _LoginScreenState extends State<LoginScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-      Colors.white,                    // Pure white start
-      Color(0xFFFFE5E5),              // Very light red
-      Color.fromARGB(255, 134, 24, 24),              // Medium red (matches button red.shade600)
-      Color(0xFF1A1A1A),              // Dark red/black (matches button black87)         // Dark red/black (matches button black87)
+              Colors.white,                    // Pure white start
+              Color(0xFFFFE5E5),              // Very light red
+              Color.fromARGB(255, 134, 24, 24),              // Medium red (matches button red.shade600)
+              Color(0xFF1A1A1A),              // Dark red/black (matches button black87)         // Dark red/black (matches button black87)
             ],
             stops: [0.0, 0.3, 0.7, 1.0],
           ),

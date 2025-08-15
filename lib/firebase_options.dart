@@ -46,30 +46,31 @@ class DefaultFirebaseOptions {
     }
   }
 
+  // UPDATED: QuizMaster project configuration
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAvtVWQyuxOXeoZi32EoiktarPcg2FqYoE',
-    appId: '1:433797099242:web:d563c188feb05fa3c7b193',
-    messagingSenderId: '433797099242',
-    projectId: 'quizapp-be230',
-    authDomain: 'quizapp-be230.firebaseapp.com',
-    storageBucket: 'quizapp-be230.firebasestorage.app',
-    measurementId: 'G-RK1CXR97KR',
+    apiKey: 'AIzaSyCt08wSov0LhGB2n-8XIA7E0fvuUoF8jNY',
+    appId: '1:666452813332:web:0893826a52515f9ddca901',
+    messagingSenderId: '666452813332',
+    projectId: 'quizmaster-2e381',
+    authDomain: 'quizmaster-2e381.firebaseapp.com',
+    storageBucket: 'quizmaster-2e381.firebasestorage.app',
+    measurementId: 'G-6B6FFB3SKH',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAvtVWQyuxOXeoZi32EoiktarPcg2FqYoE',
-    appId: '1:433797099242:android:your_android_app_id', // You'll need to add Android app to get this
-    messagingSenderId: '433797099242',
-    projectId: 'quizapp-be230',
-    storageBucket: 'quizapp-be230.firebasestorage.app',
+    apiKey: 'AIzaSyCt08wSov0LhGB2n-8XIA7E0fvuUoF8jNY',
+    appId: '1:666452813332:android:YOUR_ANDROID_APP_ID', // You'll need to add Android app to get this
+    messagingSenderId: '666452813332',
+    projectId: 'quizmaster-2e381',
+    storageBucket: 'quizmaster-2e381.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAvtVWQyuxOXeoZi32EoiktarPcg2FqYoE',
-    appId: '1:433797099242:ios:your_ios_app_id', // You'll need to add iOS app to get this
-    messagingSenderId: '433797099242',
-    projectId: 'quizapp-be230',
-    storageBucket: 'quizapp-be230.firebasestorage.app',
-    iosBundleId: 'com.example.quizApp',
+    apiKey: 'AIzaSyCt08wSov0LhGB2n-8XIA7E0fvuUoF8jNY',
+    appId: '1:666452813332:ios:YOUR_IOS_APP_ID', // You'll need to add iOS app to get this
+    messagingSenderId: '666452813332',
+    projectId: 'quizmaster-2e381',
+    storageBucket: 'quizmaster-2e381.firebasestorage.app',
+    iosBundleId: 'com.example.quizMaster',
   );
 }
