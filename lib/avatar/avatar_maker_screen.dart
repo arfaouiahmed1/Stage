@@ -110,23 +110,14 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
                 ),
                 SizedBox(height: 15),
                 Text(
-                  'Capturing and saving avatar...',
+                  'Saving your avatar...',
                   style: TextStyle(fontSize: 16),
                 ),
                 SizedBox(height: 10),
                 Text(
-                  downloadToPC 
-                    ? 'Will also download to your Downloads folder...' 
-                    : 'Saving to Firebase cloud database...',
+                  'This will only take a moment...',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
-                if (_currentUserId != null) ...[
-                  SizedBox(height: 10),
-                  Text(
-                    'User ID: ${_currentUserId!.substring(0, 8)}...',
-                    style: TextStyle(fontSize: 10, color: Colors.green),
-                  ),
-                ],
               ],
             ),
           ),
@@ -259,7 +250,7 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
           title: Row(
             children: [
               Icon(
-                Icons.cloud_done,
+                Icons.check_circle,
                 color: Colors.green,
                 size: 28,
               ),
@@ -283,102 +274,6 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
               ),
               SizedBox(height: 15),
               
-              // User ID Info
-              if (_currentUserId != null) ...[
-                Container(
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.person, color: Colors.blue.shade600, size: 20),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          "👤 Linked to User ID: ${_currentUserId!.substring(0, 12)}...",
-                          style: TextStyle(
-                            color: Colors.blue.shade700,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 15),
-              ],
-              
-              if (downloadedToPC) ...[
-                Container(
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.download_done, color: Colors.green.shade600, size: 20),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          "📂 Image downloaded to your Downloads folder!",
-                          style: TextStyle(
-                            color: Colors.green.shade700,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 15),
-              ],
-              
-              Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Avatar ID:",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    SelectableText(
-                      avatarId,
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 12,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 10),
-              Text(
-                "✅ Saved to Firebase Firestore!\n${downloadedToPC ? '📂 Downloaded to PC Downloads folder!' : '☁️ Cloud storage only'}",
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              SizedBox(height: 15),
               Container(
                 padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -471,25 +366,8 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                "Failed to save avatar:",
+                "Failed to save avatar. Please try again.",
                 style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 10),
-              Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade200),
-                ),
-                child: Text(
-                  error,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.red.shade700,
-                    fontFamily: 'monospace',
-                  ),
-                ),
               ),
             ],
           ),
@@ -586,21 +464,6 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
             icon: Icon(Icons.skip_next),
             tooltip: 'Skip Avatar Creation',
           ),
-          // Test Firebase connection button
-          IconButton(
-            onPressed: () async {
-              final success = await firebaseService.testConnection();
-              Get.snackbar(
-                success ? 'Connected' : 'Connection Failed',
-                success ? 'Firebase is working!' : 'Check your Firebase setup',
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: success ? Colors.green : Colors.red,
-                colorText: Colors.white,
-              );
-            },
-            icon: Icon(Icons.wifi),
-            tooltip: 'Test Firebase Connection',
-          ),
         ],
       ),
       body: Container(
@@ -625,7 +488,7 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Column(
               children: [
-                // Welcome message for first-time users with user info
+                // Welcome message for first-time users (cleaned up)
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(16),
@@ -658,43 +521,6 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      if (_currentUserId != null) ...[
-                        SizedBox(height: 8),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.green.shade300),
-                          ),
-                          child: Text(
-                            "👤 User ID: ${_currentUserId!.substring(0, 8)}...",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.green.shade700,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                        ),
-                      ] else ...[
-                        SizedBox(height: 8),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.orange.shade300),
-                          ),
-                          child: Text(
-                            "⚠️ No User ID Found",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.orange.shade700,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -757,15 +583,15 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
                 
                 const SizedBox(height: 30),
                 
-                // Save & Download Button
+                // Save Your Avatar Button
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(horizontal: 40),
                   child: ElevatedButton.icon(
-                    onPressed: _isSaving ? null : () => _saveAvatarWithImage(context, downloadToPC: true),
-                    icon: Icon(Icons.cloud_upload, size: 24),
+                    onPressed: _isSaving ? null : () => _saveAvatarWithImage(context, downloadToPC: false),
+                    icon: Icon(Icons.save, size: 24),
                     label: Text(
-                      _isSaving ? "Saving..." : "Save & Download to PC",
+                      _isSaving ? "Saving..." : "Save Your Avatar",
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -780,60 +606,6 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
                       ),
                       elevation: 5,
                       shadowColor: Colors.redAccent.withOpacity(0.3),
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 15),
-                
-                // Save Only Button
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: 40),
-                  child: OutlinedButton.icon(
-                    onPressed: _isSaving ? null : () => _saveAvatarWithImage(context, downloadToPC: false),
-                    icon: Icon(Icons.cloud_queue, size: 20),
-                    label: Text(
-                      "Save to Firebase Only",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.green.shade600,
-                      side: BorderSide(color: Colors.green.shade600, width: 2),
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 15),
-                
-                // Download Only Button
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: 40),
-                  child: OutlinedButton.icon(
-                    onPressed: _downloadCurrentAvatar,
-                    icon: Icon(Icons.download, size: 20),
-                    label: Text(
-                      "Download to PC Only",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.blue.shade600,
-                      side: BorderSide(color: Colors.blue.shade600, width: 2),
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
                     ),
                   ),
                 ),
@@ -878,57 +650,11 @@ class _AvatarMakerScreenState extends State<AvatarMakerScreen> {
                 ),
                 
                 const SizedBox(height: 20),
-                
-                // Info Card
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 20),
-                  padding: EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue.shade200),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: Colors.blue.shade600,
-                            size: 20,
-                          ),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              "Avatar Information",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        "📂 Downloaded images save to: Downloads folder\n☁️ Firebase saves Base64 image data with your User ID\n👤 User ID: ${_currentUserId ?? 'Not Found'}",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.blue.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 20),
               ],
             ),
           ),
         ),
       ),
     );
-    
   } 
 }

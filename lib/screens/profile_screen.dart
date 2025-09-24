@@ -29,23 +29,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
   bool _obscureDeletePassword = true;
-  String _selectedGender = '';
+  String? _selectedGender;
   String _originalEmail = '';
   
   FluttermojiController? _fluttermojiController;
   
   // Replace with your actual Symfony server URL
-  static const String _baseUrl = 'http://127.0.0.1:8000';
+  static const String _baseUrl = 'http://127.0.0.1:8001';
 
   @override
   void initState() {
     super.initState();
     _initializeFluttermoji();
     _loadProfile();
+    _selectedGender = null;
   }
 
   @override
   void didChangeDependencies() {
+
+
+
+    
     super.didChangeDependencies();
     _refreshAvatar();
   }
@@ -77,7 +82,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _lastNameController.text = prefs.getString('profile_lastname') ?? '';
       _emailController.text = prefs.getString('profile_email') ?? '';
       _originalEmail = prefs.getString('profile_email') ?? '';
-      _selectedGender = prefs.getString('profile_gender') ?? '';
+final gender = prefs.getString('profile_gender');
+if (gender == 'Male' || gender == 'Female' || gender == 'Other') {
+  _selectedGender = gender;
+} else {
+  _selectedGender = null;
+}
       _classeController.text = prefs.getString('profile_classe') ?? '';
       
       // Set new email to current email initially
@@ -504,7 +514,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               
               // Gender Dropdown
               DropdownButtonFormField<String>(
-                value: _selectedGender.isEmpty ? null : _selectedGender,
+                value: _selectedGender,
                 decoration: const InputDecoration(
                   labelText: 'Gender',
                   prefixIcon: Icon(Icons.wc),
@@ -523,7 +533,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
                 onChanged: (value) {
                   setState(() {
-                    _selectedGender = value ?? '';
+                    _selectedGender = value ;
                   });
                 },
               ),

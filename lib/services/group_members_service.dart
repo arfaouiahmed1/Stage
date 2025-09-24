@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class SimpleGroupService {
-  static const String _pythonBaseUrl = 'http://127.0.0.1:8001'; // Your Python backend URL
+  static const String _pythonBaseUrl = 'http://127.0.0.1:8000'; // Your Python backend URL
   
   /// Get group members for a user (just the names as strings)
   Future<List<String>> getUserGroupMembers(String firstName, String lastName) async {

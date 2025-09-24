@@ -25,7 +25,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String _selectedNationality = '';
   DateTime? _selectedDate;
   
-  static const String _baseUrl = 'http://127.0.0.1:8000';
+  static const String _baseUrl = 'http://127.0.0.1:8001';
 
   static const List<String> _nationalities = [
     'Afghan', 'Albanian', 'Algerian', 'American', 'Andorran', 'Angolan', 'Antiguan', 'Argentine', 'Armenian', 'Australian',

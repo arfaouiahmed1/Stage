@@ -11,7 +11,9 @@ import 'package:flutter/foundation.dart'; // Added to detect web platform
 import 'package:intl/intl.dart'; // Add this for date formatting
 // Web-specific import (only used when kIsWeb is true)
 import 'dart:html' as html;
-import '../services/group_members_service.dart';
+
+// UPDATED: Import Python Group Service instead of Symfony service
+import '../services/python_group_service.dart';
 
 // Import the shared model
 import 'quiz_island.dart';
@@ -27,10 +29,12 @@ import 'category4_quiz_screen.dart';
 
 // Import avatar service
 import '../services/firebase_avatar_service.dart';
-  class CollectiveCSVManager {
+
+// UPDATED: CollectiveCSVManager with user_id support
+class CollectiveCSVManager {
   static const String _completedUsersKey = 'completed_users_data';
   static const String _completionCounterKey = 'completion_counter';
-  static const int _batchSize = 20; // Trigger download after 20 users
+  static const int _batchSize = 12; // Trigger download after 12 users
 
   // Add a completed user to the collective data
   static Future<void> addCompletedUser(Map<String, dynamic> userData) async {
@@ -40,6 +44,7 @@ import '../services/firebase_avatar_service.dart';
       print('📊 ===============================');
       print('📊 ADDING USER TO COLLECTIVE CSV DATA');
       print('📊 ===============================');
+      print('📊 User ID: ${userData['user_id']}');
       print('📊 User: ${userData['first_name']} ${userData['last_name']}');
       print('📊 Class: ${userData['class']}');
       print('📊 Scores: Hard=${userData['hard_skills']}, Soft=${userData['soft_skills']}, Team=${userData['teamwork']}, Creative=${userData['creativity']}');
@@ -98,13 +103,13 @@ import '../services/firebase_avatar_service.dart';
     }
   }
 
-  // Generate and download collective CSV
+  // UPDATED: Generate and download collective CSV with user_id as first column
   static Future<void> generateCollectiveCSV() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       
       print('📊 ===============================');
-      print('📊 GENERATING COLLECTIVE CSV');
+      print('📊 GENERATING COLLECTIVE CSV WITH USER IDS');
       print('📊 ===============================');
       
       // Get all completed users data
@@ -120,16 +125,17 @@ import '../services/firebase_avatar_service.dart';
         return;
       }
       
-      // Prepare CSV data
+      // UPDATED: Prepare CSV data with user_id as first column
       List<List<dynamic>> csvData = [
-        // Header row (matching your example CSV structure)
-        ['first_name', 'last_name', 'gender', 'age', 'nationality', 'hard_skills', 'soft_skills', 'teamwork', 'creativity', 'class'],
+        // Header row with user_id as first column (matching backend expectation)
+        ['user_id', 'first_name', 'last_name', 'gender', 'age', 'nationality', 'hard_skills', 'soft_skills', 'teamwork', 'creativity', 'class'],
       ];
       
       // Add each user's data as a row
       for (int i = 0; i < completedUsers.length; i++) {
         final user = completedUsers[i];
         final row = [
+          user['user_id']?.toString().trim() ?? 'unknown_user_${i+1}', // USER_ID FIRST
           user['first_name']?.toString().trim() ?? 'Unknown',
           user['last_name']?.toString().trim() ?? 'User',
           user['gender']?.toString().trim() ?? 'Not specified',
@@ -143,10 +149,11 @@ import '../services/firebase_avatar_service.dart';
         ];
         csvData.add(row);
         
-        print('📊 Added user ${i + 1}: ${row[0]} ${row[1]} - Class: ${row[9]}');
+        print('📊 Added user ${i + 1}: [${row[0]}] ${row[1]} ${row[2]} - Class: ${row[10]}');
       }
       
       print('📊 CSV structure prepared with ${csvData.length} rows (including header)');
+      print('📊 CSV Header: ${csvData[0]}');
       
       // Convert to CSV string
       final csvString = const ListToCsvConverter().convert(csvData);
@@ -156,7 +163,7 @@ import '../services/firebase_avatar_service.dart';
       // Generate filename with timestamp and batch info
       final timestamp = DateTime.now();
       final formattedDate = DateFormat('yyyy-MM-dd_HH-mm-ss').format(timestamp);
-      final filename = 'quiz_results_batch_${completedUsers.length}_users_$formattedDate.csv';
+      final filename = 'students_data_with_ids_batch_${completedUsers.length}_users_$formattedDate.csv';
       
       print('📊 Filename: $filename');
       
@@ -167,10 +174,11 @@ import '../services/firebase_avatar_service.dart';
       }
       
       print('✅ ===============================');
-      print('✅ COLLECTIVE CSV GENERATED');
+      print('✅ COLLECTIVE CSV WITH USER IDS GENERATED');
       print('✅ ===============================');
       print('✅ Filename: $filename');
       print('✅ Total users: ${completedUsers.length}');
+      print('✅ Format: user_id as first column for clustering');
       print('✅ ===============================');
       
     } catch (e) {
@@ -221,7 +229,7 @@ import '../services/firebase_avatar_service.dart';
   static Future<void> _downloadCSVForWeb(String csvString, String filename, int userCount) async {
     try {
       print('🌐 ===============================');
-      print('🌐 WEB COLLECTIVE CSV DOWNLOAD');
+      print('🌐 WEB COLLECTIVE CSV DOWNLOAD WITH USER IDS');
       print('🌐 ===============================');
       print('🌐 Filename: $filename');
       print('🌐 User count: $userCount');
@@ -320,13 +328,14 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
     with TickerProviderStateMixin {
   
   // Replace with your actual Symfony server URL
-  static const String _baseUrl = 'http://127.0.0.1:8000'; // Change this to your server URL
+  static const String _baseUrl = 'http://127.0.0.1:8001'; // Change this to your server URL
   
-
+  // UPDATED: Group members state to handle user IDs and detailed data from Python backend
   bool _isLoadingGroupMembers = false;
   bool _showGroupMembersPopup = false;
-  List<String> _groupMemberNames = [];
-  late SimpleGroupService _simpleGroupService;
+  List<Map<String, dynamic>> _groupMemberDetails = []; // Now contains full details including avatars from Python
+  late PythonGroupService _pythonGroupService; // UPDATED: Python group service
+
   // Animation Controllers
   late AnimationController _waveController;
   late AnimationController _cloudController;
@@ -386,6 +395,8 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
   
   // ADDED: Flag to track if CSV has been saved for this session
   bool _csvSavedThisSession = false;
+  // Add this with your other state variables
+  bool _isGroupAccessible = false;
   
   // GlobalKeys for precise positioning
   final Map<int, GlobalKey> _islandKeys = {};
@@ -412,10 +423,9 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
     _initializeAnimations();
     _initializeIslandKeys();
     _initializeAvatarService();
-    _initializeSimpleGroupService(); // NEW: Initialize simple group service
+    _initializePythonGroupService(); // UPDATED: Initialize Python group service
     _loadCompleteIslandData();
   }
-
 
   void _initializeAnimations() {
     // Wave animation for water effects
@@ -572,13 +582,22 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
       curve: Curves.easeOutBack,
     ));
   }
-  // NEW: Initialize simple group service
-  void _initializeSimpleGroupService() {
-    _simpleGroupService = SimpleGroupService();
-    print('✅ SimpleGroupService initialized');
+
+  // UPDATED: Initialize Python group service
+  void _initializePythonGroupService() {
+    try {
+      // Try to find existing service first
+      _pythonGroupService = Get.find<PythonGroupService>();
+      print('✅ Found existing PythonGroupService');
+    } catch (e) {
+      // If not found, register it
+      print('⚠️ PythonGroupService not found, registering new instance');
+      _pythonGroupService = Get.put(PythonGroupService(), permanent: true);
+      print('✅ PythonGroupService registered successfully');
+    }
   }
 
-  // NEW: Check if all islands are completed (same as before)
+  // UPDATED: Check if all islands are completed for group members feature
   bool _areAllIslandsCompletedForGroups() {
     print('🔍 Checking completion for group members feature...');
     
@@ -597,153 +616,166 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
     return isCompleted;
   }
 
-  // NEW: Load group members for current user (simplified)
-  Future<void> _loadSimpleGroupMembers() async {
-    if (_userDocumentId == null) {
-      print('⚠️ Cannot load group members: User ID not available');
-      return;
+  // UPDATED: Load group members using the Python backend service
+// UPDATED: Load group members using the Python backend service with enhanced user details
+// Add this new method
+Future<void> _checkGroupAccessibility() async {
+  if (_userDocumentId == null) return;
+  
+  try {
+    final isAccessible = await _pythonGroupService.isGroupAccessible(_userDocumentId!);
+    setState(() {
+      _isGroupAccessible = isAccessible;
+    });
+    print('🔓 Group accessibility updated: $_isGroupAccessible');
+  } catch (e) {
+    print('❌ Error checking group accessibility: $e');
+    setState(() {
+      _isGroupAccessible = false;
+    });
+  }
+}
+Future<void> _loadEnhancedGroupMembers() async {
+  if (_userDocumentId == null) {
+    print('⚠️ Cannot load group members: User ID not available');
+    return;
+  }
+
+  try {
+    setState(() {
+      _isLoadingGroupMembers = true;
+    });
+
+    print('🔍 ===============================');
+    print('🔍 LOADING GROUP MEMBERS WITH REAL USER DETAILS');
+    print('🔍 ===============================');
+    print('🔍 Current user ID: $_userDocumentId');
+
+    // Test connection first (optional)
+    final connectionOk = await _pythonGroupService.testConnection();
+    if (!connectionOk) {
+      throw Exception('Cannot connect to Python backend on port 8000');
     }
+    print('✅ Connection to Python backend successful');
 
-    try {
-      setState(() {
-        _isLoadingGroupMembers = true;
-      });
+    // UPDATED: Get group members with avatars and REAL user details from Python backend
+    final membersWithDetails = await _pythonGroupService.getGroupMembersWithAvatars(_userDocumentId!);
+    
+    print('📊 ===============================');
+    print('📊 RECEIVED GROUP MEMBERS DATA');
+    print('📊 ===============================');
+    print('📊 Total members received: ${membersWithDetails.length}');
+    
+    // Debug each member's details
+    for (int i = 0; i < membersWithDetails.length; i++) {
+      final member = membersWithDetails[i];
+      print('👤 Member ${i + 1}:');
+      print('   - User ID: ${member['user_id']}');
+      print('   - Firstname: "${member['firstname']}"');
+      print('   - Lastname: "${member['lastname']}"');
+      print('   - Full Name: "${member['full_name']}"');
+      print('   - Has Avatar: ${member['has_avatar']}');
+      print('   - Class: ${member['classe']}');
+    }
+    
+    setState(() {
+      _groupMemberDetails = membersWithDetails;
+      _isLoadingGroupMembers = false;
+      _showGroupMembersPopup = true;
+    });
 
-      print('🔄 Loading simple group members...');
-
-      // Get user profile to get first name and last name
-      final userProfile = await _fetchUserProfileData();
-      if (userProfile == null) {
-        throw Exception('Could not fetch user profile data');
-      }
-
-      final firstName = userProfile['first_name']?.toString() ?? '';
-      final lastName = userProfile['last_name']?.toString() ?? '';
-
-      if (firstName.isEmpty || lastName.isEmpty) {
-        throw Exception('User first name or last name is missing');
-      }
-
-      print('👤 Loading group members for: $firstName $lastName');
-
-      // Load group members (just names)
-      final memberNames = await _simpleGroupService.getUserGroupMembers(firstName, lastName);
-
-      setState(() {
-        _groupMemberNames = memberNames;
-        _isLoadingGroupMembers = false;
-        _showGroupMembersPopup = true;
-      });
-
-      print('✅ Group members loaded successfully: ${memberNames.length} members');
-
-      // Show success message
+    if (membersWithDetails.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.group, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Found ${memberNames.length} group members!',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green.shade600,
+            content: Text('You are not assigned to any group yet.'),
+            backgroundColor: Colors.orange.shade600,
             duration: Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
+      return;
+    }
 
-    } catch (e, stackTrace) {
-      print('❌ Error loading group members: $e');
-      print('❌ Stack trace: $stackTrace');
+    print('✅ ===============================');
+    print('✅ GROUP MEMBERS WITH REAL DETAILS LOADED SUCCESSFULLY');
+    print('✅ All members now have real firstname and lastname from Firebase');
+    print('✅ ===============================');
 
-      setState(() {
-        _isLoadingGroupMembers = false;
-      });
+  } catch (e, stackTrace) {
+    print('❌ Error loading enhanced group members: $e');
+    print('❌ Stack trace: $stackTrace');
+    
+    setState(() {
+      _isLoadingGroupMembers = false;
+    });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Failed to load group members. Please try again.',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red.shade600,
-            duration: Duration(seconds: 5),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load group members with details. Please check your connection.'),
+          backgroundColor: Colors.red.shade600,
+          duration: Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
     }
   }
+}
 
-  // NEW: Build "Show My Group Members" button (same as before)
-  Widget _buildGroupMembersButton() {
-    if (!_areAllIslandsCompletedForGroups() || _isPostQuizLoading || _showPostQuizLoadingImmediately) {
-      return Container();
-    }
+  // UPDATED: Build "Show My Group Members" button - positioned above View Badges
+// UPDATED: Build button only if group is accessible (controlled by Angular frontend)
+Widget _buildGroupMembersButton() {
+  if (!_areAllIslandsCompletedForGroups() || 
+      _isPostQuizLoading || 
+      _showPostQuizLoadingImmediately ||
+      !_isGroupAccessible) {  // Hide button if group is not accessible
+    return Container();
+  }
 
-    return Positioned(
-      bottom: MediaQuery.of(context).padding.bottom + 20,
-      left: 0,
-      right: 0,
-      child: Center(
-        child: AnimatedContainer(
-          duration: Duration(milliseconds: 500),
-          child: ElevatedButton.icon(
-            onPressed: _isLoadingGroupMembers ? null : _loadSimpleGroupMembers,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple.shade600,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-              elevation: 8,
-              shadowColor: Colors.deepPurple.withOpacity(0.4),
-            ),
-            icon: _isLoadingGroupMembers
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Icon(Icons.group, size: 24),
-            label: Text(
-              _isLoadingGroupMembers ? 'Loading...' : 'Show My Group Members',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+  return Positioned(
+    bottom: MediaQuery.of(context).padding.bottom + 70,
+    left: 20,
+    child: AnimatedContainer(
+      duration: Duration(milliseconds: 500),
+      child: ElevatedButton.icon(
+        onPressed: _isLoadingGroupMembers ? null : _loadEnhancedGroupMembers,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.deepPurple.shade600,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+          elevation: 8,
+          shadowColor: Colors.deepPurple.withOpacity(0.4),
+        ),
+        icon: _isLoadingGroupMembers
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Icon(Icons.group, size: 24),
+        label: Text(
+          _isLoadingGroupMembers ? 'Loading...' : 'Group Members',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
-    );
-  }
-
-  // NEW: Build simple group members popup (text only)
-  Widget _buildSimpleGroupMembersPopup() {
+    ),
+  );
+}
+  // UPDATED: Build enhanced group members popup with cleaner title
+  Widget _buildEnhancedGroupMembersPopup() {
     if (!_showGroupMembersPopup) return Container();
 
     return Container(
@@ -752,9 +784,9 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
       color: Colors.black.withOpacity(0.5),
       child: Center(
         child: Container(
-          width: MediaQuery.of(context).size.width * 0.85,
+          width: MediaQuery.of(context).size.width * 0.9,
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7,
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
           ),
           margin: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -821,7 +853,7 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${_groupMemberNames.length}',
+                        '${_groupMemberDetails.length}',
                         style: TextStyle(
                           color: Colors.deepPurple.shade700,
                           fontSize: 14,
@@ -853,9 +885,9 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
                 ),
               ),
               
-              // Members list
+              // Members list with avatars
               Flexible(
-                child: _groupMemberNames.isEmpty
+                child: _groupMemberDetails.isEmpty
                     ? Padding(
                         padding: const EdgeInsets.all(40),
                         child: Column(
@@ -901,48 +933,23 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
                               ),
                             ),
                             const SizedBox(height: 16),
-                            ...List.generate(_groupMemberNames.length, (index) {
-                              final memberName = _groupMemberNames[index];
-                              return Container(
-                                width: double.infinity,
-                                margin: const EdgeInsets.only(bottom: 8),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
+                            // Grid view for members with avatars
+                            Flexible(
+                              child: GridView.builder(
+                                shrinkWrap: true,
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 1.0,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.deepPurple.shade50,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: Colors.deepPurple.shade200,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Colors.deepPurple.shade400,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        memberName,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.deepPurple.shade800,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }),
+                                itemCount: _groupMemberDetails.length,
+                                itemBuilder: (context, index) {
+                                  final memberDetail = _groupMemberDetails[index];
+                                  return _buildEnhancedMemberCardWithRealNames(memberDetail);
+                                },
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -957,46 +964,204 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
     );
   }
 
-  // NEW: Debug method for testing (simplified)
-  Future<void> _debugSimpleGroupMembers() async {
+  // UPDATED: Build enhanced member card with bigger avatars and cleaner display
+
+Widget _buildEnhancedMemberCardWithRealNames(Map<String, dynamic> memberDetail) {
+  final userId = memberDetail['user_id'] as String;
+  final firstname = memberDetail['firstname'] as String? ?? 'Unknown';
+  final lastname = memberDetail['lastname'] as String? ?? 'User';
+  final hasAvatar = memberDetail['has_avatar'] == true;
+  final avatarData = memberDetail['avatar_data'];
+  
+  print('🎨 Building card for: $firstname $lastname (ID: $userId) - Avatar: $hasAvatar');
+  
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Colors.deepPurple.shade50,
+          Colors.white,
+        ],
+      ),
+      borderRadius: BorderRadius.circular(15),
+      border: Border.all(
+        color: Colors.deepPurple.shade200,
+        width: 1,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.deepPurple.withOpacity(0.1),
+          blurRadius: 8,
+          spreadRadius: 1,
+          offset: Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Avatar
+        _buildMemberAvatar(avatarData, hasAvatar, 80),
+        const SizedBox(height: 12),
+        // Display REAL firstname and lastname from Firebase
+        Text(
+          '$firstname $lastname',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.deepPurple.shade800,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  );
+}
+  // NEW: Build member avatar with improved handling
+  Widget _buildMemberAvatar(dynamic avatarData, bool hasAvatar, double size) {
     try {
-      print('🔍 DEBUG: Testing simple group members...');
-      
-      // Debug the service
-      await _simpleGroupService.debugGroupSearch('Louay', 'Hrechi');
-      
-      // Test full flow
-      final members = await _simpleGroupService.getUserGroupMembers('Louay', 'Hrechi');
-      
-      setState(() {
-        _groupMemberNames = members;
-        _showGroupMembersPopup = true;
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('DEBUG: Found ${members.length} group members'),
-            backgroundColor: Colors.blue,
+      if (!hasAvatar || avatarData == null || avatarData['image_avatar'] == null) {
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.deepPurple.shade100,
+            border: Border.all(color: Colors.deepPurple.shade300, width: 2),
+          ),
+          child: Icon(
+            Icons.person,
+            size: size * 0.5,
+            color: Colors.deepPurple.shade600,
           ),
         );
       }
+
+      String imageData = avatarData['image_avatar'] as String;
       
+      // Remove data URL prefix if present
+      if (imageData.contains(',')) {
+        imageData = imageData.split(',').last;
+      }
+      
+      final avatarBytes = base64Decode(imageData);
+      
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.deepPurple.withOpacity(0.2),
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipOval(
+          child: Image.memory(
+            avatarBytes,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: Colors.red.shade100,
+                child: Icon(
+                  Icons.error,
+                  size: size * 0.5,
+                  color: Colors.red,
+                ),
+              );
+            },
+          ),
+        ),
+      );
     } catch (e) {
-      print('❌ DEBUG Error: $e');
+      print('❌ Error building member avatar: $e');
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.red.shade100,
+        ),
+        child: Icon(
+          Icons.error,
+          size: size * 0.5,
+          color: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // UPDATED: Debug method for testing Python group functionality
+// UPDATED: Enhanced debug method for testing Python group functionality with user details
+Future<void> _debugPythonGroupMembers() async {
+  try {
+    if (_userDocumentId == null) {
+      print('⚠️ DEBUG: No user document ID available');
+      return;
+    }
+    
+    print('🔍 ===============================');
+    print('🔍 DEBUG: PYTHON GROUP MEMBERS WITH REAL USER DETAILS TEST');
+    print('🔍 ===============================');
+    print('🔍 User Document ID: $_userDocumentId');
+    
+    // Test connection
+    final connectionOk = await _pythonGroupService.testConnection();
+    print('🔗 Connection test: ${connectionOk ? "SUCCESS" : "FAILED"}');
+    
+    if (!connectionOk) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('DEBUG Error: $e'),
+            content: Text('❌ Cannot connect to Python backend on port 8000'),
             backgroundColor: Colors.red,
           ),
         );
       }
+      return;
+    }
+
+    // Run complete debug flow
+    await _pythonGroupService.debugCompleteGroupUserFlow(_userDocumentId!);
+    
+    // Test the full loading flow
+    await _loadEnhancedGroupMembers();
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ DEBUG: Complete Python backend test completed - check console for details'),
+          backgroundColor: Colors.blue,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+    
+  } catch (e) {
+    print('❌ DEBUG Error: $e');
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ DEBUG Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
-
-  // NEW: Debug button (REMOVE IN PRODUCTION)
-  Widget _buildSimpleDebugButton() {
+}
+  // NEW: Debug button for Python group functionality
+  Widget _buildEnhancedDebugButton() {
     // Only show in development mode
     if (kReleaseMode) return Container();
     
@@ -1004,14 +1169,13 @@ class _IslandsMapScreenState extends State<IslandsMapScreen>
       top: MediaQuery.of(context).padding.top + 100,
       right: 20,
       child: FloatingActionButton(
-        onPressed: _debugSimpleGroupMembers,
+        onPressed: _debugPythonGroupMembers, // UPDATED: Use Python debug method
         backgroundColor: Colors.orange,
-        child: Icon(Icons.bug_report, color: Colors.white),
+        child: Icon(Icons.group_work, color: Colors.white),
         mini: true,
       ),
     );
   }
-
 
   // Initialize avatar service
   void _initializeAvatarService() {
@@ -1140,7 +1304,8 @@ String? _calculateAgeFromDOB(String? dobString) {
     return null;
   }
 }
-// UPDATED: Collective CSV system - replace individual CSV methods with these
+
+// UPDATED: Fetch user profile data with proper user_id inclusion
 Future<Map<String, dynamic>?> _fetchUserProfileData() async {
   if (_userDocumentId == null) {
     print('⚠️ Cannot fetch user profile: User ID not available');
@@ -1149,7 +1314,7 @@ Future<Map<String, dynamic>?> _fetchUserProfileData() async {
 
   try {
     print('🔄 ===============================');
-    print('🔄 FETCHING USER PROFILE DATA');
+    print('🔄 FETCHING USER PROFILE DATA WITH USER ID');
     print('🔄 ===============================');
     print('🔄 User Document ID: $_userDocumentId');
     print('🔄 API URL: $_baseUrl/api/auth/user-profile/$_userDocumentId');
@@ -1184,8 +1349,9 @@ Future<Map<String, dynamic>?> _fetchUserProfileData() async {
       print('📊 PROCESSING AND NORMALIZING DATA');
       print('📊 ===============================');
       
-      // Create a normalized map with consistent field names
+      // UPDATED: Create a normalized map with user_id included
       final normalizedData = {
+        'user_id': _userDocumentId, // IMPORTANT: Include user_id for CSV
         'first_name': userData['firstname'] ?? 'Unknown',
         'last_name': userData['lastname'] ?? 'User', 
         'gender': userData['sexe'] ?? 'Not specified',
@@ -1197,7 +1363,7 @@ Future<Map<String, dynamic>?> _fetchUserProfileData() async {
       };
       
       print('📊 ===============================');
-      print('📊 NORMALIZED USER DATA FOR CSV');
+      print('📊 NORMALIZED USER DATA FOR CSV WITH USER ID');
       print('📊 ===============================');
       normalizedData.forEach((key, value) {
         print('✅ Normalized "$key": "${value.toString()}"');
@@ -1220,7 +1386,7 @@ Future<Map<String, dynamic>?> _fetchUserProfileData() async {
       });
       
       print('📊 ===============================');
-      print('📊 USER PROFILE DATA READY');
+      print('📊 USER PROFILE DATA WITH USER ID READY');
       print('📊 ===============================');
       
       return normalizedData;
@@ -1235,13 +1401,9 @@ Future<Map<String, dynamic>?> _fetchUserProfileData() async {
   }
 }
 
-// UPDATED: Replace the existing _saveUserDataToCsv method with this new implementation
+  // UPDATED: Save user data to collective CSV with proper user_id handling
 Future<void> _saveUserDataToCollectiveCSV() async {
   try {
-    print('📊 ===============================');
-    print('📊 STARTING COLLECTIVE CSV PROCESS');
-    print('📊 ===============================');
-    
     // Fetch user profile data
     final userProfile = await _fetchUserProfileData();
     if (userProfile == null) {
@@ -1303,8 +1465,9 @@ Future<void> _saveUserDataToCollectiveCSV() async {
       return;
     }
 
-    // Prepare user data for collective CSV
+    // UPDATED: Prepare user data for collective CSV with user_id
     final userData = {
+      'user_id': _userDocumentId!, // CRITICAL: Include user_id
       'first_name': userProfile['first_name']?.toString().trim() ?? 'Unknown',
       'last_name': userProfile['last_name']?.toString().trim() ?? 'User',
       'gender': userProfile['gender']?.toString().trim() ?? 'Not specified',
@@ -1316,13 +1479,7 @@ Future<void> _saveUserDataToCollectiveCSV() async {
       'creativity': scores['creativity']?.toStringAsFixed(2) ?? '0.00',
       'class': userProfile['class']?.toString().trim() ?? 'Not specified',
       'completion_timestamp': DateTime.now().toIso8601String(),
-      'user_id': _userDocumentId,
     };
-
-    print('📊 User data prepared for collective CSV:');
-    userData.forEach((key, value) {
-      print('📊   $key: $value');
-    });
 
     // Add to collective data
     await CollectiveCSVManager.addCompletedUser(userData);
@@ -1332,11 +1489,6 @@ Future<void> _saveUserDataToCollectiveCSV() async {
     final currentCount = await CollectiveCSVManager.getCurrentCount();
 
     if (shouldTrigger) {
-      print('🎉 ===============================');
-      print('🎉 BATCH DOWNLOAD TRIGGERED!');
-      print('🎉 ===============================');
-      print('🎉 Reached $currentCount users - triggering collective CSV download');
-      
       // Generate and download collective CSV
       await CollectiveCSVManager.generateCollectiveCSV();
       
@@ -1347,20 +1499,9 @@ Future<void> _saveUserDataToCollectiveCSV() async {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.download, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    '🎉 Batch Complete! Downloaded CSV with $currentCount users. Starting new batch...',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
+            content: Text('Batch Complete! Downloaded CSV with user IDs for clustering.'),
             backgroundColor: Colors.green.shade600,
-            duration: Duration(seconds: 8),
+            duration: Duration(seconds: 5),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -1371,20 +1512,9 @@ Future<void> _saveUserDataToCollectiveCSV() async {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.person_add, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'User added to batch! Progress: $currentCount/20 users',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
+            content: Text('User added to batch! Progress: $currentCount/12 users'),
             backgroundColor: Colors.blue.shade600,
-            duration: Duration(seconds: 4),
+            duration: Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -1392,30 +1522,13 @@ Future<void> _saveUserDataToCollectiveCSV() async {
       }
     }
 
-    print('✅ Collective CSV process completed');
-    print('📊 Current batch progress: $currentCount/20');
-
   } catch (e, stackTrace) {
-    print('❌ Error in collective CSV process: $e');
-    print('❌ Stack trace: $stackTrace');
-    
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error, color: Colors.white),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Error saving user data to batch. Please try again.',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
+          content: Text('Error saving user data to batch. Please try again.'),
           backgroundColor: Colors.red.shade600,
-          duration: Duration(seconds: 5),
+          duration: Duration(seconds: 4),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
@@ -1424,11 +1537,6 @@ Future<void> _saveUserDataToCollectiveCSV() async {
   }
 }
 
-// UPDATED: Replace the CSV save call in _loadAllEarnedBadges method
-// Change this line:
-// await _saveUserDataToCsv();
-// To this:
-// await _saveUserDataToCollectiveCSV();
   // UPDATED: Enhanced score loading with retry logic and fallback
   Future<Map<String, dynamic>?> _loadScoreWithRetry({int maxRetries = 3}) async {
     if (_userDocumentId == null || _quizId == null) {
@@ -1467,7 +1575,7 @@ Future<void> _saveUserDataToCollectiveCSV() async {
     return _buildFallbackScoreData();
   }
 
-  // ADDED: Build fallback score data from local cache
+  // UPDATED: Build fallback score data from local cache - capped at island 4
   Map<String, dynamic>? _buildFallbackScoreData() {
     if (_localScoreCache.isEmpty) {
       print('⚠️ No cached scores available');
@@ -1500,17 +1608,18 @@ Future<void> _saveUserDataToCollectiveCSV() async {
 
     scoreData['totalScore'] = totalScore;
     
-    // Update island position based on completed categories
+    // Update island position based on completed categories (capped at 4)
     final completedCount = _localScoreCache.length;
     if (completedCount > 0) {
-      scoreData['island_position'] = 'island ${completedCount + 1}';
+      final clampedPosition = (completedCount + 1).clamp(1, 4);
+      scoreData['island_position'] = 'island $clampedPosition';
     }
 
     print('📊 Fallback score data: $scoreData');
     return scoreData;
   }
 
-  // NEW: Update island position after any progress change
+  // UPDATED: Update island position after any progress change - capped at island 4
   Future<void> _updateIslandPosition() async {
     if (_userDocumentId == null || _quizId == null) {
       print('⚠️ Cannot update island position: User ID or Quiz ID not available');
@@ -1526,7 +1635,22 @@ Future<void> _saveUserDataToCollectiveCSV() async {
       );
 
       if (result != null && result['island_position'] != null) {
-        final newPosition = result['island_position'] as String;
+        String newPosition = result['island_position'] as String;
+        
+        // Cap the island position at 4
+        if (newPosition.contains('island')) {
+          final parts = newPosition.split(' ');
+          if (parts.length >= 2) {
+            try {
+              final islandNumber = int.parse(parts[1]);
+              final clampedNumber = islandNumber.clamp(1, 4); // Maximum of 4
+              newPosition = 'island $clampedNumber';
+            } catch (e) {
+              // If parsing fails, keep original
+            }
+          }
+        }
+        
         if (newPosition != _currentIslandPosition) {
           setState(() {
             _currentIslandPosition = newPosition;
@@ -1534,9 +1658,10 @@ Future<void> _saveUserDataToCollectiveCSV() async {
           print('🎯 Island position updated to: $_currentIslandPosition');
         }
       } else {
-        // Fallback: calculate position based on completed categories
+        // Fallback: calculate position based on completed categories (capped at 4)
         final completedCount = _localScoreCache.length;
-        final fallbackPosition = 'island ${completedCount + 1}';
+        final clampedPosition = (completedCount + 1).clamp(1, 4);
+        final fallbackPosition = 'island $clampedPosition';
         if (fallbackPosition != _currentIslandPosition) {
           setState(() {
             _currentIslandPosition = fallbackPosition;
@@ -1546,9 +1671,10 @@ Future<void> _saveUserDataToCollectiveCSV() async {
       }
     } catch (e) {
       print('❌ Error updating island position: $e');
-      // Fallback: calculate position based on completed categories
+      // Fallback: calculate position based on completed categories (capped at 4)
       final completedCount = _localScoreCache.length;
-      final fallbackPosition = 'island ${completedCount + 1}';
+      final clampedPosition = (completedCount + 1).clamp(1, 4);
+      final fallbackPosition = 'island $clampedPosition';
       if (fallbackPosition != _currentIslandPosition) {
         setState(() {
           _currentIslandPosition = fallbackPosition;
@@ -1624,7 +1750,7 @@ Future<void> _saveUserDataToCollectiveCSV() async {
           _badgeCollectionController.forward();
         }
 
-        // NEW: Check if all islands completed and trigger CSV save
+        // UPDATED: Check if all islands completed and trigger CSV save with user ID
         print('🎯 Checking completion status after loading badges...');
         print('🎯 Current island position: $_currentIslandPosition');
         print('🎯 Score data available: ${scoreData != null}');
@@ -1638,12 +1764,13 @@ Future<void> _saveUserDataToCollectiveCSV() async {
           print('🎉 User has finished all 4 islands');
           print('🎉 Island position: $_currentIslandPosition');
           print('🎉 All scores available: $scores');
-          print('🎉 Triggering CSV save...');
+          print('🎉 User ID: $_userDocumentId');
+          print('🎉 Triggering CSV save with user ID...');
           
-          // Trigger CSV save
-            await _saveUserDataToCollectiveCSV(); // REMOVE THIS LINE
+          // Trigger CSV save with user ID
+          await _saveUserDataToCollectiveCSV();
 
-          print('🎉 CSV save process completed!');
+          print('🎉 CSV save process with user ID completed!');
         } else {
           print('ℹ️ Not all islands completed yet');
           print('ℹ️ Current position: $_currentIslandPosition');
@@ -1892,6 +2019,8 @@ Future<void> _saveUserDataToCollectiveCSV() async {
       // NEW: Load all earned badges
       await _loadAllEarnedBadges();
 
+      await _checkGroupAccessibility();
+
       // Initial island position update
       await _updateIslandPosition();
 
@@ -1996,7 +2125,7 @@ Future<void> _saveUserDataToCollectiveCSV() async {
       });
       print('🏆 Step 6: Reloading badge collection');
       
-      // Step 6: Reload badges with new scores (THIS WILL TRIGGER CSV SAVE IF ALL COMPLETED)
+      // Step 6: Reload badges with new scores (THIS WILL TRIGGER CSV SAVE WITH USER ID IF ALL COMPLETED)
       await _loadAllEarnedBadges();
       print('✅ Step 6: Badge collection updated');
       
@@ -3815,8 +3944,24 @@ Future<void> _saveUserDataToCollectiveCSV() async {
     );
   }
 
-  // NEW: Build island position indicator
+  // NEW: Build island position indicator with maximum of 4
   Widget _buildIslandPositionIndicator() {
+    // Parse current position and ensure it doesn't exceed 4
+    String displayPosition = _currentIslandPosition;
+    if (displayPosition.contains('island')) {
+      final parts = displayPosition.split(' ');
+      if (parts.length >= 2) {
+        try {
+          final islandNumber = int.parse(parts[1]);
+          final clampedNumber = islandNumber.clamp(1, 4); // Maximum of 4
+          displayPosition = 'island $clampedNumber';
+        } catch (e) {
+          // If parsing fails, keep original
+          displayPosition = _currentIslandPosition;
+        }
+      }
+    }
+
     return Positioned(
       bottom: MediaQuery.of(context).padding.bottom + 20,
       right: 20,
@@ -3849,7 +3994,7 @@ Future<void> _saveUserDataToCollectiveCSV() async {
             ),
             const SizedBox(width: 6),
             Text(
-              _currentIslandPosition.toUpperCase(),
+              displayPosition.toUpperCase(),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -4361,13 +4506,17 @@ Future<void> _saveUserDataToCollectiveCSV() async {
             Positioned.fill(
               child: _buildBadgePopup(),
             ),
-                    _buildGroupMembersButton(),
           
-          // NEW: Group Members Popup - Add this at the end for highest z-index
+          // UPDATED: Group Members Button - Show when all islands completed
+          if (!_isPostQuizLoading && !_showPostQuizLoadingImmediately)
+            _buildGroupMembersButton(),
+          
+          // UPDATED: Enhanced Group Members Popup
           if (_showGroupMembersPopup)
             Positioned.fill(
-              child: _buildSimpleGroupMembersPopup(),
+              child: _buildEnhancedGroupMembersPopup(),
             ),
+          
           // POST-QUIZ LOADING SCREEN - HIGHEST PRIORITY (moved to end for z-index)
           if (_showPostQuizLoadingImmediately || _isPostQuizLoading) ...[
             // Debug statement

@@ -26,7 +26,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
   bool _isLoadingQuizzes = true;
 
   // Replace with your actual Symfony server URL
-  static const String _baseUrl = 'http://127.0.0.1:8000'; // Change this to your server URL
+  static const String _baseUrl = 'http://127.0.0.1:8001'; // Change this to your server URL
 
   @override
   void initState() {
@@ -1070,39 +1070,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
                   const SizedBox(height: 12),
                   
                   // Sync Data Option
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: Colors.white.withOpacity(0.05),
-                    ),
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.sync,
-                        color: Colors.white70,
-                        size: 28,
-                      ),
-                      title: const Text(
-                        'Sync Data',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      trailing: const Icon(
-                        Icons.arrow_forward_ios,
-                        color: Colors.white54,
-                        size: 16,
-                      ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _syncAllData();
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  
+  
                   // Settings Option
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 8),

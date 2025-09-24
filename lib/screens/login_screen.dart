@@ -23,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscurePassword = true;
   
   // Replace with your actual Symfony server URL
-  static const String _baseUrl = 'http://127.0.0.1:8000'; // Change this to your server URL
+  static const String _baseUrl = 'http://127.0.0.1:8001'; // Change this to your server URL
   
   late AnimationController _slideController;
   late AnimationController _fadeController;

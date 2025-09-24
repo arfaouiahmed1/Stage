@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class SymfonyService {
   // Symfony backend URL - only for badge operations
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String baseUrl = 'http://127.0.0.1:8001/api';
   
   // Headers for all requests
   static Map<String, String> get defaultHeaders => {

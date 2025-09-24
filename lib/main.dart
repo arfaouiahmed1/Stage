@@ -8,6 +8,10 @@ import 'screens/waiting_screen.dart';
 import 'screens/quiz_code_entry_screen.dart'; // Import your QuizCodeEntryScreen  
 import 'screens/islands_map_screen.dart'; // Import your IslandsMapScreen
 
+// Import the new Python backend service
+import 'services/python_group_service.dart';
+import 'services/firebase_avatar_service.dart'; // Make sure avatar service is available
+
 void main() async {
   // Ensure that plugin services are initialized so that Firebase can be used
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +27,31 @@ void main() async {
     // App can still run, but Firebase features won't work
   }
   
+  // Initialize services
+  _initializeServices();
+  
   runApp(const QuizApp());
+}
+
+/// Initialize global services for the app
+void _initializeServices() {
+  try {
+    // Initialize Firebase Avatar Service if not already initialized
+    if (!Get.isRegistered<FirebaseAvatarService>()) {
+      Get.put(FirebaseAvatarService(), permanent: true);
+      debugPrint('✅ FirebaseAvatarService initialized globally');
+    }
+
+    // Initialize Python Group Service
+    if (!Get.isRegistered<PythonGroupService>()) {
+      Get.put(PythonGroupService(), permanent: true);
+      debugPrint('✅ PythonGroupService initialized globally');
+    }
+
+    debugPrint('✅ All services initialized successfully');
+  } catch (e) {
+    debugPrint('❌ Error initializing services: $e');
+  }
 }
 
 class QuizApp extends StatelessWidget {
